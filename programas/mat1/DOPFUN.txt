@@ -1,0 +1,75 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DOPFUN - operaciones con funciones y composicion (TP 4 entero).
+  @ Suma, resta, producto, cociente f/g, y las dos composiciones.
+  @ Operacion: 0 = todas, 1 = f+g, 2 = f-g, 3 = f*g, 4 = f/g,
+  @            5 = fog = f(g(X)), 6 = gof = g(f(X)).
+  @ El punto x0 sirve para el ejercicio 3 del TP 4, que pide evaluar
+  @ composiciones "si es posible": cuando el punto cae fuera del
+  @ dominio la caja dice NO EXISTE, que es justo la respuesta buscada.
+  @ NO calcula dominios: eso es lo que hay que escribir a mano, y
+  @ deducirlo simbolicamente es un pozo sin fondo (ver SUITE-MAT1 4).
+  @ Las dos composiciones quedan en la pila: n2 = fog, n1 = gof.
+  "Operaciones con funciones"
+  {
+    { "f(X):" "'\v/(X-1)'" }
+    { "g(X):" "'2*X^2'" }
+    { "Oper. 0=todas 1..4 5=fog 6=gof:" "0" 0 }
+    { "Evaluar composiciones en x0:" "0" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F0 G0 OP X0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+        \<<
+          0 0 \-> FG GF
+          \<<
+            IFERR F 'X' G = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'FG' STO
+            IFERR G 'X' F = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'GF' STO
+            IF OP 0 == OP 1 == OR THEN
+              "(f+g)(X) =" 10 CHR +
+              IFERR F G + EXPAND \->STR THEN "NO SE PUDO" END +
+              MSGBOX
+            END
+            IF OP 0 == OP 2 == OR THEN
+              "(f-g)(X) =" 10 CHR +
+              IFERR F G - EXPAND \->STR THEN "NO SE PUDO" END +
+              MSGBOX
+            END
+            IF OP 0 == OP 3 == OR THEN
+              "(f*g)(X) =" 10 CHR +
+              IFERR F G * EXPAND \->STR THEN "NO SE PUDO" END +
+              MSGBOX
+            END
+            IF OP 0 == OP 4 == OR THEN
+              "(f/g)(X) =" 10 CHR +
+              IFERR F G / SIMPLIFY \->STR THEN "NO SE PUDO" END +
+              MSGBOX
+            END
+            IF OP 0 == OP 5 == OR THEN
+              "(fog)(X) =" 10 CHR +
+              FG \->STR +
+              MSGBOX
+            END
+            IF OP 0 == OP 6 == OR THEN
+              "(gof)(X) =" 10 CHR +
+              GF \->STR +
+              MSGBOX
+            END
+            "(fog)(" X0 \->STR + ") =" + 10 CHR +
+            IFERR FG 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
+            MSGBOX
+            "(gof)(" X0 \->STR + ") =" + 10 CHR +
+            IFERR GF 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
+            MSGBOX
+            FG GF
+          \>>
+        \>>
+      \>>
+    \>>
+  END
+\>>

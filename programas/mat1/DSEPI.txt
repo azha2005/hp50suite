@@ -1,0 +1,27 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DSEPI - separable con condicion inicial (problema de valor inicial).
+  @ Uso:  'M(Y)' 'N(X)' X0 Y0 DSEPI
+  @ Deja: n1 = 'F(Y) = G(X) + K' con la constante ya resuelta.
+  @ K = F(Y0) - G(X0), calculada con SUBST. NO usa STO/PURGE sobre
+  @ los globales X e Y: ese era el punto mas fragil de la suite,
+  @ porque pisaba lo que tuvieras guardado ahi.
+  @ Si el CAS no puede evaluar en el punto, deja 'C' simbolica.
+  \-> MY NX X0 Y0
+  \<<
+    0 0 \-> FY GX
+    \<<
+      IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END 'FY' STO
+      IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END 'GX' STO
+      FY
+      GX
+      IFERR
+        FY 'Y' Y0 = SUBST EVAL GX 'X' X0 = SUBST EVAL -
+      THEN
+        'C'
+      END
+      +
+      =
+    \>>
+  \>>
+\>>

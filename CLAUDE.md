@@ -1,0 +1,716 @@
+# CLAUDE.md — Suite de programas UserRPL para HP 50g
+
+Contexto de proyecto para continuar el desarrollo de una suite de programas en
+UserRPL para una calculadora **HP 50g real** (no emulador), usada en las materias
+**Laboratorio de Datos** y **Microeconomía I** (Lic. en Economía, FCE-UNLP), con
+extensión planificada a **Matemática I**.
+
+**Entorno de trabajo: Windows.** Los scripts auxiliares están en PowerShell
+(`programas/verificar.ps1`, `programas/a-crlf.ps1`).
+
+Todo lo que sigue fue verificado empíricamente en el hardware. Las reglas de la
+sección "Reglas de UserRPL" NO son teoría: cada una viene de un bug real que
+costó tiempo encontrar.
+
+---
+
+## 1. Formato de archivo y transferencia
+
+Los programas se escriben como archivos `.txt` en la PC y se transfieren con
+**Conn4x** a la calculadora.
+
+Requisitos **obligatorios** para que Conn4x lo reconozca como objeto nativo
+(programa/lista/matriz) en vez de cargarlo como string inerte:
+
+1. Primera línea exacta: `%%HP: T(3)A(R)F(.);`
+2. Terminaciones de línea **CRLF** (`\r\n`), no LF.
+3. **ASCII puro de 7 bits** en todo el archivo — ni un byte fuera de 0x00–0x7F,
+   ni siquiera dentro de comentarios `@`. Un carácter `Σ` en un comentario
+   rompe la transferencia aunque el compilador ignore los comentarios.
+
+Comando para convertir a CRLF al final de cada edición:
+
+```bash
+sed 's/$/\r/' archivo_lf.txt > /ruta/salida/ARCHIVO.txt
+file /ruta/salida/ARCHIVO.txt   # debe decir: HP text - T(3) A(R) F(.);
+```
+
+**Terminología de Conn4x:** "download" = de la PC a la calculadora (al revés de
+lo intuitivo).
+
+**Después de cada transferencia:** confirmar el ícono del objeto en `VAR`
+(programa / directorio / lista / string) antes de asumir que cargó bien.
+
+### Estructura del archivo
+
+```
+%%HP: T(3)A(R)F(.);
+DIR
+  NOMBREPROG
+  \<<
+    ... código ...
+  \>>
+END
+```
+
+Un objeto suelto (sin `DIR`, ej. una lista de datos o un helper) va sin el
+envoltorio y se guarda directo con `'NOMBRE' STO`.
+
+---
+
+## 2. Reglas de UserRPL (aprendidas a los golpes)
+
+### 2.1 Comandos que NO existen (a pesar de sonar lógicos)
+
+| Escribí esto ❌ | El real es ✅ | Nota |
+|---|---|---|
+| `ROUND` | `RND` | Necesita 2 args: `valor decimales RND`. Para entero: `0 RND` |
+| `SQRT` | `\v/` | Es el símbolo √ en forma ASCII |
+| `\GTE` / `\LTE` | `< NOT` / `> NOT` | No existen esos escapes. `A ≥ B` ⇔ `A B < NOT` |
+| `>=` / `<=` | `< NOT` / `> NOT` | Sueltos no andan. Ver abajo: `\>=` es otra cosa |
+
+**`\>=` y `\<=` (con barra) parecen ser los escapes correctos, y no están
+probados acá.** No es lo mismo que `>=` suelto ni que `\GTE`. Hay dos fuentes
+independientes de terceros, las dos de código que funciona:
+
+- `Graf/GRAF.txt`: 7 usos de `\>=`, incluso dentro de strings que el programa
+  compila en tiempo de ejecución con `OBJ\->`.
+- Los fuentes de `calcnum` (ver el fork, `analisis/REVISION.md`): traen los
+  símbolos como **bytes** del juego de caracteres de la HP, y ahí se lee que
+  137 = ≤ y 138 = ≥. `\<=` aparece **39 veces como comando de pila**, no solo
+  adentro de un algebraico: `K NMI \<=` compara dos valores y deja el flag.
+
+**Confirmado corriendo en el emulador con ROM de 50g** (`harness/casos-escapes.txt`):
+`3 3 \>=` da 1 y `4 3 \<=` da 0. Son comandos de pila de verdad. Falta lo de
+abajo (que Conn4x traduzca la grafía) antes de sacarlos a producción, pero el
+rodeo `< NOT` tiene los días contados. `verificar.ps1` ya distingue: marca `>=`
+suelto y deja pasar `\>=`.
+
+Escapes ASCII **confirmados por nosotros**: `\->` (flecha), `\<<` `\>>`
+(programa), `\v/` (raíz), `\=/` (distinto de), `\GS` (Σ).
+
+**`\.S` es la integral (∫)**, y toma 4 argumentos: `LOWLIM UPLIM EXPR X \.S`.
+Visto en `Graf/GRAF.txt` y **confirmado en el emulador**: `0 1 'X^2' 'X' ∫ EVAL`
+da `1/3`. Sirve para `AREA` e `IMPR` (§7): integral definida directa, sin pasar
+por `RISCH` + `PREVAL`.
+
+**⚠️ Los escapes son del formato de transferencia, no de la calculadora.**
+`STR\->` **no los entiende**: pasarle un fuente con `\->` o `\<<` adentro da
+syntax error y deja el string en la pila. Quien traduce `\->` al carácter 141 es
+el programa de transferencia (Conn4x, `ASCIIBIN`), no el compilador de la
+máquina. Importa cada vez que un programa compile texto en tiempo de ejecución.
+La tabla de traducción está en `herramientas/compilar.py` del fork.
+
+**⚠️ `\.oo` (infinito) transfiere y compila, pero NO sirve.** Produce un **nombre
+global** (`TYPE` 6) que solo se *dibuja* como ∞. El infinito real del CAS es un
+**algebraico** (`TYPE` 9). Por eso `LIMIT` con `'X=\.oo'` sustituye en vez de
+calcular, y `1/\.oo` queda inerte en modo exacto. Confirmado en la máquina.
+
+Es el caso más traicionero de esta tabla: no da error, no rompe la transferencia,
+el objeto se ve bien en pantalla, y el resultado es silenciosamente equivocado.
+
+**El infinito hay que capturarlo del teclado en la máquina**, porque el archivo
+tiene que ser ASCII puro de 7 bits (§1) y ∞ está fuera de ese rango. Ver
+`programas/DINF.txt` y `SUITE-MAT1.md` §2.
+
+**⚠️ El infinito escrito en el fuente FUNCIONA — y `\.oo` no es el escape.**
+
+Corrido en el emulador con ROM de 50g (`harness/casos-escapes.txt`, 9 de 9):
+
+| Prueba | Resultado |
+|---|---|
+| `∞ TYPE` | **9** (algebraico, no nombre) |
+| `'1/X' 'X' ∞ = LIMIT EVAL` | **0** |
+| `'(X^2+1)/X' 'X' / 'X' ∞ = LIMIT EVAL` | **1** ← la `m` de `DASHO` |
+| `'(X^2+1)/X' 'X' - 'X' ∞ = LIMIT EVAL` | **0** ← la `b` de `DASHO` |
+| `∞ \->STR 3 3 SUB NUM` | **159** |
+
+**Cuidado con lo que esto prueba y lo que no.** Lo que se probó es que el
+**carácter** ∞ (código 159) metido dentro de un objeto se comporta como el
+infinito del CAS. Lo hizo `herramientas/compilar.py`, que traduce los escapes a
+bytes del juego de caracteres de la HP y manda el objeto ya armado. Lo que
+**falta** es que Conn4x traduzca la grafía `\oo` de un archivo de texto a ese
+carácter. Es un paso chico y se prueba con un archivo de una línea.
+
+Si eso anda, `DINF` y el global `INF` sobran: `DASHO`, `DESTFUN` y las asíntotas
+se escriben con el infinito en el fuente y listo.
+
+De paso quedó claro por qué `\.oo` falla: la tercera medición dio 159 recién en
+el carácter 3, porque `\->STR` de un algebraico devuelve `'+∞'` **con comillas y
+con signo**. La secuencia 39 → 43 → 159 del emulador es la misma que costó tres
+lecturas en la calculadora.
+
+**Hipótesis (ahora sí solo de transferencia): el escape sería `\oo`, sin el punto.**
+Toda la familia es de la forma `\.S` (∫), `\.d` (∂), `\v/` (√), `\GS` (Σ), y en
+esa tabla ∞ es `\oo`. `\.oo` no aparece en ninguna fuente ajena — ni en
+`Graf/GRAF.txt`, ni en los 52 fuentes de `calcnum`, ni en el ejecutable de
+Debug4x, que sí contiene `\oo`. Encaja con el síntoma observado: un escape que el
+compilador no reconoce se compila como **nombre con los caracteres literales**, y
+en la pila se vio precisamente `1/\.oo` con la barra a la vista, no el glifo ∞.
+
+Si se confirma, `DINF` y el global `INF` sobran. La prueba es de tres líneas y
+está escrita en el fork, `analisis/REVISION.md` §2. Hasta correrla, `INF` sigue
+siendo la forma soportada.
+
+**Para detectar si un resultado del CAS es infinito, no comparar objetos.**
+`+∞` y `∞` son objetos distintos (la calculadora escribe el `+` sola), así que
+`SAME` contra un ∞ guardado falla. El carácter ∞ tiene **código 159** y aparece
+igual en `+∞`, `-∞` o `2*∞`: `VALOR \->STR 159 CHR POS` da 0 si no hay infinito y
+la posición si hay. Confirmado que el código es 159; el `SAME` frágil costó una
+corrida de `DCONT` con el veredicto equivocado.
+
+`\.d` (derivada parcial) se descartó sin probar — `DERIV` hace lo mismo y es
+comando de fábrica. La decisión sigue en pie, pero ahora se sabe que pertenece a
+la misma familia que `\.S`, que sí se va a necesitar.
+
+Síntoma típico de usar un comando inexistente: el nombre queda **sin evaluar en
+la pila** y el error aparece más adelante, en el comando que recibe la basura
+(ej. `R\->C ERROR: BAD ARGUMENT TYPE` con `'ROUND'` visible en la pila).
+
+### 2.2 Bloques `\<<` huérfanos ⚠️ (el bug más difícil de detectar)
+
+Un `\<< ... \>>` que **NO** está inmediatamente precedido por una declaración
+`\->` **nunca se autoejecuta** — se empuja a la pila como dato inerte (ves el
+código entero sentado en el nivel 1).
+
+Es fácil de introducir al sacar una variable `\->` que antes precedía a un `\<<`,
+dejándolo huérfano.
+
+**Este bug NO se detecta contando paréntesis** — el total puede seguir cerrando
+perfecto. Hay que verificar que cada `\<<` (salvo el que abre el programa entero)
+tenga un `\->` en la línea anterior. Ver script en sección 4.
+
+### 2.3 Variables locales vs. globales y `PURGE`
+
+- **Locales** (creadas con `\->`): se autodestruyen al cerrar su scope. Nunca
+  hace falta (ni sirve) purgarlas.
+- `{ NOMBRE }` con un nombre **LOCAL** evalúa al **VALOR**, no al nombre → `PURGE`
+  falla con "bad argument type". Con un nombre **GLOBAL** (creado con
+  `'NOMBRE' STO` sin `\->` previo) sí funciona.
+- `'NOMBRE' STO` **actualiza el local existente** si ya hay uno en scope con ese
+  nombre (no crea un global nuevo). Así se mutan acumuladores dentro de un loop.
+- Para armar una lista de 1 elemento desde un local: `VALOR 1 \->LIST`, nunca
+  `{ VALOR }` (esto último guarda el nombre sin evaluar).
+- **Nunca** guardar un programa dentro de una variable local para invocarlo
+  después por nombre — comportamiento inconsistente confirmado. Poner la lógica
+  inline en cada punto de uso.
+
+### 2.4 Concatenación de strings (patrón semilla)
+
+```
+"Etiqueta: " VALOR \->STR + 10 CHR +     <- semilla SIN + adelante
+"Otra: " + VALOR2 \->STR +               <- cada pieza CON su +, incluida la última
+MSGBOX
+```
+
+- El **primer literal es la semilla** y NO lleva `+` antes (no hay nada con qué
+  concatenar todavía). Ponerlo da `+ ERROR: too few arguments`.
+- Cada pieza siguiente, **incluida la última antes de `MSGBOX`**, necesita su `+`.
+  Olvidar el `+` final deja dos objetos sueltos y `MSGBOX` muestra solo uno
+  (bug silencioso: se ve "algo", pero falta texto).
+
+### 2.5 `INFORM` (formularios)
+
+- **Máximo ~4 campos** por pantalla. Con 5, el último queda inalcanzable con las
+  flechas. Solución: partir en 2+ pantallas `INFORM` secuenciales.
+- Campo **numérico**: `{ "label" "default" 0 }` (3 elementos, el `0` final es el
+  código de tipo). Sin ese `0`, el valor vuelve como texto y rompe la aritmética.
+- Campo que acepta **lista/vector/algebraico**: `{ "label" "hint" }` (2 elementos).
+- El default debe ser un string no vacío como `"0"`, nunca `""` — un campo nunca
+  visitado se envía con su default literal.
+- `OBJ\-> DROP \-> N1 N2 N3` asigna en el **mismo orden** en que se declararon los
+  campos. Invertir el orden es un bug frecuente y silencioso.
+
+### 2.6 `MSGBOX`
+
+- **No hace scroll.** Máximo seguro: **2 líneas de datos SIN encabezado
+  decorativo** por caja. Más que eso corta contenido silenciosamente.
+- Es **modal** (espera OK), así que varias llamadas seguidas encadenan solas.
+  Patrón usado: partir un resumen de 6 líneas en 3 cajas de 2.
+
+### 2.7 `FOR` y modo exacto/aproximado
+
+- Un `FOR` con **inicio > fin no ejecuta ni una vez**; con **inicio = fin ejecuta
+  una vez** (no cero — esto causó una "raya fantasma" en un gráfico cuando el
+  rango era degenerado).
+- Si el orden relativo de dos límites puede variar según el caso (ej. impuesto
+  vs. subsidio), calcular explícitamente cuál es menor con IF/THEN/ELSE antes del
+  `FOR`.
+- Literales enteros pueden generar **fracciones exactas/simbólicas** que los
+  comandos gráficos rechazan con "BAD ARGUMENT TYPE". Mitigación: escribir
+  literales con punto decimal (`0.` `10.` en vez de `0` `10`) y aplicar `\->NUM`
+  antes de usar un valor calculado como coordenada.
+
+### 2.8 Gráficos: `PICT`, `R\->C`, `XRNG`/`YRNG`
+
+- ⚠️ **Una fila con número MÁS GRANDE está FÍSICAMENTE MÁS ARRIBA** en pantalla
+  (al revés de la convención top-down típica). Detectado por una pendiente
+  invertida en un gráfico de dispersión.
+- `XRNG`/`YRNG` **NO son cosméticos**: reescalan de verdad cómo `LINE`/`BOX`/
+  `PIXON`/`R\->C` interpretan sus argumentos.
+- **Enfoque recomendado** (el que usan las versiones actuales): fijar
+  `XRNG`/`YRNG` al **rango real de los datos** y dibujar con **valores reales
+  directos**, sin fórmula manual de escalado a píxel. Ventajas: código mucho más
+  simple, y el cursor del modo interactivo lee valores reales.
+- **No mezclar** coordenadas estilo píxel crudo con un `XRNG`/`YRNG` de rango
+  real en el mismo programa. Elegir un enfoque y ser consistente.
+- `XRNG` rechaza rangos de **ancho cero** con "bad argument value". Siempre
+  poner salvaguarda: `IF XMAX XMIN == THEN XMAX 1. + 'XMAX' STO END`.
+- Offsets de marcadores deben ser **proporcionales a la escala**
+  (ej. `QMAX 40. /`), no constantes de píxel.
+- `GOR` (pegar GROB sobre PICT) necesita **3 argumentos**, con `PICT` primero
+  (nivel 3, el más profundo): `PICT grob posicion GOR`.
+- `\->GROB` (string → gráfico de texto) es válido.
+
+### 2.9 Camino nativo de graficación (leído en código de terceros, sin probar)
+
+```
+'X^2' 'EQ' STO
+-5. 5. XRNG  0. 25. YRNG
+ERASE DRAX DRAW LABEL PICTURE
+```
+
+`DRAX` = ejes, `DRAW` = grafica la EQ, **`LABEL` = pone los números en los ejes
+automáticamente**. Mucho más simple que dibujar con `LINE` a mano, y resuelve el
+problema de rotular gráficos que habíamos abandonado.
+
+**Ya no es especulación.** El fuente completo está en `Graf/GRAF.txt` (suite de
+terceros, autor `au777fait@gmail.com`), y su programa de funciones a trozos
+`PCWYZ` usa exactamente esta secuencia en producción, con `2.01 MENU` antes de
+`PICTURE`. Sigue **sin probarse en nuestro hardware**: leer código ajeno que
+funciona es mejor evidencia que una corazonada, pero no es una prueba.
+
+Cuatro técnicas de ahí que valen para nuestra suite:
+
+**a) Restricción de dominio sin dibujar tramo por tramo.** En vez de recortar a
+mano, `EQ` se carga con una **lista de programas**, uno por tramo, y `DRAW` los
+grafica todos de una. Cada programa devuelve la expresión del tramo si `x` cae
+adentro, y `'\v/-ABS(X)'` si cae afuera:
+
+```
+\<< X \-> x
+  \<<
+    IF DLA x >   THEN '\v/-ABS(X)'
+    ELSE IF ULA x \>= THEN EA ELSE '\v/-ABS(X)' END
+    END
+  \>>
+\>>
+```
+
+√(−|X|) no es real, así que el plotter simplemente **saltea** ese punto. Es más
+simple y más robusto que el bucle de `LINE` que usa `DTROZOS`. Ojo: no protege
+contra asíntotas — un valor enorme sigue siendo real.
+
+**b) Autoescala de ventana.** `Screen4Pw` muestrea cada tramo en 7 puntos
+(`0. 6. FOR n ULp DLp - 6. / n * DLp +`) y acumula min/max de X e Y. `DTROZOS`
+hoy le pide la ventana al usuario; esto la calcula solo.
+
+**c) String → nombre global sin evaluar**, en una línea:
+
+```
+PRESERVE:  \<< "}" + "{" SWAP + OBJ\-> OBJ\-> DROP \>>
+```
+
+`"EA" PRESERVE` deja el nombre `EA` sin evaluar, listo para `STO` o `PURGE`.
+Se apoya en la regla de 2.3 (los nombres adentro de una lista no se evalúan).
+Combinado con `64. p + CHR` (que da "A", "B", "C"... desde el índice de un
+`FOR`) permite crear variables dinámicas `EA`/`EB`/`EC`, `ULA`/`ULB`, etc.
+
+**d) Guardar y restaurar las opciones de display del usuario.** Los programas
+abren con `7. NOFORMAT` y cierran con `8. NOFORMAT`. Ataca el problema de que
+ningún programa nuestro fija ni restaura flags.
+
+**`NOFORMAT` ya está descompilado** (fork, `analisis/graf/`), y no hace falta el
+binario: `7` guarda las banderas −45…−50 (formato de número) y −17/−18 (modo
+angular) con `FS?` en un global `NUMfrmt`; `8` las restaura con `SF`/`CF`;
+`0`…`4` es `FIX 0`…`FIX 4` y `9` es `STD`. Diez líneas de UserRPL.
+
+**Para código propio conviene más `RCLF` / `STOF`**, que son de fábrica y guardan
+el estado **completo** de la máquina de una:
+
+```
+RCLF \-> FL
+\<<
+  ... fijar los modos que hagan falta, hacer el trabajo ...
+  FL STOF
+\>>
+```
+
+Así lo hace `domain49` (fork, `analisis/domain49/LOGICA.md`). Es lo que Mat1
+necesita para pasar a modo exacto y devolver la máquina como estaba.
+
+También usa `INPUT` (no `INFORM`) con prompts multilínea, que esquiva el límite
+de ~4 campos de 2.5.
+
+### 2.10 Evaluación de expresiones algebraicas (CAS)
+
+Confirmado que funciona:
+
+```
+'X^2+3' \-> EXPR
+\<<
+  2 'X' STO
+  EXPR EVAL \->NUM     @ da 7
+\>>
+```
+
+- El usuario debe tipear la expresión **con comillas simples**: `'X^2+3'`.
+- Para símbolos sueltos (`<`, `<=`) en un campo, van **con comillas dobles**:
+  `"<"`, `"<="` — si no, la calculadora intenta parsearlos como comparación
+  algebraica incompleta y tira syntax error.
+- Salvaguarda por si el campo devuelve string en vez de algebraico:
+  `IF DUP TYPE 2 == THEN STR\-> END`
+
+### 2.11 ⚠️ `IFERR` **no** limpia la pila
+
+Medido en el emulador con ROM de 50g, batería `harness/casos-diag.txt`:
+
+```
+DEPTH \-> D0 \<< IFERR 1 2 0 INV THEN "E" END DEPTH D0 - \>>     @ da 3, no 1
+```
+
+El cuerpo alcanzó a empujar `1` y `2` antes de que `0 INV` fallara. **Los dos
+quedaron en la pila**, y encima el `"E"` del `THEN`: 3 objetos. Si `IFERR`
+restaurara la pila, el resultado sería 1.
+
+Importa porque la suite usa `IFERR` en todos lados con la forma
+
+```
+IFERR  ARG1 ARG2 COMANDO  THEN "FALLO" END
+```
+
+y si `COMANDO` falla, `ARG1` y `ARG2` **se quedan**. Las consecuencias, de menor
+a mayor:
+
+- Si lo que sigue es `'VAR' STO`, el valor guardado es el correcto y la basura
+  solo ensucia la pila. Molesto, no grave.
+- Si lo que sigue es una **concatenación de strings con `+`** (patrón 2.4), el
+  `+` toma los dos objetos de arriba, que ahora incluyen la basura. Sale texto
+  equivocado o un `BAD ARGUMENT TYPE`.
+- Si lo que sigue arma un resultado con `=` o `\->LIST` (`DSEP`, `DSEPI`), el
+  programa **devuelve una respuesta equivocada sin avisar**. Es el caso peor.
+
+El rodeo, cuando importa, es un guardián de profundidad:
+
+```
+DEPTH \-> D0
+\<<
+  IFERR ARG1 ARG2 COMANDO THEN "FALLO" END
+  \-> R \<< DEPTH D0 - DROPN R \>>        @ tira lo que sobre y deja solo R
+\>>
+```
+
+### 2.12 El CAS abre diálogos modales en medio del cálculo
+
+`LIMIT` de `1/X` en 0 abre **"Unsigned inf. Solve?"** y se queda esperando una
+respuesta. Un programa que corre solo se cuelga ahí hasta que alguien contesta.
+
+Afecta a `DCONT` con una rama que revienta en el punto de corte, que es
+justamente el caso interesante. Y la respuesta por defecto (YES) devuelve el
+infinito **sin signo**, que es por qué `DCONT` informó `lim izq +∞` para `1/X`
+cuando el límite lateral verdadero es −∞.
+
+### 2.13 Matrices como salida tipo tabla
+
+`{ K 6 } \->ARRY` construye una matriz de K filas × 6 columnas a partir de K*6
+valores apilados. En **modo algebraico**, `EDIT` sobre esa matriz abre un editor
+de celdas tipo planilla (en modo RPN solo edita la matriz plana).
+
+---
+
+## 3. Flujo de trabajo que funciona
+
+1. **Probar aislado antes de confiar.** Ante cualquier comando o técnica nueva,
+   escribir un test de 2-5 líneas y correrlo en la calculadora ANTES de meterlo
+   en un programa grande. Esto ahorró horas repetidamente.
+2. **Editar con `str_replace` de coincidencia exacta**, nunca reconstruir el
+   archivo cortando con `head -N` y pegando pedazos — así se perdió un `\<<` en
+   un empalme y costó un ciclo entero de debug.
+3. **Correr la batería de verificación** (sección 4) antes de cada entrega.
+4. **Convertir a CRLF** y verificar con `file`.
+5. Si algo funciona en un programa pero falla en otro con patrón similar:
+   **sospechar primero de una versión vieja todavía residente en la
+   calculadora** antes de asumir un bug nuevo. Pasó dos veces (DBOXPLOT, DOLS).
+   Purgar la vieja antes de probar la nueva.
+
+---
+
+## 4. Batería de verificación (correr antes de cada entrega)
+
+**El entorno de trabajo es Windows.** Hay dos scripts de PowerShell en
+`programas/`:
+
+```powershell
+# Verificar uno o varios archivos
+.\verificar.ps1 DBOXPLOT.txt
+.\verificar.ps1 *.txt
+
+# Convertir a CRLF + verificar header y ASCII antes de transferir
+.\a-crlf.ps1 archivo_editado.txt
+
+# Matemática I: verificar la fuente y regenerar el paquete de transferencia
+.\verificar.ps1 .\programas\mat1\*.txt
+.\programas\armar-mat1.ps1
+```
+
+Si PowerShell bloquea la ejecución:
+`powershell -ExecutionPolicy Bypass -File .\verificar.ps1 *.txt`
+
+`verificar.ps1` chequea, en este orden: profundidad de anidación acumulada
+(debe cerrar en 0), bloques `\<<` huérfanos, bytes no-ASCII, comandos inválidos
+(`SQRT`/`ROUND`/`>=`/`=/=`), comillas balanceadas, header `%%HP`,
+terminaciones CRLF, `FOR` contra `NEXT`/`STEP`, y el balance de `END`.
+
+El balance de `END` usa `END = THEN + CASE + DO + WHILE + DIR` (cada rama de un
+`CASE` cierra con su propio `END`, y el `CASE` agrega uno más). Es el único
+chequeo que detecta un **`IFERR` sin cerrar**, porque `IFERR` no abre un bloque
+`\<<` y el conteo de profundidad no lo ve.
+
+El chequeo de huérfanos exceptúa la línea previa cuando es un identificador
+solo: dentro de un `DIR` esa línea es el **nombre** del objeto, y es legítima.
+Así un archivo con varios objetos en un mismo `DIR` (`programas/MAT1.txt`) no
+dispara falsos positivos.
+
+**Advertencia:** el conteo total de paréntesis **no detecta** un `\<<` mal
+ubicado si se compensó con cierres de más en otro lado. Por eso el chequeo de
+profundidad acumulada y el de huérfanos son los importantes — un total
+balanceado no garantiza nada.
+
+Tras editar un bloque grande, comparar las partes **no tocadas** contra la
+versión anterior (`git diff`, o `Compare-Object` en PowerShell) para detectar
+truncamientos accidentales.
+
+<details>
+<summary>Equivalentes en bash (si alguna vez se trabaja en Linux/WSL)</summary>
+
+```bash
+F=archivo.txt
+
+python3 -c "
+with open('$F') as f:
+    depth = 0; maxd = 0
+    for line in f:
+        depth += line.count('\\\\<<') - line.count('\\\\>>')
+        maxd = max(maxd, depth)
+    print('DEPTH FINAL:', depth, '| MAXIMA:', maxd)
+"
+
+python3 -c "
+with open('$F') as f: lines = f.readlines()
+h = [i+1 for i,l in enumerate(lines) if '\\\\<<' in l and i>0 and '\\\\->' not in lines[i-1]]
+print('Huerfanos:', h)
+"
+
+grep -naP '[^\x00-\x7F]' $F || echo "ASCII OK"
+grep -v '^\s*@' $F | grep -cE 'SQRT|ROUND|>=|=/='
+sed 's/$/\r/' archivo_lf.txt > SALIDA.txt   # conversion a CRLF
+```
+</details>
+
+---
+
+## 5. Inventario de programas (16)
+
+### Estadística descriptiva (una variable)
+
+| Programa | Qué hace | Entrada |
+|---|---|---|
+| `DSTATS` | Media, varianza, desvío, CV | Datos |
+| `DMODA` | Moda(s), avisa si no hay | Datos |
+| `DPCTIL` | Percentil interpolado `Lp=(p/100)(n+1)`. **Mediana = p50** | Datos + p |
+| `DFRECTABLA` | Tabla de frecuencias (abs, acum.abs, %, acum.%) como **matriz** | Datos + K + Ancho + Inicio |
+| `DHISTO` | Histograma (barras) | Datos + K + Ancho + Inicio |
+| `DBOXPLOT` | Caja, bigotes, outliers, eje, puntos individuales | Datos |
+
+En `DFRECTABLA`/`DHISTO`, los campos K/Ancho/Inicio en `0` = automático (Sturges).
+Se pueden fijar a mano para reproducir ejercicios de cátedra que eligen K
+arbitrariamente (ej. el de horas trabajadas usa K=5, Ancho=5, Inicio=10 — la
+cátedra arranca en un entero cómodo *menor* al mínimo real).
+
+### Relación entre dos variables
+
+| Programa | Qué hace |
+|---|---|
+| `DCOVCORR` | Covarianza, r de Pearson, dispersión + recta de regresión |
+| `DOLS` | Regresión lineal (b0, b1, r, R²) por sumatorias |
+
+Ambos piden **dos listas separadas** (X e Y), no una matriz. Ambos usan `SIGFIG`.
+
+### Economía
+
+| Programa | Qué hace |
+|---|---|
+| `DMKT` | Equilibrio de mercado simple + gráfico |
+| `DMKTFISC` | Completo: impuesto/subsidio, Pb/Ps, recaudación, PIE, incidencia, elasticidades, controles de precio (techo/piso) con escasez/excedente, gráfico con áreas sombreadas |
+| `DCOMPFIRM` | Empresa competitiva: Q* por P=CMg, beneficio, cierre; gráfico CMg/CVMe/P |
+| `DPIBPPA` | PIB per cápita PPA |
+| `DTCAMBIO` | Tasa de crecimiento anual compuesta (CAGR) |
+| `DVLRZ` (`DCOMPZ`) | Valor Z, clasifica atípico si \|Z\|>3 |
+
+### Matemática
+
+| Programa | Qué hace |
+|---|---|
+| `DTROZOS` | Grafica funciones a trozos, con extremos abiertos/cerrados marcados |
+
+`DTROZOS`: pide ventana de gráfico, luego por tramo la expresión (`'X^2'`), y
+cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
+
+### Matemática I (suite aparte)
+
+18 objetos más en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+
+Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
+
+| Programa | Qué hace | TP |
+|---|---|---|
+| `DOPFUN` | Suma, resta, producto, cociente y las dos composiciones | 4 |
+| `DCONT` | Continuidad de una función a trozos en el punto de corte | 7 |
+| `DASHO` | Asíntotas horizontales y oblicuas, a los dos infinitos | 8 |
+| `DASV` | Asíntota vertical en un punto candidato | 8 |
+| `DDEF` | Derivada por definición, con el cociente incremental a la vista | 9 |
+| `DTANOR` | Recta tangente y recta normal en x0 | 9 |
+| `DESTFUN` | Estudio de función completo, hasta donde llegue el CAS | 8+ |
+| `DVFG` | Verifica una simplificación evaluando en seis puntos | 0/1 |
+| `DDOMP` | Sondea qué puntos pertenecen al dominio | 1 |
+
+Parcial 2 y final, **todavía con interfaz por pila** (falta convertirlos):
+`LHOP`, `DSEP`, `DSEPI`, `LAGR`.
+Pruebas: `TCHK`, `TDSEP`, `TD`, `TEFUN`, `TF`.
+
+La columna TP refiere al recopilado `MEGA_TODOS_LOS_TPS (1).txt` (raíz del
+repo): el temario y las resoluciones de cátedra contra las que se diseñaron.
+
+Usan `IFERR` en todos lados para que un fallo del CAS no tire abajo el resto del
+cálculo. **Ninguno está probado en hardware.** Documentación propia en
+`SUITE-MAT1.md`, que se subordina a este archivo.
+
+### Utilidad
+
+| Programa | Qué hace |
+|---|---|
+| `SIGFIG` | Redondea a N cifras significativas. **DEBE estar en HOME**, no en subcarpeta, para que `DOLS`/`DCOVCORR` lo encuentren |
+
+**Regla de scope:** `HOME` es visible desde cualquier subcarpeta (la búsqueda de
+nombres sube). Entre carpetas hermanas NO hay visibilidad.
+
+---
+
+## 6. Datasets de prueba (cargados como variables en la calculadora)
+
+| Variable | Contenido | Uso |
+|---|---|---|
+| `BM5X` / `BM5Y` | PIB pc PPA y precio Big Mac, 5 países | Par X/Y. `r ≈ 0.9781` |
+| `BMHIST` | 45 precios Big Mac | Una variable. Moda: `5.31` (frec 3) |
+| `BMSCX` / `BMSCY` | PIB y precio, 46 países | Par X/Y. `r ≈ 0.7579` |
+| `HORAS` | 20 valores de horas trabajadas | K=5, Ancho=5, Inicio=10 → frec `2,2,6,6,4` |
+
+**Se pueden usar escribiendo el nombre de la variable en el campo "Datos"** en
+vez de tipear la lista entera. Confirmado que funciona.
+
+### Casos de verificación conocidos
+
+- `DSTATS` con `BM5X`: Media=32172.2, sX=32930.3
+- `DCOVCORR` con `BM5X`/`BM5Y`: sXY=62909.8, r=0.9781 (valores del apunte de cátedra)
+- `DOLS` con `BM5X`/`BM5Y`: `Y = 1.952 + 0.0000580*X`, r=0.9781 (debe coincidir con DCOVCORR)
+- `DMKT` con a=100,b=2,c=10,d=3,T=0: P*=18, Q*=64. Con T=5: P*=21, Q*=58
+- `DMKTFISC` con a=100,b=2,c=10,d=3,T=5: Ps=16, Recaud=290, PIE=15, Inc 60/40, Ed=-0.7241, Es=0.8276
+- `DMKTFISC` subsidio a=60,b=4,c=0,d=2,T=-3: Pb=9, Ps=12, Q*=24, Recaud=-72, PIE=6
+- `DCOMPFIRM` con CF=20,b=3,c=1: P=43→Q*=20,Ben=380 | P=11→Q*=4,Ben=-4 | P=1→cierra,Ben=-20
+- `DPCTIL` con `{2,4,6,8,10}`: p50→6, p70→Lp=4.2, Valor=8.4
+
+---
+
+## 7. Pendientes
+
+### Programas no hechos (priorizados)
+
+1. **Modelo macro simple** — `Y=C+I+G` con `C=a+b(Y-T)`; ingreso de equilibrio y
+   multiplicador. Cierra el último hueco explícito de la Unidad 6 del programa.
+2. **Monopolio** — demanda lineal + costos, resolver por `IMg=CMg`. Es el patrón
+   más repetido en el TP6 de Micro.
+3. **Utilidad Cobb-Douglas** — `U=X^a·Y^b` con restricción presupuestaria.
+4. Elasticidad arco (entre dos puntos arbitrarios), números índice,
+   interpolación lineal. Para la interpolación ya hay fuente legible de terceros
+   (fork, `analisis/calcnum/fuentes/Interpolacao-Lagrange-Unidimensional.txt`).
+5. **`DAJUSTE` — ajuste no lineal por linealización.** Es el único hueco de
+   materia que apareció revisando los programas de terceros: `DOLS` hace la recta
+   y nada más. Exponencial (`Y=A·e^(bX)`), potencial (`Y=A·X^b`), logarítmica y
+   parábola, **mostrando las sumatorias** (ΣX, ΣY, ΣX², ΣX³, ΣX⁴, ΣXY, ΣX²Y,
+   ΣLNX, ΣLNY), que es como lo pide la cátedra. Dos fuentes para copiar, las dos
+   en el fork: `ajustedecurvas` descompilado y el `.hpe`
+   `Ajuste-de-Funcoes-Regressao-com-Funcoes-Linearizaveis`.
+6. **Matemática I** (cátedra Barraza): EDO separables, estudio de función,
+   multiplicadores de Lagrange. — **Escritos, sin probar.** Los tres están
+   cubiertos (`DSEP`/`DSEPI`, `DESTFUN`/`DASHO`, `LAGR`) junto con otros 13
+   objetos. Lo que falta ahora es probarlos en la calculadora, no escribirlos.
+   Ver `SUITE-MAT1.md`. Quedan sin escribir `AREA` (área entre curvas) e `IMPR`
+   (integral impropia); para los dos hay ahora **dos caminos** en vez de uno:
+   `\.S` como integral definida de fábrica (§2.1) y, cuando `RISCH` no puede,
+   Simpson o Romberg, con fuente legible en el fork
+   (`analisis/calcnum/fuentes/`).
+
+### Mejoras pendientes
+
+- Probar el camino nativo `DRAX/DRAW/LABEL` (sección 2.9) — simplificaría todos
+  los gráficos y permitiría rotular ejes. Ya hay código de terceros que lo usa
+  en producción (`Graf/GRAF.txt`); falta correrlo acá.
+- **Probar la traducción de escapes de Conn4x.** Es lo único que falta para
+  cerrar tres cosas de golpe (§2.1): el infinito en el fuente (y con eso se van
+  `DINF` y el global `INF`), `\>=`/`\<=` en vez del rodeo `< NOT`, y `\.S` para
+  `AREA`/`IMPR`. Los tres **ya funcionan en la máquina**; lo que falta es que
+  las grafías `\oo`, `\>=`, `\<=`, `\.S` de un archivo de texto lleguen como los
+  caracteres 159, 138, 137 y 132. Se prueba con un archivo de una línea:
+  transferir `\<< \oo DUP TYPE \>>` y correrlo — tiene que dar **9**, no 6.
+- **`SIMPLIFY` borra las discontinuidades evitables — revisar `DOPFUN`.** Medido
+  probando `domain49` (fork, `analisis/domain49/CASOS-PROBADOS.md`): en la 50g,
+  `'(X-3)/(X^2-9)' SIMPLIFY` da `'1/(X+3)'`, y con eso desaparece que `X=3` no
+  pertenece al dominio. `DOPFUN` hace exactamente `F G / SIMPLIFY` para el
+  cociente (línea 50), que es el caso del TP 4: muestra `f/g` ya cancelada, y el
+  punto que la cátedra quiere ver excluido no se ve. Lo mismo vale para el
+  `EXPAND SIMPLIFY` de `DESTFUN`. Al menos avisar en la caja de que el dominio se
+  calcula **antes** de simplificar; idealmente mostrar las dos formas.
+
+- **Arreglar los `IFERR` que dejan basura** (§2.11), empezando por `DSEP` y
+  `DSEPI`, que son los que pueden devolver una respuesta equivocada sin avisar.
+- **Correr el harness.** Está implementado en el fork (`harness/`): una tabla de
+  casos, un programa `BATERIA` generado, y el resultado que vuelve por `DDE48 r`
+  como objeto y se compara en la PC. Corre sobre el `Emu48` de **Debug4x**, que
+  emula la 50g de verdad con la ROM `ROMG+.50G` autorizada por HP, no una 49G con
+  carátula. Falta correrlo: el viaje de ida y vuelta por DDE no está probado.
+  Prueba la capa de cálculo, no los formularios. Detalle en `analisis/REVISION.md`
+  §3 y §6; corrige `SUITE-MAT1.md` §9.
+- Meter `RCLF`/`STOF` (2.9d) para guardar y restaurar el estado de la máquina.
+  Ningún programa de la suite toca flags hoy, y Mat1 necesita modo exacto. Ya no
+  hace falta evaluar `NOFORMAT`: está descompilado y `RCLF`/`STOF` es mejor.
+- **Leer los 52 fuentes UserRPL de `calcnum`** (fork,
+  `analisis/calcnum/fuentes/`) antes de escribir `AREA` e `IMPR`: hay Trapecio,
+  Simpson y Romberg en fuente legible, más Newton-Raphson y bisección como red
+  numérica para cuando `ZEROS` no puede. También regresión múltiple y ajustes
+  linealizables, que le faltan a `DOLS`.
+- Alinear columnas de salida con padding de espacios donde se use texto.
+- `DTROZOS` no tiene protección contra asíntotas/discontinuidades dentro de un
+  tramo (ej. `1/X` con un tramo que cruce 0) — va a fallar o dar resultados sin
+  sentido. **La técnica de 2.9a no arregla esto**: sortea el dominio, no las
+  asíntotas, porque un valor enorme sigue siendo un número real.
+
+### Decisiones tomadas (no re-litigar)
+
+- **No** calcular dominio/imagen automáticamente en `DTROZOS`: requiere
+  matemática simbólica frágil, y el "dominio" resultante sería solo la ventana
+  elegida, no el dominio matemático real. Se descartó a propósito.
+- **No** parsear condiciones completas tipo `"si x < 2"`: implicaría un
+  mini-parser de texto, demasiado frágil. Se optó por campos separados.
+- Los gráficos usan la orientación de libro de texto donde corresponde
+  (`DMKTFISC`: Precio vertical, Cantidad horizontal).
+- **No** reescribir `DTROZOS`. `PCWYZ` (en `Graf/`) ya hace funciones a trozos
+  mejor: autoescala la ventana, grafica todos los tramos de una con `DRAW`, y
+  resuelve el dominio con el truco de `'\v/-ABS(X)'` en vez de un bucle de
+  `LINE`. Invertir en `DTROZOS` sería reescribir algo que ya existe y anda.
+  `DTROZOS` queda como está, sin más trabajo encima.
+- **Los programas de Matemática I van con el mismo estilo que los de Lab de
+  Datos**: entrada por `INFORM` desde la calculadora (nunca editando el código),
+  salida por `MSGBOX`, y prefijo `D` en el nombre. Se descartó la interfaz por
+  pila que tenían las primeras versiones. Cuando el resultado es una expresión
+  que no entra en una caja de 2 líneas, va igual al `MSGBOX` **y** queda en la
+  pila para poder leerla entera.

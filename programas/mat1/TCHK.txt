@@ -1,0 +1,14 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ TCHK - correr PRIMERO, sin argumentos, antes de confiar en nada.
+  @ Chequea los cuatro cimientos que asume toda la suite Mat1:
+  @ el comando = como constructor de ecuacion, RISCH, el formato de
+  @ LIMIT con infinito, y DERIV.
+  @ Deja 4 resultados. Si alguno es un string "ERR ...", ese comando
+  @ no se comporta como asumen los programas y hay que arreglar eso
+  @ antes de seguir.
+  IFERR 'X' 2 = THEN "ERR: = no construye ecuacion" END
+  IFERR 'X^2' 'X' RISCH THEN "ERR: RISCH" END
+  IFERR '1/X' 'X=\.oo' LIMIT EVAL THEN "ERR: LIMIT con \.oo" END
+  IFERR 'X^2' 'X' DERIV THEN "ERR: DERIV" END
+\>>

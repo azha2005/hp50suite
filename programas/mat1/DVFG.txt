@@ -1,0 +1,71 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DVFG - verifica que H(X) sea la simplificacion de F(X)/G(X).
+  @ Evalua en seis puntos y resta. Todas las diferencias en 0 significa
+  @ que el algebra esta bien. No demuestra nada, pero dos expresiones
+  @ distintas casi nunca coinciden en seis puntos.
+  @ Los puntos por defecto evitan 0, 1 y 4 (las exclusiones del
+  @ ejercicio de la guia). Para otro ejercicio se cambian en el campo.
+  @ La lista de diferencias queda en la pila.
+  "Verificar simplificacion"
+  {
+    { "F(X):" "'X^2-1'" }
+    { "G(X):" "'X-1'" }
+    { "H(X) propuesta:" "'X+1'" }
+    { "Puntos de prueba:" "{ -3 -1 .5 2 3 3.5 }" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F0 G0 H0 P0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+        \<<
+          H0 IF DUP TYPE 2 == THEN STR\-> END \-> H
+          \<<
+            P0 IF DUP TYPE 2 == THEN STR\-> END \-> PTS
+            \<<
+              { } 0 \-> DIF MAL
+              \<<
+                1 PTS SIZE FOR I
+                  PTS I GET 'X' STO
+                  IFERR
+                    F \->NUM G \->NUM / H \->NUM -
+                  THEN
+                    "INDEF"
+                  END
+                  @ Cuenta como "mal" tanto una diferencia no nula como
+                  @ un punto que no se pudo evaluar (ahi el valor es el
+                  @ string "INDEF", de TYPE 2 y no 0).
+                  DUP
+                  IF DUP TYPE 0 ==
+                  THEN ABS .0000001 >
+                  ELSE DROP 1
+                  END
+                  IF THEN MAL 1 + 'MAL' STO END
+                  1 \->LIST DIF SWAP + 'DIF' STO
+                NEXT
+                IFERR { X } PURGE THEN 0 DROP END
+                "Puntos probados: " PTS SIZE \->STR + 10 CHR +
+                "Con diferencia: " + MAL \->STR +
+                MSGBOX
+                IF MAL 0 ==
+                THEN
+                  "SIMPLIFICACION OK" 10 CHR +
+                  "Las 6 diferencias 0" +
+                ELSE
+                  "NO COINCIDE" 10 CHR +
+                  "Ver lista en la pila" +
+                END
+                MSGBOX
+                DIF
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  END
+\>>

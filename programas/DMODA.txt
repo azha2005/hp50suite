@@ -1,0 +1,76 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  DMODA
+  \<<
+    "Moda"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET
+      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      SORT
+      \-> L
+      \<<
+        L SIZE \-> N
+        \<<
+          @ MODES y MAXFREQ son globales (bare STO, se purgan al final).
+          @ CORREGIDO: "{ CURVAL }" (nombre suelto entre llaves)
+          @ guardaba el NOMBRE 'CURVAL' en vez de su valor -- por
+          @ eso la moda salia como texto "CURVAL". Se reemplaza por
+          @ "CURVAL 1 \->LIST", que arma la lista de 1 elemento a
+          @ partir del VALOR (evaluado normalmente, como en
+          @ cualquier operando fuera de llaves).
+          @ CURVAL es local (\->), se actualiza con 'CURVAL' STO dentro
+          @ del mismo scope -- no entra en el PURGE (ver DHISTO/FREQ).
+          { } 'MODES' STO
+          0 'MAXFREQ' STO
+          L 1 GET \-> CURVAL
+          \<<
+            1 'CURFREQ' STO
+            2 N FOR i
+              L i GET \-> V
+              \<<
+                IF V CURVAL == THEN
+                  CURFREQ 1 + 'CURFREQ' STO
+                ELSE
+                  @ cerrar la racha del valor anterior
+                  IF CURFREQ MAXFREQ > THEN
+                    CURVAL 1 \->LIST 'MODES' STO
+                    CURFREQ 'MAXFREQ' STO
+                  ELSE
+                    IF CURFREQ MAXFREQ == THEN
+                      MODES CURVAL + 'MODES' STO
+                    END
+                  END
+                  V 'CURVAL' STO
+                  1 'CURFREQ' STO
+                END
+              \>>
+            NEXT
+            @ el FOR no cierra la ULTIMA racha -- se repite aca
+            IF CURFREQ MAXFREQ > THEN
+              CURVAL 1 \->LIST 'MODES' STO
+              CURFREQ 'MAXFREQ' STO
+            ELSE
+              IF CURFREQ MAXFREQ == THEN
+                MODES CURVAL + 'MODES' STO
+              END
+            END
+            
+            IF MAXFREQ 1 == THEN
+              "Sin moda: todos los valores son distintos entre si."
+              MSGBOX
+            ELSE
+              "Moda(s): " MODES \->STR + 10 CHR +
+              "Frecuencia: " + MAXFREQ \->STR +
+              MSGBOX
+            END
+            
+            { MODES MAXFREQ CURFREQ } PURGE
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+END

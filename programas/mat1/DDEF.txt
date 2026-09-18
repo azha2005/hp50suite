@@ -1,0 +1,45 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DDEF - derivada por definicion. Punto 4 de la guia.
+  @ En x0 se puede poner 'X' para obtener f'(X) simbolica.
+  @ Deja en la pila el cociente incremental SIN simplificar (n2) y la
+  @ derivada (n1): el cociente es lo que hay que copiar a la hoja para
+  @ mostrar el procedimiento, y casi nunca entra en una caja.
+  "Derivada por definicion"
+  {
+    { "f(X), ej 'X^2':" "'X^2'" }
+    { "Punto x0 ('X' = simbolico):" "'X'" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F0 P0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        P0 IF DUP TYPE 2 == THEN STR\-> END \-> X0
+        \<<
+          F 'X=X+H' SUBST EVAL F - 'H' / \-> Q
+          \<<
+            0 \-> DV
+            \<<
+              IFERR
+                Q 'H=0' LIMIT EVAL SIMPLIFY 'X' X0 = SUBST EVAL
+              THEN
+                "EL CAS NO PUDO"
+              END
+              'DV' STO
+              "Cociente increm.:" 10 CHR +
+              Q \->STR +
+              MSGBOX
+              "Derivada:" 10 CHR +
+              DV \->STR +
+              MSGBOX
+              Q DV
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  END
+\>>

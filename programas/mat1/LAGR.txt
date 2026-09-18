@@ -1,0 +1,27 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ LAGR - multiplicadores de Lagrange, puntos criticos restringidos.
+  @ Uso:  'f(X,Y)' 'g(X,Y)' c LAGR
+  @ Deja: n2 = el lagrangiano L = f - LM*(g - c),
+  @       n1 = solucion del sistema, o un aviso si el CAS no pudo.
+  @ Los examenes modelo nunca piden clasificar los puntos, asi que
+  @ no arma el hessiano orlado.
+  @ Usa LM como multiplicador y DERIV para las parciales (el escape
+  @ de derivada parcial no esta confirmado en esta suite).
+  @ Purgar X, Y y LM antes de correrlo si tenian valor.
+  \-> F G C
+  \<<
+    F G C - 'LM' * - \-> LG
+    \<<
+      LG
+      IFERR
+        LG 'X' DERIV 0 =
+        LG 'Y' DERIV 0 =
+        LG 'LM' DERIV 0 =
+        3 \->LIST { X Y LM } SOLVE
+      THEN
+        "EL CAS NO RESOLVIO EL SISTEMA: pasarlo a mano"
+      END
+    \>>
+  \>>
+\>>

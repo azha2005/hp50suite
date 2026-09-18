@@ -1,0 +1,139 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  DCOVCORR
+  \<<
+    "Covarianza y Correlacion (Manual)"
+    {
+      { "Datos X:" "Vector [x] o Lista {x}" }
+      { "Datos Y:" "Vector [y] o Lista {y}" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> DX0 DY0
+      \<<
+        DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+        \<<
+          DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+          \<<
+            LX SIZE \-> N
+            \<<
+              0. 'SX' STO 0. 'SY' STO 0. 'SXY' STO 0. 'SXX' STO 0. 'SYY' STO
+              1 N FOR i
+                LX i GET \-> XI
+                \<<
+                  LY i GET \-> YI
+                  \<<
+                    SX XI + 'SX' STO
+                    SY YI + 'SY' STO
+                  \>>
+                \>>
+              NEXT
+              SX N / \->NUM \-> XB
+              \<<
+                SY N / \->NUM \-> YB
+                \<<
+                  1 N FOR i
+                    LX i GET XB - \-> DXI
+                    \<<
+                      LY i GET YB - \-> DYI
+                      \<<
+                        SXY DXI DYI * + 'SXY' STO
+                        SXX DXI SQ + 'SXX' STO
+                        SYY DYI SQ + 'SYY' STO
+                      \>>
+                    \>>
+                  NEXT
+                  SXY N 1 - / \->NUM \-> COVXY
+                  \<<
+                    @ CORREGIDO: "SQRT" no es un comando valido de HP
+                    @ RPL (no existe con ese nombre); el simbolo de
+                    @ raiz cuadrada en forma de texto ASCII es \v/
+                    SXX N 1 - / \v/ \->NUM \-> SDX
+                    \<<
+                      SYY N 1 - / \v/ \->NUM \-> SDY
+                      \<<
+                        COVXY SDX SDY * / \->NUM \-> R
+                        \<<
+                          @ AGREGADO: grafico de dispersion con recta de
+                          @ regresion superpuesta. B0/B1 con la misma
+                          @ formula que DOLS (reutiliza SXY/SXX ya
+                          @ calculados aca). Escala de ejes en base al
+                          @ min/max real de X e Y (no en base a 0).
+                          SXY SXX / \->NUM \-> B1
+                          \<<
+                            YB B1 XB * - \->NUM \-> B0
+                            \<<
+                              LX SORT \-> LXS
+                              \<<
+                                LY SORT \-> LYS
+                                \<<
+                                  LXS 1 GET \-> XMIN
+                                  \<<
+                                    LXS N GET \-> XMAX
+                                    \<<
+                                      LYS 1 GET \-> YMIN
+                                      \<<
+                                        LYS N GET \-> YMAX
+                                        \<<
+                                          @ AGREGADO (version 2): XRNG/YRNG con
+                                          @ el rango REAL de X e Y, dibujando
+                                          @ con los valores directos -- ya
+                                          @ confirmado que XRNG/YRNG reescalan
+                                          @ de verdad las coordenadas de LINE/
+                                          @ PIXON/R\->C. El cursor del modo
+                                          @ interactivo ahora muestra los
+                                          @ valores reales de X e Y.
+                                          ERASE
+                                          XMIN XMAX XRNG YMIN YMAX YRNG
+                                          
+                                          @ Ejes: horizontal en Y=YMIN,
+                                          @ vertical en X=XMIN
+                                          XMIN YMIN R\->C XMAX YMIN R\->C LINE
+                                          XMIN YMIN R\->C XMIN YMAX R\->C LINE
+                                          
+                                          @ Puntos de dispersion (valores
+                                          @ reales, sin formula de escalado)
+                                          1 N FOR i
+                                            LX i GET LY i GET R\->C PIXON
+                                          NEXT
+                                          
+                                          @ Recta de regresion, de XMIN a XMAX
+                                          XMIN B0 B1 XMIN * + R\->C
+                                          XMAX B0 B1 XMAX * + R\->C LINE
+                                          
+                                          PICT PICTURE
+                                          
+                                          "Media X: " XB \->STR + 10 CHR +
+                                          "Media Y: " + YB \->STR +
+                                          MSGBOX
+                                          "sX: " SDX \->STR + 10 CHR +
+                                          "sY: " + SDY \->STR +
+                                          MSGBOX
+                                          "sXY: " COVXY \->STR + 10 CHR +
+                                          "r (Pearson): " + R \->STR +
+                                          MSGBOX
+                                          "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
+                                          MSGBOX
+                                        \>>
+                                      \>>
+                                    \>>
+                                  \>>
+                                \>>
+                              \>>
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+              { SX SY SXY SXX SYY } PURGE
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+END

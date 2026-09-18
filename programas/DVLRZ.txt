@@ -1,0 +1,31 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  DCOMPZ
+  \<<
+    "Estandarizacion Z = (x-u)/s"
+    {
+      { "Valor Obs (x):" "" 0 }
+      { "Media (u):" "" 0 }
+      { "Desvio Est. (s):" "" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> X U S
+      \<<
+        X U - S / \->NUM \-> ZV
+        \<<
+          "Valor Z = " ZV \->STR + 10 CHR +
+          @ CORREGIDO: faltaba el + final que fusiona la
+          @ clasificacion (Atipico/Normal) al mensaje acumulado.
+          IF ZV ABS 3. > THEN
+            "Clasif: Atipico (|Z| > 3)"
+          ELSE
+            "Clasif: Rango Normal"
+          END +
+          MSGBOX
+        \>>
+      \>>
+    END
+  \>>
+END

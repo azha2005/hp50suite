@@ -1,0 +1,698 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  PWYZ
+  \<< PWIZ PCWYZ
+  \>>
+  PCALC
+  \<< RCTNGL TYPES
+  \>>
+  FOG
+  DIR
+    F '-2.*X+30.'
+    G 'X^2.+5.'
+    FoG
+    \<< 7. NOFORMAT STD DEPTH
+      IF 0. \=/
+      THEN 0.
+      END "F(x)=" F \->STR TICKOUT + "G(x)=" G \->STR TICKOUT + " FoG of  " { X TEMPX } PURGE TEMPX 'X' STO F EVAL 'X' PURGE G 'TEMPX' STO EVAL 'TEMPX' PURGE EVAL \->STR TICKOUT 8. NOFORMAT
+    \>>
+    GoF
+    \<< 7. NOFORMAT STD DEPTH
+      IF 0. \=/
+      THEN 0.
+      END "G(x)=" G \->STR TICKOUT + "F(x)=" F \->STR TICKOUT + " GoF of  " { X TEMPX } PURGE TEMPX 'X' STO G EVAL 'X' PURGE F 'TEMPX' STO EVAL 'TEMPX' PURGE EVAL \->STR TICKOUT 8. NOFORMAT
+    \>>
+    EXIT
+    \<< GOHOME
+    \>>
+    README
+    \<< CLLCD "
+ Store F & G functions in
+ terms of X as equations
+ like:
+      '5*X^2+3*X-1' 
+ 
+
+
+ Press the <NEXT> soft-key
+" NEXTMENU 1. DISP 3. FREEZE HALT CLLCD "
+ Put equation in ticks on
+      first line.
+ Press left shift then
+  F or G soft menu key
+ to store the equation. 
+
+
+ Press the <NEXT> soft-key
+" NEXTMENU 1. DISP 3. FREEZE HALT CLLCD "
+ After F(x) and G(x) are
+   stored press either
+   FoG or GoF and the
+ composite equation will
+   be put on the stack 
+
+
+ Press the <NEXT> soft-key
+" NEXTMENU 1. DISP 3. FREEZE HALT 2. MENU
+    \>>
+  END
+  EXIT
+  \<< GOHOME
+  \>>
+  QUADSOLVR
+  \<< 7. NOFORMAT 'x' INDEP -3. CF FUNCTION STD DEG 'x' PURGE -52. SF CLLCD DEPTH 'preSTACK' STO { { GROB 21 8 000000000000000000000000000000000000000000000000
+    \<<
+    \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+    \<<
+    \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+    \<<
+    \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+    \<<
+    \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+    \<<
+    \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+    \<<
+    \>> } } TMENU "     Ax^2+Bx+C=0
+
+   List  A  B  C
+ seperated by <SPC>s
+
+ then press <ENTER>
+
+
+
+" { "" } INPUT OBJ\-> DEPTH preSTACK - DUP
+    IF 3. \=/
+    THEN DROPN CLLCD "
+  You need 3 coeficients
+ for a quadratic equation?
+ 
+   Press any key and 
+      try again.
+
+
+
+" { { "RETRY"
+      \<< 8. NOFORMAT QUADSOLVR
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { "QUIT"
+      \<< 8. NOFORMAT KILL
+      \>> } } TMENU 1. DISP 3. FREEZE
+    ELSE DROP \-> a b c
+      \<< '(-b+\v/ABS(b^2.-4.*a*c))/(2.*a)' \->NUM '(-b-\v/ABS(b^2.-4.*a*c))/(2.*a)' \->NUM \-> ROOT1 ROOT2
+        \<< '(-b+\v/(b^2.-4.*a*c))/(2.*a)' \->NUM \->STR "Root1" \->TAG '(-b-\v/(b^2.-4.*a*c))/(2.*a)' \->NUM \->STR "Root2" \->TAG "(" '-b/(2.*a)' \->NUM + "," + 'a*(-b/(2.*a))^2.+b*(-b/(2.*a))+c' \->NUM + ")" + "Vertex" \->TAG
+          CASE a -1. ==
+            THEN "-X^2"
+            END a 1. ==
+            THEN "X^2"
+            END a 0. ==
+            THEN ""
+            END a \->STR "X^2" +
+          END
+          CASE b -1. ==
+            THEN "-X" +
+            END b 1. ==
+            THEN "+X" +
+            END b 0. ==
+            THEN
+            END b 0. <
+            THEN b \->STR + "X" +
+            END b 0. >
+            THEN "+" b \->STR + + "X" +
+            END
+          END
+          IF c 0. <
+          THEN c \->STR +
+          ELSE "+" + c \->STR +
+          END "EQ" \->TAG 4. ROLLD CLLCD "
+ Do you want a graph
+
+   of the equation?
+
+
+ 
+
+
+
+" { { " YES "
+          \<< 'a*x^2.+b*x+c' EVAL 'EQ' STO
+            IF ROOT1 ROOT2 >
+            THEN ROOT2 1. - ROOT1 1. + XRNG
+            ELSE ROOT1 1. - ROOT2 1. + XRNG
+            END 'a*(-b/(2.*a))^2.+b*(-b/(2.*a))+c' \->NUM DUP
+            IF 0. <
+            THEN DUP 2.5 * SWAP -.5 * YRNG
+            ELSE DUP -.5 * SWAP 2.5 * YRNG
+            END ERASE DRAX DRAW LABEL PICTURE CONT
+          \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+          \<<
+          \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+          \<<
+          \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+          \<<
+          \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+          \<<
+          \>> } { " NO "
+          \<< CONT
+          \>> } } TMENU 1. DISP 3. FREEZE HALT
+        \>> 2.01 MENU 8. NOFORMAT { preSTACK } PURGE KILL
+      \>>
+    END
+  \>>
+  ROTOR
+  \<< 7. NOFORMAT 'x' INDEP STD DEPTH 0. 0. 3. "1 2 3" " " -1. \-> preSTACKdepth Xmin Xmax n Terms nTest t
+    \<< { { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } } TMENU " How many terms in
+this polynomial?" { "     " -5. } INPUT DUP 'nTest' STO OBJ\-> DEPTH preSTACKdepth 1. +
+      IF \=/
+      THEN CLLCD "Isn't multiple choice
+  " nTest + "
+  Please try again!!!" + MSGBOX DEPTH preSTACKdepth - DROPN 8. NOFORMAT 2. MENU KILL
+      ELSE 'nTest' STO
+        IF nTest 3. <
+        THEN CLLCD "Polynomials are atleast
+        3 terms" MSGBOX 8. NOFORMAT KILL
+        ELSE nTest 'n' STO
+        END
+      END "Enter " n + " terms separated 
+  by <SPC>'s in order
+highest degree to constant " + { "      " -5. } INPUT DUP 'Terms' STO OBJ\-> DEPTH preSTACKdepth n +
+      IF ==
+      THEN 1. n
+        FOR d 't' STO
+          CASE d 1. ==
+            THEN
+              IF t 0. <
+              THEN t \->STR
+              ELSE "+" t \->STR +
+              END
+            END d 2. ==
+            THEN
+              CASE t -1. ==
+                THEN "-X"
+                END t 1. ==
+                THEN "+X"
+                END t 0. ==
+                THEN "  "
+                END t 0. <
+                THEN t \->STR "X" +
+                END "+" t \->STR + "X" +
+              END
+            END
+            CASE t -1. ==
+              THEN "-X^" d 1. - \->STR +
+              END t 1. ==
+              THEN "+X^" d 1. - \->STR +
+              END t 0. ==
+              THEN "  "
+              END t 0. <
+              THEN t \->STR "X^" d 1. - \->STR + +
+              END "+" t \->STR "X^" d 1. - \->STR + + +
+            END
+          END n ROLLD
+        NEXT
+      ELSE "You said " n \->STR + " terms
+but gave " + Terms \->STR + "
+  Please try again!!!" + MSGBOX DEPTH preSTACKdepth - DROPN 8. NOFORMAT
+      END 1. n 1. -
+      START +
+      NEXT "EQ" \->TAG Terms OBJ\-> n \->ARRY PROOT OBJ\-> DROP 1. n 1. -
+      FOR d 't' STO
+        IF t TYPE 1. ==
+        THEN t OBJ\-> + 'nTest' STO t n 1. - ROLLD
+        ELSE t 'nTest' STO t n 1. - ROLLD
+        END
+        IF d 1. ==
+        THEN nTest DUP 'Xmax' STO 'Xmin' STO
+        ELSE
+          CASE nTest Xmin <
+            THEN nTest 'Xmin' STO
+            END nTest Xmax >
+            THEN nTest 'Xmax' STO
+            END
+          END
+        END
+      NEXT CLLCD 1. n 1. -
+      FOR t "Root" n t - \->STR + \->TAG n 1. - ROLLD
+      NEXT "
+ Do you want a graph
+
+   of the equation?
+
+
+ 
+
+
+
+" { { "YES"
+      \<< Terms OBJ\-> 1. n
+        FOR d 't' STO 't*x^(d-1.)' EVAL n ROLLD
+        NEXT 1. n 1. -
+        START +
+        NEXT EVAL 'EQ' STO Xmin Xmax XRNG AUTO ERASE DRAX DRAW LABEL PICTURE CONT
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { "NO"
+      \<< CONT
+      \>> } } TMENU 1. DISP 3. FREEZE HALT
+    \>> 'x' PURGE 2.01 MENU 8. NOFORMAT
+  \>>
+  PWIZ
+  DIR
+    Y9
+    \<< \-> X '(X^2-6)/(X-3)^2'
+    \>>
+    Y8
+    \<< \-> X '1/(X+3)'
+    \>>
+    Y7
+    \<< \-> X '(3*X^4+1)/X^3'
+    \>>
+    Y6
+    \<< \-> X '(1-X)/(1-X^2)'
+    \>>
+    Y5
+    \<< \-> X '5/(X-3)'
+    \>>
+    EQ 'Y9(X)'
+    Y4
+    \<< \-> X '(-(3*X)+9)/(X^2-3*X)'
+    \>>
+    Y3
+    \<< \-> X '\v/X*(X-3)/ABS(X-3)'
+    \>>
+    PCWYZ
+    \<< 7. NOFORMAT STD 'X' INDEP FUNCTION { { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } } TMENU "LowX" "HighX" "LowY" "HighY" "    Enter how many
+ Piecewise EQs you want
+    to run at once
+  then press <ENTER>
+ " { " " -9. } 1. "        " NoEQs EVAL \->STR + PUT INPUT OBJ\-> \->STR DUP 'NoEQs' STO \-> LowXmax HighXmax LowYmax HighYmax NumLines
+      \<<
+        IF NumLines "" SAME
+        THEN ERASE DRAX DRAW LABEL PICTURE KILL
+        ELSE NumLines OBJ\-> 'NumLines' STO
+        END 1. NumLines
+        FOR p "   Edit equation " 64. p + CHR + "
+ enclose all eq's in
+  ticks like 'X^2+1' " + { "" 2. } 1. "E" 64. p + CHR + OBJ\-> \->STR PUT INPUT OBJ\-> PRESERVE " Enter domain limits
+    of X for EQ" 64. p + CHR + "
+  lower <SPC> upper." + { "" -6. } 1. "     " "DL" 64. p + CHR + OBJ\-> DUP TYPE DUP
+          IF 6. == OR 2. ==
+          THEN DROP -1.
+          END \->STR " " + "UL" 64. p + CHR + OBJ\-> DUP TYPE DUP
+          IF 6. == OR 2. ==
+          THEN DROP 1.
+          END \->STR + + PUT INPUT OBJ\-> LowXmax HighXmax LowYmax HighYmax p Screen4Pw 'HighYmax' STO 'LowYmax' STO 'HighXmax' STO 'LowXmax' STO
+        NEXT 1. NumLines
+        FOR p "EQ" 64. p + CHR + PRESERVE
+        NEXT NumLines \->LIST 'EQ' STO 1. NumLines
+        FOR p "\<< X \-> x 
+   \<< 
+    IF DL" 64. p + CHR + " x >  
+    THEN '\v/-ABS(X)' 
+    ELSE 
+      IF UL" + 64. p + CHR + " x \>= 
+       THEN E" + 64. p + CHR + " ELSE '\v/-ABS(X)' 
+       END  
+    END  
+  \>> 
+\>> " + OBJ\-> "EQ" 64. p + CHR + PRESERVE STO
+        NEXT LowYmax HighYmax YRNG LowXmax HighXmax XRNG ERASE DRAX DRAW LABEL 2.01 MENU PICTURE 8. NOFORMAT
+      \>>
+    \>>
+    EXIT
+    \<< GOHOME
+    \>>
+    Screen4Pw
+    \<< \-> EQp DLp ULp LowXmax HighXmax LowYmax HighYmax p
+      \<< EQp "E" 64. p + CHR + PRESERVE STO ULp "UL" 64. p + CHR + PRESERVE STO DLp "DL" 64. p + CHR + PRESERVE STO
+        IF HighXmax TYPE 2. ==
+        THEN ULp 'HighXmax' STO
+        ELSE
+          IF ULp HighXmax >
+          THEN ULp 'HighXmax' STO
+          END
+        END
+        IF LowXmax TYPE 2. ==
+        THEN DLp 'LowXmax' STO
+        ELSE
+          IF DLp LowXmax <
+          THEN DLp 'LowXmax' STO
+          END
+        END
+        IF HighYmax TYPE 2. ==
+        THEN DLp 'X' STO EQp \->NUM 'HighYmax' STO
+        END
+        IF LowYmax TYPE 2. ==
+        THEN DLp 'X' STO EQp \->NUM 'LowYmax' STO
+        END 0. 6.
+        FOR n ULp DLp - 6. / n * DLp + 'X' STO
+          CASE EQp \->NUM HighYmax >
+            THEN EQp \->NUM 'HighYmax' STO
+            END EQp \->NUM LowYmax <
+            THEN EQp \->NUM 'LowYmax' STO
+            END
+          END
+        NEXT 'X' PURGE LowXmax HighXmax LowYmax HighYmax
+      \>>
+    \>>
+    Y1
+    \<< \-> X '14.*3.'
+    \>>
+    Y2
+    \<< \-> X 'X/4.'
+    \>>
+    PRESERVE
+    \<< "}" + "{" SWAP + OBJ\-> OBJ\-> DROP
+    \>>
+    NoEQs "2."
+    X. "EA"
+    PPAR { (-40.3,-40.1215189873) (42.9,46.2784810127) X 0. (0.,0.) FUNCTION Y }
+    EQD
+    \<< X \-> x
+      \<<
+        IF DLD x >
+        THEN '\v/-ABS(X)'
+        ELSE
+          IF ULD x \>=
+          THEN ED
+          ELSE '\v/-ABS(X)'
+          END
+        END
+      \>>
+    \>>
+    EQC
+    \<< X \-> x
+      \<<
+        IF DLC x >
+        THEN '\v/-ABS(X)'
+        ELSE
+          IF ULC x \>=
+          THEN EC
+          ELSE '\v/-ABS(X)'
+          END
+        END
+      \>>
+    \>>
+    DLD 0.
+    ULD 2.
+    ED '2.*X^2.-3.*X'
+    DLC 2.
+    ULC 5.
+    EC '3*X-2'
+    ZPAR { 2. 2. 0. { (-19.5,-18.7949367088) (22.1,24.4050632912) X 0. (0.,0.) FUNCTION Y } }
+    EQB
+    \<< X \-> x
+      \<<
+        IF DLB x >
+        THEN '\v/-ABS(X)'
+        ELSE
+          IF ULB x \>=
+          THEN EB
+          ELSE '\v/-ABS(X)'
+          END
+        END
+      \>>
+    \>>
+    EQA
+    \<< X \-> x
+      \<<
+        IF DLA x >
+        THEN '\v/-ABS(X)'
+        ELSE
+          IF ULA x \>=
+          THEN EA
+          ELSE '\v/-ABS(X)'
+          END
+        END
+      \>>
+    \>>
+    DLB -7.
+    ULB 3.
+    EB '(-(3*X)+9)/(X^2-3*X)'
+    DLA 3.
+    ULA 7.
+    EA '2*X+1'
+  END
+  RCTNGL
+  DIR
+    TYPES
+    \<< 7. NOFORMAT STD -72. SF -3. CF CLLCD "   Press (?) first 
+ letter of the approx
+ type that you want.
+
+ (R)ight   (S)impson 
+ (M)id     (T)rapizoid
+ (L)eft    (I)ntegral
+    
+
+
+
+" { { " R "
+      \<< 52. 'atype' STO TYPESB
+      \>> } { " M "
+      \<< 41. 'atype' STO TYPESB
+      \>> } { " L "
+      \<< 33. 'atype' STO TYPESB
+      \>> } { " S "
+      \<< 53. 'atype' STO TYPESB
+      \>> } { " T "
+      \<< 54. 'atype' STO TYPESB
+      \>> } { " I "
+      \<< 23. 'atype' STO TYPESB
+      \>> } } TMENU 1. DISP 3. FREEZE
+    \>>
+    EXIT
+    \<< GOHOME
+    \>>
+    LEFT
+    \<< LOWLIM UPLIM nTimes \-> a b n
+      \<< RECTEQ 'EQ2' STO 'a+(b-a)*(t-1.)/n' EVAL 'X' STO EQ2 '(b-a)/n' * EVAL 'EQ2' STO 't' 1. n EQ2 \GS \->STR "Lft" \->TAG 'X' PURGE
+      \>>
+    \>>
+    MID
+    \<< LOWLIM UPLIM nTimes \-> a b n
+      \<< RECTEQ 'EQ2' STO 'a+(b-a)*t/n-(b-a)/(2.*n)' EVAL 'X' STO EQ2 '(b-a)/n' * EVAL 'EQ2' STO 't' 1. n EQ2 \GS \->STR "Mid" \->TAG 'X' PURGE
+      \>>
+    \>>
+    RIGHT
+    \<< LOWLIM UPLIM nTimes \-> a b n
+      \<< RECTEQ 'EQ2' STO 'a+(b-a)*t/n' EVAL 'X' STO EQ2 '(b-a)/n' EVAL * EVAL 'EQ2' STO 't' 1. n EQ2 \GS \->STR "Rgt" \->TAG 'X' PURGE
+      \>>
+    \>>
+    SIMP
+    \<< LOWLIM UPLIM nTimes \-> a b n
+      \<< RECTEQ 'EQ2' STO a 'X' STO EQ2 EVAL b 'X' STO EQ2 EVAL + '(b-a)/(6.*n)' EVAL * 'X' PURGE EQ2 '(b-a)/(6.*n)' EVAL * 'EQ2' STO 'a+(b-a)*t/n-(b-a)/(2.*n)' EVAL 'X' STO 't' 1. n EQ2 4. * EVAL \GS 'a+(b-a)*t/n' EVAL 'X' STO 't' 1. n 1. - EQ2 2. * EVAL \GS + + \->STR "Simp" \->TAG 'X' PURGE
+      \>>
+    \>>
+    TRAP
+    \<< LOWLIM UPLIM nTimes \-> a b n
+      \<< RECTEQ 'EQ2' STO a 'X' STO EQ2 EVAL b 'X' STO EQ2 EVAL + '(b-a)/(2.*n)' * EVAL 'X' PURGE EQ2 '(b-a)/(2.*n)' * EVAL 'EQ2' STO 'a+(b-a)*t/n' EVAL 'X' STO 't' 1. n 1. - EQ2 2. * EVAL \GS + \->STR "Trap" \->TAG 'X' PURGE
+      \>>
+    \>>
+    INTRGL
+    \<< 'atype' PURGE RECTEQ 'EQ2' STO LOWLIM UPLIM EQ2 X \.S EVAL \->STR "Exact" \->TAG
+    \>>
+    TYPESB
+    \<< 9. NOFORMAT CLLCD { { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } } TMENU "
+  Edit the equation.
+
+
+
+
+" { "" -2. } 1. RECTEQ \->STR PUT INPUT OBJ\-> 'RECTEQ' STO "
+    Enter limits of 
+       Integral
+  lower <SPC> upper
+
+" { " " -8. } 1. "       " LOWLIM DUP
+      IF TYPE 6. ==
+      THEN DROP -1.
+      END \->STR " " + UPLIM DUP
+      IF TYPE 6. ==
+      THEN DROP 1.
+      END \->STR + + PUT INPUT OBJ\-> EVAL SWAP EVAL 'LOWLIM' STO 'UPLIM' STO
+      IF atype 23. \=/
+      THEN "
+ How many partitions
+     do you want?
+
+" { "" -9. } 1. "        " nTimes EVAL \->STR + PUT INPUT OBJ\-> 0. RND 'nTimes' STO 2.01 MENU
+      END CLLCD
+      CASE atype 33. ==
+        THEN LEFT VRYNC POSER
+        END atype 52. ==
+        THEN RIGHT VRYNC POSER
+        END atype 41. ==
+        THEN MID VRYNC POSER
+        END atype 54. ==
+        THEN TRAP VRYNC POSER
+        END atype 53. ==
+        THEN SIMP VRYNC POSER
+        END atype 23. ==
+        THEN INTRGL 2.01 MENU 8. NOFORMAT KILL
+        END
+      END
+    \>>
+    VRYNC
+    \<< DUP DTAG OBJ\-> LOWLIM UPLIM RECTEQ X \.S - "Typ:"
+      CASE atype 41. ==
+        THEN "M"
+        END atype 52. ==
+        THEN "R"
+        END atype 33. ==
+        THEN "L"
+        END atype 53. ==
+        THEN "S"
+        END atype 54. ==
+        THEN "T"
+        END
+      END + " n:" nTimes + + " Err:" + SWAP + 'X' PURGE
+    \>>
+    POSER
+    \<< CLLCD "
+  Do you want a graph
+ of the approximation
+      equation?
+
+" { { " YES "
+      \<< "
+     It takes time
+   drawing sections
+     please wait
+
+
+
+" 1. DISP FUNCTION LOWLIM UPLIM XRNG RECTEQ 'EQ' STO LOWLIM 'X' STO EQ EVAL 'LOWVAL' STO UPLIM 'X' STO EQ EVAL 'UPVAL' STO 'X' PURGE
+        IF 'ABS(LOWVAL)>ABS(UPVAL)'
+        THEN
+          IF 'LOWVAL\>=0.'
+          THEN -4. LOWVAL 1. + YRNG Boxes
+          ELSE -4. LOWVAL + 1. YRNG Boxes
+          END
+        ELSE
+          IF 'UPVAL\>=0.'
+          THEN -4. UPVAL 1. + YRNG Boxes
+          ELSE -4. UPVAL + 1. YRNG Boxes
+          END
+        END 2. MENU 0. NOFORMAT CONT
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { GROB 21 8 000000000000000000000000000000000000000000000000
+      \<<
+      \>> } { " NO "
+      \<< 2. MENU 'atype' PURGE 8. NOFORMAT CONT
+      \>> } } TMENU 1. DISP 3. FREEZE HALT
+    \>>
+    Boxes
+    \<< UPLIM LOWLIM - nTimes / \-> Xstep
+      \<< 1. nTimes 1. +
+        FOR Countr 'LOWLIM+(Countr-1.)*Xstep' EVAL
+        NEXT 1. nTimes 1. +
+        FOR Countr 'LOWLIM+(Countr-1.)*Xstep' EVAL 'X' STO EQ EVAL
+        NEXT nTimes 1. + \->LIST 'Ycor' STO nTimes 1. + \->LIST 'Xcor' STO 'X' PURGE
+      \>> ERASE
+      CASE atype 33. ==
+        THEN 1. nTimes
+          FOR Countr "(" Xcor Countr GET \->STR + "," + Ycor Countr GET \->STR + ")" + OBJ\-> "(" Xcor Countr 1. + GET \->STR + ",0.)" + OBJ\-> BOX
+          NEXT
+        END atype 52. ==
+        THEN 1. nTimes
+          FOR Countr "(" Xcor Countr GET \->STR + ",0.)" + OBJ\-> "(" Xcor Countr 1. + GET \->STR + "," + Ycor Countr 1. + GET \->STR + ")" + OBJ\-> BOX
+          NEXT
+        END atype 41. ==
+        THEN 1. nTimes
+          FOR Countr "(" Xcor Countr GET \->STR + "," + Xcor Countr 1. + GET Xcor Countr GET + 2. / 'X' STO EQ EVAL \->STR + ")" + OBJ\-> "(" Xcor Countr 1. + GET \->STR + ",0.)" + OBJ\-> BOX
+          NEXT 'X' PURGE
+        END atype 53. ==
+        THEN 1. nTimes
+          FOR Countr "(" Xcor Countr GET \->STR + ", 0)" + OBJ\-> "(" Xcor Countr GET \->STR + "," + Ycor Countr GET \->STR + ")" + OBJ\-> DUP 3. ROLLD LINE "(" Xcor Countr 1. + GET Xcor Countr GET + 2. / DUP 'X' STO \->STR + "," + EQ EVAL \->STR + ")" + OBJ\-> DUP 3. ROLLD LINE "(" Xcor Countr 1. + GET \->STR + "," + Ycor Countr 1. + GET \->STR + ")" + OBJ\-> DUP 3. ROLLD LINE "(" Xcor Countr 1. + GET \->STR + ", 0)" + OBJ\-> LINE
+          NEXT 'X' PURGE
+        END atype 54. ==
+        THEN 1. nTimes
+          FOR Countr "(" Xcor Countr GET \->STR + ", 0)" + OBJ\-> "(" Xcor Countr GET \->STR + "," + Ycor Countr GET \->STR + ")" + OBJ\-> DUP 3. ROLLD LINE "(" Xcor Countr 1. + GET \->STR + "," + Ycor Countr 1. + GET \->STR + ")" + OBJ\-> DUP 3. ROLLD LINE "(" Xcor Countr 1. + GET \->STR + ", 0)" + OBJ\-> LINE
+          NEXT
+        END
+      END DRAX DRAW LABEL PICTURE { Xcor Ycor atype } PURGE
+    \>>
+    nTimes 3.
+    UPVAL 9.
+    LOWVAL -1.
+    IERR 1.44833525391E-10
+    ZPAR { 4. 4. 0. { (-3.,-4.) (3.,11.) X 0. (0.,0.) FUNCTION Y } }
+    RECTEQ 'X^2.+X-3.'
+    PPAR { (-2.,-4.) (3.,10.) X 0. (0.,0.) FUNCTION Y }
+    EQ 'X^2.+X-3.'
+    LOWLIM -2.
+    EQ2 '-(2.5+-.833333333333*X+-.833333333333*X^2.)'
+    EQ1 'X^2.-5.*X-2.'
+    UPLIM 3.
+  END
+  Y2
+  \<< \-> x '21.*x'
+  \>>
+  Y1
+  \<< \-> X '.016157192*X^2.*24.98512131'
+  \>>
+  \GSPAR { 1. 2. -4.21955111599 3.77129919383 LINFIT }
+  TPAR { 188.9 .1 0. 4. 0. TAB }
+  LINEFIT
+[[ 192. 689. ]
+ [ 0. 0. ]
+ [ 241. 920. ]]
+  ZPAR { 2. 2. 1. { (-6.4811736344,-55.5545762351) (3.17958770416,44.0115525681) x 0. (0.,0.) FUNCTION Y } }
+  EQ '30.+5.*x+-1.*x^2.'
+  PPAR { (-4.5207972894,-18.125) (9.5207972894,90.625) x 0. (0.,0.) FUNCTION Y }
+END

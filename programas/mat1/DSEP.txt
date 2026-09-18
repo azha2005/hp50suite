@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DSEP - ecuacion diferencial separable, solucion general.
+  @ Uso:  'M(Y)' 'N(X)' DSEP
+  @ Deja: n1 = 'F(Y) = G(X) + C'
+  @ El programa NO separa la ecuacion: la separacion algebraica es
+  @ justo lo que el profesor quiere ver escrito, y automatizarla en
+  @ RPL no termina nunca. Entras con M(Y) y N(X) ya separadas y el
+  @ programa hace las dos primitivas, cada una en su variable.
+  \-> MY NX
+  \<<
+    IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
+    IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
+    'C' +
+    =
+  \>>
+\>>

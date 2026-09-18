@@ -1,0 +1,21 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ TESC - prueba la TRADUCCION DE ESCAPES de la transferencia.
+  @
+  @ Los tres escapes ya se probaron adentro de la maquina y funcionan
+  @ (ver CLAUDE.md 2.1): el caracter infinito da TYPE 9 y LIMIT calcula,
+  @ >= y <= son comandos de pila, y la integral definida toma 4 args.
+  @ Lo unico que falta saber es si Conn4x traduce las grafias \oo, \>=,
+  @ \<= y \.S de este archivo a los caracteres 159, 138, 137 y 132.
+  @
+  @ Si la primera caja dice TYPE 9, la traduccion anda: DINF y el global
+  @ INF dejan de hacer falta y el rodeo < NOT se puede jubilar.
+  @ Si dice TYPE 6, el escape \oo no se tradujo (igual que \.oo) y todo
+  @ queda como esta.
+  "TYPE de oo (debe ser 9): " \oo TYPE \->STR + 10 CHR +
+  "3>=3 y 4<=3 (1 y 0): " + 3 3 \>= \->STR + " " + 4 3 \<= \->STR +
+  MSGBOX
+  "Integral 0 a 1 de X^2" 10 CHR +
+  "(debe ser 1/3): " + 0 1 'X^2' 'X' \.S EVAL \->STR +
+  MSGBOX
+\>>

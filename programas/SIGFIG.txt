@@ -1,0 +1,26 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Redondea un valor a N cifras significativas (no decimales
+  @ fijos). Uso: valor N SIGFIG -> valor redondeado.
+  @ Ejemplo: 0.000058013220973 4 SIGFIG -> 0.00005801
+  @ IMPORTANTE: guardar esto en HOME (no dentro de una subcarpeta)
+  @ para que otros programas (DOLS, etc.) lo puedan llamar por
+  @ nombre sin importar en que subcarpeta esten ellos.
+  \-> V N
+  \<<
+    IF V 0 == THEN
+      0
+    ELSE
+      V ABS LOG FLOOR \-> M
+      \<<
+        N 1 - M - \-> EXPN
+        \<<
+          10 EXPN ^ \-> ESCALA
+          \<<
+            V ESCALA * 0 RND ESCALA / \->NUM
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+\>>

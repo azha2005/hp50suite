@@ -1,0 +1,31 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  DPIBPPA
+  \<<
+    "PIB per Capita PPA"
+    {
+      { "PIB Nominal (moneda local):" "" 0 }
+      { "Factor Conversion PPA:" "" 0 }
+      { "Poblacion:" "" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> PIB FAC POB
+      \<<
+        PIB FAC / \->NUM \-> PIBPPA
+        \<<
+          PIBPPA POB / \->NUM \-> PIBPC
+          \<<
+            @ CORREGIDO: faltaba el + final antes de MSGBOX, y se
+            @ saca el encabezado decorativo (2 lineas de datos sin
+            @ encabezado ya entra bien en una sola caja).
+            "PIB PPA (total): " PIBPPA \->STR + 10 CHR +
+            "PIB pc PPA: " + PIBPC \->STR +
+            MSGBOX
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+END

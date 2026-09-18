@@ -1,0 +1,745 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  TDSEP
+  {
+    { 'Y' 'X' "dy/dx = x/y" }
+    { '1/Y' 'X' "dy/dx = x*y" }
+    { '1/Y' '1/X' "dy/dx = y/x" }
+    { 'Y' 'EXP(X)' "dy/dx = e^x / y" }
+    { '1/(1+Y^2)' '1' "dy/dx = 1 + y^2" }
+    { '1/Y^3' 'X^2' "dy/dx = x^2 * y^3" }
+    { 'Y' 'COS(X)' "dy/dx = cos(x) / y" }
+  }
+  TEFUN
+  {
+    { '(X^2-1)/(X-1)' "evitable en X=1, limite 2" }
+    { '1/X' "asintota vertical en 0, horizontal y=0" }
+    { '(X^2+1)/X' "oblicua y=X" }
+    { 'X^3-3*X' "criticos en X=-1 y X=1" }
+    { 'XROOT(3,X^2)' "HOSTIL: raiz cubica, sin derivada en 0" }
+    { 'LN(X)/X' "horizontal y=0, pide LHopital en +oo" }
+    { 'EXP(-X^2)' "horizontal y=0 a los dos lados" }
+    { 'EXP(X)/X^2' "HOSTIL: oo/oo en +oo, dos pasos de LHopital" }
+  }
+  TCHK
+  \<<
+    @ TCHK - correr PRIMERO, sin argumentos, antes de confiar en nada.
+    @ Chequea los cuatro cimientos que asume toda la suite Mat1:
+    @ el comando = como constructor de ecuacion, RISCH, el formato de
+    @ LIMIT con infinito, y DERIV.
+    @ Deja 4 resultados. Si alguno es un string "ERR ...", ese comando
+    @ no se comporta como asumen los programas y hay que arreglar eso
+    @ antes de seguir.
+    IFERR 'X' 2 = THEN "ERR: = no construye ecuacion" END
+    IFERR 'X^2' 'X' RISCH THEN "ERR: RISCH" END
+    IFERR '1/X' 'X=\.oo' LIMIT EVAL THEN "ERR: LIMIT con \.oo" END
+    IFERR 'X^2' 'X' DERIV THEN "ERR: DERIV" END
+  \>>
+  TD
+  \<<
+    @ TD - levanta el caso n de TDSEP a la pila, listo para DSEP.
+    @ Uso:  n TD   ->   n3 = M(Y), n2 = N(X), n1 = "origen"
+    @ TDSEP tiene que estar en el mismo directorio que TD.
+    \-> N
+    \<<
+      TDSEP N GET OBJ\-> DROP
+    \>>
+  \>>
+  TF
+  \<<
+    @ TF - levanta la funcion n de TEFUN a la pila.
+    @ Uso:  n TF   ->   n2 = 'f(X)', n1 = "que esperar"
+    @ TEFUN tiene que estar en el mismo directorio que TF.
+    \-> N
+    \<<
+      TEFUN N GET OBJ\-> DROP
+    \>>
+  \>>
+  DVFG
+  \<<
+    @ DVFG - verifica que H(X) sea la simplificacion de F(X)/G(X).
+    @ Evalua en seis puntos y resta. Todas las diferencias en 0 significa
+    @ que el algebra esta bien. No demuestra nada, pero dos expresiones
+    @ distintas casi nunca coinciden en seis puntos.
+    @ Los puntos por defecto evitan 0, 1 y 4 (las exclusiones del
+    @ ejercicio de la guia). Para otro ejercicio se cambian en el campo.
+    @ La lista de diferencias queda en la pila.
+    "Verificar simplificacion"
+    {
+      { "F(X):" "'X^2-1'" }
+      { "G(X):" "'X-1'" }
+      { "H(X) propuesta:" "'X+1'" }
+      { "Puntos de prueba:" "{ -3 -1 .5 2 3 3.5 }" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 G0 H0 P0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+          \<<
+            H0 IF DUP TYPE 2 == THEN STR\-> END \-> H
+            \<<
+              P0 IF DUP TYPE 2 == THEN STR\-> END \-> PTS
+              \<<
+                { } 0 \-> DIF MAL
+                \<<
+                  1 PTS SIZE FOR I
+                    PTS I GET 'X' STO
+                    IFERR
+                      F \->NUM G \->NUM / H \->NUM -
+                    THEN
+                      "INDEF"
+                    END
+                    @ Cuenta como "mal" tanto una diferencia no nula como
+                    @ un punto que no se pudo evaluar (ahi el valor es el
+                    @ string "INDEF", de TYPE 2 y no 0).
+                    DUP
+                    IF DUP TYPE 0 ==
+                    THEN ABS .0000001 >
+                    ELSE DROP 1
+                    END
+                    IF THEN MAL 1 + 'MAL' STO END
+                    1 \->LIST DIF SWAP + 'DIF' STO
+                  NEXT
+                  IFERR { X } PURGE THEN 0 DROP END
+                  "Puntos probados: " PTS SIZE \->STR + 10 CHR +
+                  "Con diferencia: " + MAL \->STR +
+                  MSGBOX
+                  IF MAL 0 ==
+                  THEN
+                    "SIMPLIFICACION OK" 10 CHR +
+                    "Las 6 diferencias 0" +
+                  ELSE
+                    "NO COINCIDE" 10 CHR +
+                    "Ver lista en la pila" +
+                  END
+                  MSGBOX
+                  DIF
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DDOMP
+  \<<
+    @ DDOMP - sondea el dominio de F(X) en una lista de puntos.
+    @ Confirma que puntos pertenecen; NO deduce el dominio.
+    @ Requiere modo Complex APAGADO: si no, la raiz de un negativo
+    @ devuelve un complejo en vez de error y el punto pasa por bueno.
+    @ La lista de resultados (valor o "FUERA") queda en la pila.
+    "Sondear dominio"
+    {
+      { "F(X), ej '\v/X':" "'\v/X'" }
+      { "Puntos a probar:" "{ -2 -1 0 1 2 4 }" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 P0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          P0 IF DUP TYPE 2 == THEN STR\-> END \-> PTS
+          \<<
+            { } 0 \-> RES DENTRO
+            \<<
+              1 PTS SIZE FOR I
+                PTS I GET 'X' STO
+                IFERR
+                  F \->NUM DENTRO 1 + 'DENTRO' STO
+                THEN
+                  "FUERA"
+                END
+                1 \->LIST RES SWAP + 'RES' STO
+              NEXT
+              IFERR { X } PURGE THEN 0 DROP END
+              "Puntos probados: " PTS SIZE \->STR + 10 CHR +
+              "En el dominio: " + DENTRO \->STR +
+              MSGBOX
+              "Detalle en la pila" 10 CHR +
+              "(valor o FUERA)" +
+              MSGBOX
+              RES
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DCONT
+  \<<
+    @ DCONT - continuidad de una funcion a trozos en el punto de corte.
+    @ Cubre entero el punto 2 de la guia (los cuatro incisos).
+    @ Cada rama por separado es una funcion comun, asi que alcanza con el
+    @ limite ordinario en a; el lateral solo haria falta si la rama misma
+    @ revienta ahi, y para eso esta DASV.
+    @
+    @ NO requiere el global INF: el punto de corte es finito, y el infinito
+    @ se detecta por su caracter (ver abajo), no comparando objetos.
+    @
+    @ Los dos limites quedan tambien en la pila, por si el texto no entra
+    @ en la caja.
+    "Continuidad en el corte"
+    {
+      { "Rama izquierda, ej 'X^2':" "'X'" }
+      { "Rama derecha, ej '2*X':" "'X'" }
+      { "Punto de corte a:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> FI0 FD0 A
+      \<<
+        FI0 IF DUP TYPE 2 == THEN STR\-> END \-> FI
+        \<<
+          FD0 IF DUP TYPE 2 == THEN STR\-> END \-> FD
+          \<<
+            0 0 0 0 \-> LI LD IG ES
+            \<<
+              IFERR FI 'X' A = LIMIT EVAL THEN "INDEF" END 'LI' STO
+              IFERR FD 'X' A = LIMIT EVAL THEN "INDEF" END 'LD' STO
+              IFERR LI \->NUM LD \->NUM - ABS .0000001 < THEN LI LD SAME END 'IG' STO
+              @ Deteccion del infinito POR EL CARACTER, no por SAME contra INF.
+              @ Probado en la maquina: con rama izq '1/X' y corte 0, LIMIT
+              @ devuelve +oo (con el signo pegado, que es como la calculadora
+              @ lo escribe sola) y el INF guardado por DINF es el oo pelado,
+              @ asi que SAME daba falso y el veredicto salia "SALTO FINITO".
+              @ El caracter oo tiene codigo 159 (medido con DINF) y aparece
+              @ igual en +oo, -oo o 2*oo, asi que POS lo encuentra en todos.
+              LI \->STR 159 CHR POS LD \->STR 159 CHR POS + 'ES' STO
+              @ Red de seguridad: si el CAS devolvio un numero gigante en vez
+              @ del simbolo, tambien es asintota vertical. Todo adentro del
+              @ IFERR porque con un simbolico el > puede no dar flag.
+              IFERR
+                LI \->NUM ABS LD \->NUM ABS MAX 1000000000 >
+                IF THEN 1 'ES' STO END
+              THEN
+              END
+              "Lim izq: " LI \->STR + 10 CHR +
+              "Lim der: " + LD \->STR +
+              MSGBOX
+              IF ES 0 >
+              THEN
+                "ESENCIAL (2a esp.)" 10 CHR +
+                "Asint. vert. X=" + A \->STR +
+              ELSE
+                IF IG
+                THEN
+                  "LIMITES IGUALES" 10 CHR +
+                  "Ver f(a): evitable?" +
+                ELSE
+                  "SALTO FINITO" 10 CHR +
+                  "(1a especie)" +
+                END
+              END
+              MSGBOX
+              LI LD
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DDEF
+  \<<
+    @ DDEF - derivada por definicion. Punto 4 de la guia.
+    @ En x0 se puede poner 'X' para obtener f'(X) simbolica.
+    @ Deja en la pila el cociente incremental SIN simplificar (n2) y la
+    @ derivada (n1): el cociente es lo que hay que copiar a la hoja para
+    @ mostrar el procedimiento, y casi nunca entra en una caja.
+    "Derivada por definicion"
+    {
+      { "f(X), ej 'X^2':" "'X^2'" }
+      { "Punto x0 ('X' = simbolico):" "'X'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 P0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          P0 IF DUP TYPE 2 == THEN STR\-> END \-> X0
+          \<<
+            F 'X=X+H' SUBST EVAL F - 'H' / \-> Q
+            \<<
+              0 \-> DV
+              \<<
+                IFERR
+                  Q 'H=0' LIMIT EVAL SIMPLIFY 'X' X0 = SUBST EVAL
+                THEN
+                  "EL CAS NO PUDO"
+                END
+                'DV' STO
+                "Cociente increm.:" 10 CHR +
+                Q \->STR +
+                MSGBOX
+                "Derivada:" 10 CHR +
+                DV \->STR +
+                MSGBOX
+                Q DV
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DTANOR
+  \<<
+    @ DTANOR - recta tangente y recta normal en x0.
+    @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
+    @ catedra tiene mal el signo en el punto 3c de la teoria.
+    @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
+    @ Las dos rectas quedan tambien en la pila (n2 tangente, n1 normal).
+    "Tangente y normal"
+    {
+      { "f(X), ej 'X^2':" "'X^2'" }
+      { "Punto x0:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 X0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          0 0 0 0 \-> M Y0 TG NR
+          \<<
+            F DERVX EVAL 'X' X0 = SUBST EVAL \->NUM 'M' STO
+            F 'X' X0 = SUBST EVAL \->NUM 'Y0' STO
+            'Y' Y0 M 'X' X0 - * + EXPAND = 'TG' STO
+            IF M 0 ==
+            THEN
+              'X' X0 =
+            ELSE
+              'Y' Y0 -1 M / 'X' X0 - * + EXPAND =
+            END
+            'NR' STO
+            "f'(x0) = " M \->STR + 10 CHR +
+            "f(x0) = " + Y0 \->STR +
+            MSGBOX
+            "Tangente:" 10 CHR +
+            TG \->STR +
+            MSGBOX
+            "Normal:" 10 CHR +
+            NR \->STR +
+            MSGBOX
+            TG NR
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DASV
+  \<<
+    @ DASV - asintota vertical en un punto candidato.
+    @ No busca los candidatos solo: salen de anular denominadores o de
+    @ los bordes del dominio, y eso lo pone el usuario.
+    @ Sondea numericamente a los dos lados en vez de pedirle al CAS un
+    @ limite lateral, porque la sintaxis 'X=a-' no se puede armar desde
+    @ la pila. Valores enormes y de signo opuesto es el caso tipico.
+    @ Umbral 1e5 y no 1e6: con el paso de 1e-6, un polo simple da
+    @ exactamente 1e6, y 1e6 > 1e6 es falso. El caso 1/X en 0 daba
+    @ SIN ASINTOTA con el umbral anterior.
+    @ Los dos valores quedan tambien en la pila.
+    "Asintota vertical"
+    {
+      { "f(X), ej '1/X':" "'1/X'" }
+      { "Punto candidato a:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 A
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          0 0 \-> VI VD
+          \<<
+            IFERR F 'X' A .000001 - = SUBST EVAL \->NUM THEN "INDEF" END 'VI' STO
+            IFERR F 'X' A .000001 + = SUBST EVAL \->NUM THEN "INDEF" END 'VD' STO
+            "f(a-) = " VI \->STR + 10 CHR +
+            "f(a+) = " + VD \->STR +
+            MSGBOX
+            IFERR
+              IF VI ABS 100000 > VD ABS 100000 > OR
+              THEN
+                "HAY ASINTOTA" 10 CHR +
+                "vertical en X=" + A \->STR +
+              ELSE
+                "SIN ASINTOTA" 10 CHR +
+                "Queda acotada cerca" +
+              END
+            THEN
+              "NO SE PUDO EVALUAR" 10 CHR +
+              "a los dos lados" +
+            END
+            MSGBOX
+            VI VD
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DASHO
+  \<<
+    @ DASHO - asintotas horizontales y oblicuas (TP 8, ej 5 y 6).
+    @ m = LIMIT(f/X), b = LIMIT(f - m*X), a los dos infinitos.
+    @ Si m = 0 la asintota es horizontal (y = b); si no, oblicua.
+    @ NO hace verticales: para eso esta DASV.
+    @
+    @ REQUIERE el global INF (correr DINF una vez, ver SUITE-MAT1 2).
+    @ El infinito NO puede venir del escape \.oo: ese produce un nombre
+    @ global (TYPE 6) que solo se dibuja como infinito, y LIMIT termina
+    @ sustituyendo en vez de calcular. Confirmado en la maquina.
+    @
+    @ Deja en la pila n4 = m(+oo), n3 = b(+oo), n2 = m(-oo), n1 = b(-oo).
+    IF INF TYPE 9 == NOT
+    THEN
+      "Falta el global INF" 10 CHR +
+      "Correr DINF primero" +
+      MSGBOX
+    ELSE
+      "Asintotas H y oblicuas"
+      { { "f(X), ej '(X^2+1)/X':" "'(X^2+1)/X'" } }
+      { } { } { }
+      INFORM
+      IF THEN
+        1 GET \-> F0
+        \<<
+          F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+          \<<
+            0 0 0 0 \-> MP BP MN BN
+            \<<
+              IFERR F 'X' / 'X' INF = LIMIT EVAL THEN "INDEF" END 'MP' STO
+              IFERR F MP 'X' * - 'X' INF = LIMIT EVAL THEN "INDEF" END 'BP' STO
+              IFERR F 'X' / 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'MN' STO
+              IFERR F MN 'X' * - 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'BN' STO
+              "+oo: m=" MP \->STR + 10 CHR +
+              "     b=" + BP \->STR +
+              MSGBOX
+              IFERR
+                IF MP \->NUM ABS .0000001 <
+                THEN
+                  "+oo HORIZONTAL" 10 CHR +
+                  "y = " + BP \->STR +
+                ELSE
+                  "+oo OBLICUA" 10 CHR +
+                  "y = " + MP \->STR + "X + " + BP \->STR +
+                END
+              THEN
+                "+oo SIN ASINTOTA" 10 CHR +
+                "o el CAS no pudo" +
+              END
+              MSGBOX
+              "-oo: m=" MN \->STR + 10 CHR +
+              "     b=" + BN \->STR +
+              MSGBOX
+              IFERR
+                IF MN \->NUM ABS .0000001 <
+                THEN
+                  "-oo HORIZONTAL" 10 CHR +
+                  "y = " + BN \->STR +
+                ELSE
+                  "-oo OBLICUA" 10 CHR +
+                  "y = " + MN \->STR + "X + " + BN \->STR +
+                END
+              THEN
+                "-oo SIN ASINTOTA" 10 CHR +
+                "o el CAS no pudo" +
+              END
+              MSGBOX
+              MP BP MN BN
+            \>>
+          \>>
+        \>>
+      END
+    END
+  \>>
+  DOPFUN
+  \<<
+    @ DOPFUN - operaciones con funciones y composicion (TP 4 entero).
+    @ Suma, resta, producto, cociente f/g, y las dos composiciones.
+    @ Operacion: 0 = todas, 1 = f+g, 2 = f-g, 3 = f*g, 4 = f/g,
+    @            5 = fog = f(g(X)), 6 = gof = g(f(X)).
+    @ El punto x0 sirve para el ejercicio 3 del TP 4, que pide evaluar
+    @ composiciones "si es posible": cuando el punto cae fuera del
+    @ dominio la caja dice NO EXISTE, que es justo la respuesta buscada.
+    @ NO calcula dominios: eso es lo que hay que escribir a mano, y
+    @ deducirlo simbolicamente es un pozo sin fondo (ver SUITE-MAT1 4).
+    @ Las dos composiciones quedan en la pila: n2 = fog, n1 = gof.
+    "Operaciones con funciones"
+    {
+      { "f(X):" "'\v/(X-1)'" }
+      { "g(X):" "'2*X^2'" }
+      { "Oper. 0=todas 1..4 5=fog 6=gof:" "0" 0 }
+      { "Evaluar composiciones en x0:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 G0 OP X0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+          \<<
+            0 0 \-> FG GF
+            \<<
+              IFERR F 'X' G = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'FG' STO
+              IFERR G 'X' F = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'GF' STO
+              IF OP 0 == OP 1 == OR THEN
+                "(f+g)(X) =" 10 CHR +
+                IFERR F G + EXPAND \->STR THEN "NO SE PUDO" END +
+                MSGBOX
+              END
+              IF OP 0 == OP 2 == OR THEN
+                "(f-g)(X) =" 10 CHR +
+                IFERR F G - EXPAND \->STR THEN "NO SE PUDO" END +
+                MSGBOX
+              END
+              IF OP 0 == OP 3 == OR THEN
+                "(f*g)(X) =" 10 CHR +
+                IFERR F G * EXPAND \->STR THEN "NO SE PUDO" END +
+                MSGBOX
+              END
+              IF OP 0 == OP 4 == OR THEN
+                "(f/g)(X) =" 10 CHR +
+                IFERR F G / SIMPLIFY \->STR THEN "NO SE PUDO" END +
+                MSGBOX
+              END
+              IF OP 0 == OP 5 == OR THEN
+                "(fog)(X) =" 10 CHR +
+                FG \->STR +
+                MSGBOX
+              END
+              IF OP 0 == OP 6 == OR THEN
+                "(gof)(X) =" 10 CHR +
+                GF \->STR +
+                MSGBOX
+              END
+              "(fog)(" X0 \->STR + ") =" + 10 CHR +
+              IFERR FG 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
+              MSGBOX
+              "(gof)(" X0 \->STR + ") =" + 10 CHR +
+              IFERR GF 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
+              MSGBOX
+              FG GF
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DESTFUN
+  \<<
+    @ DESTFUN - estudio de funcion, hasta donde llegue el CAS.
+    @ Cada bloque va en su propio IFERR: si el CAS no puede con uno,
+    @ los demas se calculan igual. Un bloque que falla dice por que.
+    @ Cubre: derivada y puntos criticos, segunda derivada y candidatos
+    @ a inflexion, y asintotas horizontales u oblicuas a los dos lados.
+    @ La vertical es opcional y hay que darle el punto candidato: no se
+    @ deducen solos (salen de anular denominadores), ver SUITE-MAT1 4.
+    @ NO calcula dominio ni imagen: decision tomada, requiere matematica
+    @ simbolica fragil y el resultado no seria el dominio real.
+    @
+    @ REQUIERE el global INF para las asintotas (correr DINF una vez,
+    @ ver SUITE-MAT1 2). El escape \.oo no sirve: produce un nombre
+    @ global (TYPE 6) y LIMIT termina sustituyendo en vez de calcular.
+    @
+    @ Deja en la pila n4 = f', n3 = ceros de f', n2 = f'', n1 = ceros de f''.
+    IF INF TYPE 9 == NOT
+    THEN
+      "Falta el global INF" 10 CHR +
+      "Correr DINF primero" +
+      MSGBOX
+    ELSE
+      "Estudio de funcion"
+      {
+        { "f(X):" "'X^3-3*X'" }
+        { "Candidato asint. vertical:" "0" 0 }
+        { "Probar vertical? 1=si 0=no:" "0" 0 }
+      }
+      { } { } { }
+      INFORM
+      IF THEN
+        OBJ\-> DROP \-> F0 AV PV
+        \<<
+          F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+          \<<
+            0 0 0 0 \-> D1 Z1 D2 Z2
+            \<<
+              IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
+              IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
+              IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
+              IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
+              "f'(X) =" 10 CHR +
+              D1 \->STR +
+              MSGBOX
+              "Criticos (f'=0):" 10 CHR +
+              Z1 \->STR +
+              MSGBOX
+              "f''(X) =" 10 CHR +
+              D2 \->STR +
+              MSGBOX
+              "Inflexion (f''=0):" 10 CHR +
+              Z2 \->STR +
+              MSGBOX
+              "En +oo:" 10 CHR +
+              IFERR
+                F 'X' / 'X' INF = LIMIT EVAL \-> M
+                \<<
+                  IF M \->STR 159 CHR POS 0 >
+                  THEN "sin asint. (m infinito)"
+                  ELSE
+                    IF M \->NUM ABS .0000001 <
+                    THEN "HORIZ. y = " F 'X' INF = LIMIT EVAL \->STR +
+                    ELSE "OBLICUA m = " M \->STR +
+                    END
+                  END
+                \>>
+              THEN
+                "sin asintota o el CAS no pudo"
+              END
+              +
+              MSGBOX
+              "En -oo:" 10 CHR +
+              IFERR
+                F 'X' / 'X' INF NEG = LIMIT EVAL \-> M
+                \<<
+                  IF M \->STR 159 CHR POS 0 >
+                  THEN "sin asint. (m infinito)"
+                  ELSE
+                    IF M \->NUM ABS .0000001 <
+                    THEN "HORIZ. y = " F 'X' INF NEG = LIMIT EVAL \->STR +
+                    ELSE "OBLICUA m = " M \->STR +
+                    END
+                  END
+                \>>
+              THEN
+                "sin asintota o el CAS no pudo"
+              END
+              +
+              MSGBOX
+              IF PV 1 == THEN
+                "En X=" AV \->STR + ":" + 10 CHR +
+                IFERR
+                  F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
+                  F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
+                  IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
+                THEN
+                  "no se pudo evaluar"
+                END
+                +
+                MSGBOX
+              END
+              "Detalle completo" 10 CHR +
+              "en la pila (4 niveles)" +
+              MSGBOX
+              D1 Z1 D2 Z2
+            \>>
+          \>>
+        \>>
+      END
+    END
+  \>>
+  LHOP
+  \<<
+    @ LHOP - un paso de L'Hopital, con el paso a la vista.
+    @ Uso:  'f(X)' 'g(X)' 'X=a' LHOP
+    @ Deja: n3 = limite original (confirma que hay indeterminada),
+    @       n2 = f'/g' simplificado (esto es lo que se copia a la hoja),
+    @       n1 = limite del cociente de derivadas.
+    @ No existe comando de L'Hopital en la 50g: LIMIT lo aplica por
+    @ dentro pero no muestra el paso, y los finales piden justificarlo.
+    @ Solo sirve para 0/0 y oo/oo. Las formas 0*oo y 1^oo hay que
+    @ reescribirlas como cociente a mano antes de entrar aca.
+    \-> F G PT
+    \<<
+      IFERR F G / PT LIMIT EVAL THEN "INDEF" END
+      F DERVX EVAL G DERVX EVAL / SIMPLIFY \-> Q
+      \<<
+        Q
+        IFERR Q PT LIMIT EVAL THEN "EL CAS NO PUDO" END
+      \>>
+    \>>
+  \>>
+  DSEP
+  \<<
+    @ DSEP - ecuacion diferencial separable, solucion general.
+    @ Uso:  'M(Y)' 'N(X)' DSEP
+    @ Deja: n1 = 'F(Y) = G(X) + C'
+    @ El programa NO separa la ecuacion: la separacion algebraica es
+    @ justo lo que el profesor quiere ver escrito, y automatizarla en
+    @ RPL no termina nunca. Entras con M(Y) y N(X) ya separadas y el
+    @ programa hace las dos primitivas, cada una en su variable.
+    \-> MY NX
+    \<<
+      IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
+      IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
+      'C' +
+      =
+    \>>
+  \>>
+  DSEPI
+  \<<
+    @ DSEPI - separable con condicion inicial (problema de valor inicial).
+    @ Uso:  'M(Y)' 'N(X)' X0 Y0 DSEPI
+    @ Deja: n1 = 'F(Y) = G(X) + K' con la constante ya resuelta.
+    @ K = F(Y0) - G(X0), calculada con SUBST. NO usa STO/PURGE sobre
+    @ los globales X e Y: ese era el punto mas fragil de la suite,
+    @ porque pisaba lo que tuvieras guardado ahi.
+    @ Si el CAS no puede evaluar en el punto, deja 'C' simbolica.
+    \-> MY NX X0 Y0
+    \<<
+      0 0 \-> FY GX
+      \<<
+        IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END 'FY' STO
+        IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END 'GX' STO
+        FY
+        GX
+        IFERR
+          FY 'Y' Y0 = SUBST EVAL GX 'X' X0 = SUBST EVAL -
+        THEN
+          'C'
+        END
+        +
+        =
+      \>>
+    \>>
+  \>>
+  LAGR
+  \<<
+    @ LAGR - multiplicadores de Lagrange, puntos criticos restringidos.
+    @ Uso:  'f(X,Y)' 'g(X,Y)' c LAGR
+    @ Deja: n2 = el lagrangiano L = f - LM*(g - c),
+    @       n1 = solucion del sistema, o un aviso si el CAS no pudo.
+    @ Los examenes modelo nunca piden clasificar los puntos, asi que
+    @ no arma el hessiano orlado.
+    @ Usa LM como multiplicador y DERIV para las parciales (el escape
+    @ de derivada parcial no esta confirmado en esta suite).
+    @ Purgar X, Y y LM antes de correrlo si tenian valor.
+    \-> F G C
+    \<<
+      F G C - 'LM' * - \-> LG
+      \<<
+        LG
+        IFERR
+          LG 'X' DERIV 0 =
+          LG 'Y' DERIV 0 =
+          LG 'LM' DERIV 0 =
+          3 \->LIST { X Y LM } SOLVE
+        THEN
+          "EL CAS NO RESOLVIO EL SISTEMA: pasarlo a mano"
+        END
+      \>>
+    \>>
+  \>>
+END

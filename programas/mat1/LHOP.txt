@@ -1,0 +1,21 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ LHOP - un paso de L'Hopital, con el paso a la vista.
+  @ Uso:  'f(X)' 'g(X)' 'X=a' LHOP
+  @ Deja: n3 = limite original (confirma que hay indeterminada),
+  @       n2 = f'/g' simplificado (esto es lo que se copia a la hoja),
+  @       n1 = limite del cociente de derivadas.
+  @ No existe comando de L'Hopital en la 50g: LIMIT lo aplica por
+  @ dentro pero no muestra el paso, y los finales piden justificarlo.
+  @ Solo sirve para 0/0 y oo/oo. Las formas 0*oo y 1^oo hay que
+  @ reescribirlas como cociente a mano antes de entrar aca.
+  \-> F G PT
+  \<<
+    IFERR F G / PT LIMIT EVAL THEN "INDEF" END
+    F DERVX EVAL G DERVX EVAL / SIMPLIFY \-> Q
+    \<<
+      Q
+      IFERR Q PT LIMIT EVAL THEN "EL CAS NO PUDO" END
+    \>>
+  \>>
+\>>

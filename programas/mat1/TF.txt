@@ -1,0 +1,10 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ TF - levanta la funcion n de TEFUN a la pila.
+  @ Uso:  n TF   ->   n2 = 'f(X)', n1 = "que esperar"
+  @ TEFUN tiene que estar en el mismo directorio que TF.
+  \-> N
+  \<<
+    TEFUN N GET OBJ\-> DROP
+  \>>
+\>>

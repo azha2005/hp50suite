@@ -1,0 +1,10 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ TD - levanta el caso n de TDSEP a la pila, listo para DSEP.
+  @ Uso:  n TD   ->   n3 = M(Y), n2 = N(X), n1 = "origen"
+  @ TDSEP tiene que estar en el mismo directorio que TD.
+  \-> N
+  \<<
+    TDSEP N GET OBJ\-> DROP
+  \>>
+\>>

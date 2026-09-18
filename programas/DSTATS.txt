@@ -1,0 +1,56 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  DSTATS
+  \<<
+    "Media, Varianza, Desvio, CV"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET
+      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      \-> L
+      \<<
+        L SIZE \-> N
+        \<<
+          0. 'S' STO
+          1 N FOR i
+            S L i GET + 'S' STO
+          NEXT
+          S N / \->NUM \-> XBAR
+          \<<
+            0. 'SS' STO
+            1 N FOR i
+              SS L i GET XBAR - SQ + 'SS' STO
+            NEXT
+            SS N 1 - / \->NUM \-> VARZ
+            \<<
+              @ CORREGIDO: "SQRT" no es un comando valido de HP RPL;
+              @ el simbolo de raiz cuadrada en ASCII es \v/ (mismo
+              @ bug que ya se habia corregido en DCOVCORR).
+              VARZ \v/ \->NUM \-> DESV
+              \<<
+                DESV XBAR / 100. * \->NUM \-> CV
+                \<<
+                  @ CORREGIDO: se parte en 3 cajas de 2 lineas
+                  @ (sin encabezado decorativo), mismo criterio ya
+                  @ validado en DCOVCORR/DBOXPLOT/DHISTO -- 6 lineas
+                  @ en una sola caja se cortaban (se perdia el CV).
+                  "N: " N \->STR + 10 CHR +
+                  "Media: " + XBAR \->STR +
+                  MSGBOX
+                  "Var: " VARZ \->STR + 10 CHR +
+                  "Desvio: " + DESV \->STR +
+                  MSGBOX
+                  "CV: " CV \->STR + " %" +
+                  MSGBOX
+                \>>
+              \>>
+            \>>
+          \>>
+          { S SS } PURGE
+        \>>
+      \>>
+    END
+  \>>
+END

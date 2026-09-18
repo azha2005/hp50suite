@@ -1,0 +1,112 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DESTFUN - estudio de funcion, hasta donde llegue el CAS.
+  @ Cada bloque va en su propio IFERR: si el CAS no puede con uno,
+  @ los demas se calculan igual. Un bloque que falla dice por que.
+  @ Cubre: derivada y puntos criticos, segunda derivada y candidatos
+  @ a inflexion, y asintotas horizontales u oblicuas a los dos lados.
+  @ La vertical es opcional y hay que darle el punto candidato: no se
+  @ deducen solos (salen de anular denominadores), ver SUITE-MAT1 4.
+  @ NO calcula dominio ni imagen: decision tomada, requiere matematica
+  @ simbolica fragil y el resultado no seria el dominio real.
+  @
+  @ REQUIERE el global INF para las asintotas (correr DINF una vez,
+  @ ver SUITE-MAT1 2). El escape \.oo no sirve: produce un nombre
+  @ global (TYPE 6) y LIMIT termina sustituyendo en vez de calcular.
+  @
+  @ Deja en la pila n4 = f', n3 = ceros de f', n2 = f'', n1 = ceros de f''.
+  IF INF TYPE 9 == NOT
+  THEN
+    "Falta el global INF" 10 CHR +
+    "Correr DINF primero" +
+    MSGBOX
+  ELSE
+    "Estudio de funcion"
+    {
+      { "f(X):" "'X^3-3*X'" }
+      { "Candidato asint. vertical:" "0" 0 }
+      { "Probar vertical? 1=si 0=no:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 AV PV
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          0 0 0 0 \-> D1 Z1 D2 Z2
+          \<<
+            IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
+            IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
+            IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
+            IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
+            "f'(X) =" 10 CHR +
+            D1 \->STR +
+            MSGBOX
+            "Criticos (f'=0):" 10 CHR +
+            Z1 \->STR +
+            MSGBOX
+            "f''(X) =" 10 CHR +
+            D2 \->STR +
+            MSGBOX
+            "Inflexion (f''=0):" 10 CHR +
+            Z2 \->STR +
+            MSGBOX
+            "En +oo:" 10 CHR +
+            IFERR
+              F 'X' / 'X' INF = LIMIT EVAL \-> M
+              \<<
+                IF M \->STR 159 CHR POS 0 >
+                THEN "sin asint. (m infinito)"
+                ELSE
+                  IF M \->NUM ABS .0000001 <
+                  THEN "HORIZ. y = " F 'X' INF = LIMIT EVAL \->STR +
+                  ELSE "OBLICUA m = " M \->STR +
+                  END
+                END
+              \>>
+            THEN
+              "sin asintota o el CAS no pudo"
+            END
+            +
+            MSGBOX
+            "En -oo:" 10 CHR +
+            IFERR
+              F 'X' / 'X' INF NEG = LIMIT EVAL \-> M
+              \<<
+                IF M \->STR 159 CHR POS 0 >
+                THEN "sin asint. (m infinito)"
+                ELSE
+                  IF M \->NUM ABS .0000001 <
+                  THEN "HORIZ. y = " F 'X' INF NEG = LIMIT EVAL \->STR +
+                  ELSE "OBLICUA m = " M \->STR +
+                  END
+                END
+              \>>
+            THEN
+              "sin asintota o el CAS no pudo"
+            END
+            +
+            MSGBOX
+            IF PV 1 == THEN
+              "En X=" AV \->STR + ":" + 10 CHR +
+              IFERR
+                F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
+                F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
+                IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
+              THEN
+                "no se pudo evaluar"
+              END
+              +
+              MSGBOX
+            END
+            "Detalle completo" 10 CHR +
+            "en la pila (4 niveles)" +
+            MSGBOX
+            D1 Z1 D2 Z2
+          \>>
+        \>>
+      \>>
+    END
+  END
+\>>

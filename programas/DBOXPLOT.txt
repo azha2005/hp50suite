@@ -1,0 +1,154 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  DBOXPLOT
+  \<<
+    "Box Plot Univariado"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET
+      @ Conversion segura a lista
+      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      SORT
+      
+      \-> L
+      \<<
+        L SIZE \-> N
+        \<<
+          L 1 GET \-> MINV
+          \<<
+            L N GET \-> MAXV
+            \<<
+              @ Mediana Q2
+              IF N 2 MOD 0 == THEN
+                L N 2 / GET L N 2 / 1 + GET + 2 /
+              ELSE
+                L N 2 / CEIL GET
+              END
+              \-> Q2
+              \<<
+                @ Cuartiles Q1 y Q3 (metodo simplificado por indice;
+                @ NOTA: el libro de catedra usa interpolacion
+                @ Lp = (p/100)*(n+1), que puede dar valores distintos.
+                @ Ver opcion 8 del menu (Percentil Interpolado) para
+                @ el metodo exacto de catedra.
+                L N 4 / CEIL GET \-> Q1
+                \<<
+                  L N 3 * 4 / CEIL GET \-> Q3
+                  \<<
+                    Q3 Q1 - \-> IQR
+                    \<<
+                      Q1 1.5 IQR * - \-> LINF
+                      \<<
+                        Q3 1.5 IQR * + \-> LSUP
+                        \<<
+                          @ Filtrado de outliers y bigotes adyacentes
+                          { } 'OUTS' STO
+                          @ CORREGIDO: WMIN debe iniciar en MAXV,
+                          @ no en MINV, para que la comparacion
+                          @ "V < WMIN" pueda disparar correctamente
+                          @ cuando el minimo de los datos es un outlier.
+                          MAXV 'WMIN' STO
+                          MAXV 'WMAX' STO
+                          
+                          1 N FOR i
+                            L i GET \-> V
+                            \<<
+                              IF V LINF < V LSUP > OR THEN
+                                OUTS V + 'OUTS' STO
+                              END
+                              IF V LINF < NOT V WMIN < AND THEN V 'WMIN' STO END
+                              IF V LSUP > NOT THEN V 'WMAX' STO END
+                            \>>
+                          NEXT
+                          
+                          @ AGREGADO (version 2): en vez de una formula
+                          @ manual de escalado valor->pixel, se usa
+                          @ XRNG con el rango REAL de los datos y se
+                          @ dibuja con los valores directamente -- ya
+                          @ confirmado con un test aislado que XRNG/
+                          @ YRNG reescalan de verdad las coordenadas
+                          @ de LINE/BOX/R\->C, asi que la calculadora
+                          @ hace la conversion a pixel por su cuenta.
+                          @ Esto tambien deja el cursor del modo
+                          @ interactivo mostrando el valor real del
+                          @ dato en el eje X.
+                          ERASE
+                          MINV MAXV XRNG 0 10 YRNG
+                          IF MAXV MINV == THEN 1 ELSE MAXV MINV - END \-> SPAN
+                          \<<
+                            @ Caja (Q1 a Q3), fila 2.5 a 5.5 (arbitrario,
+                            @ el eje Y no representa ningun dato real)
+                            Q1 2.5 R\->C Q3 5.5 R\->C BOX
+                            @ Mediana
+                            Q2 2.5 R\->C Q2 5.5 R\->C LINE
+                            @ Bigotes
+                            WMIN 4. R\->C Q1 4. R\->C LINE
+                            Q3 4. R\->C WMAX 4. R\->C LINE
+                            WMIN 3.3 R\->C WMIN 4.7 R\->C LINE
+                            WMAX 3.3 R\->C WMAX 4.7 R\->C LINE
+                            
+                            @ Puntos de Outliers (offset proporcional
+                            @ al rango de los datos, ya que ahora los
+                            @ valores son reales, no columnas de pixel)
+                            SPAN 40. / \-> OFFS
+                            \<<
+                              IF OUTS SIZE 0 > THEN
+                                1 OUTS SIZE FOR j
+                                  OUTS j GET \-> OX
+                                  \<<
+                                    OX OFFS - 4. R\->C OX OFFS + 4. R\->C LINE
+                                    OX 3.8 R\->C OX 4.2 R\->C LINE
+                                  \>>
+                                NEXT
+                              END
+                              
+                              @ Puntos de datos individuales, fila 1.5
+                              @ (arriba de la caja, valor real directo)
+                              1 N FOR i
+                                L i GET 1.5 R\->C PIXON
+                              NEXT
+                              
+                              @ Eje de referencia con marcas en Min,
+                              @ Q1, Mediana, Q3, Max -- valores reales
+                              @ directos, sin formula de mapeo.
+                              MINV 6. R\->C MAXV 6. R\->C LINE
+                              MINV 5.8 R\->C MINV 6.2 R\->C LINE
+                              Q1 5.8 R\->C Q1 6.2 R\->C LINE
+                              Q2 5.8 R\->C Q2 6.2 R\->C LINE
+                              Q3 5.8 R\->C Q3 6.2 R\->C LINE
+                              MAXV 5.8 R\->C MAXV 6.2 R\->C LINE
+                              
+                              PICT PICTURE
+                              
+                              "Min: " MINV \->STR + 10 CHR +
+                              "Q1: " + Q1 \->STR +
+                              MSGBOX
+                              "Med: " Q2 \->STR + 10 CHR +
+                              "Q3: " + Q3 \->STR +
+                              MSGBOX
+                              "Max: " MAXV \->STR + 10 CHR +
+                              "RIC: " + IQR \->STR +
+                              MSGBOX
+                              "Outliers:" 10 CHR +
+                              OUTS \->STR +
+                              MSGBOX
+                              
+                              { MINV Q1 Q2 Q3 MAXV }
+                              { OUTS WMIN WMAX } PURGE
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+END

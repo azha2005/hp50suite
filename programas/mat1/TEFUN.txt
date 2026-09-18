@@ -1,0 +1,11 @@
+%%HP: T(3)A(R)F(.);
+{
+  { '(X^2-1)/(X-1)' "evitable en X=1, limite 2" }
+  { '1/X' "asintota vertical en 0, horizontal y=0" }
+  { '(X^2+1)/X' "oblicua y=X" }
+  { 'X^3-3*X' "criticos en X=-1 y X=1" }
+  { 'XROOT(3,X^2)' "HOSTIL: raiz cubica, sin derivada en 0" }
+  { 'LN(X)/X' "horizontal y=0, pide LHopital en +oo" }
+  { 'EXP(-X^2)' "horizontal y=0 a los dos lados" }
+  { 'EXP(X)/X^2' "HOSTIL: oo/oo en +oo, dos pasos de LHopital" }
+}

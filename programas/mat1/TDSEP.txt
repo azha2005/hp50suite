@@ -1,0 +1,10 @@
+%%HP: T(3)A(R)F(.);
+{
+  { 'Y' 'X' "dy/dx = x/y" }
+  { '1/Y' 'X' "dy/dx = x*y" }
+  { '1/Y' '1/X' "dy/dx = y/x" }
+  { 'Y' 'EXP(X)' "dy/dx = e^x / y" }
+  { '1/(1+Y^2)' '1' "dy/dx = 1 + y^2" }
+  { '1/Y^3' 'X^2' "dy/dx = x^2 * y^3" }
+  { 'Y' 'COS(X)' "dy/dx = cos(x) / y" }
+}
