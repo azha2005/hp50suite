@@ -2,12 +2,11 @@
 \<<
   @ DCONT - continuidad de una funcion a trozos en el punto de corte.
   @ Cubre entero el punto 2 de la guia (los cuatro incisos).
-  @ Cada rama por separado es una funcion comun, asi que alcanza con el
-  @ limite ordinario en a; el lateral solo haria falta si la rama misma
-  @ revienta ahi, y para eso esta DASV.
   @
-  @ NO requiere el global INF: el punto de corte es finito, y el infinito
-  @ se detecta por su caracter (ver abajo), no comparando objetos.
+  @ Este objeto es SOLO la interfaz: formulario, cajas y veredicto.
+  @ La matematica esta en DCONTC, que toma 'FI' 'FD' A de la pila y
+  @ devuelve { LI LD IG ES }. Estan separados para que el harness
+  @ pueda probar el calculo sin poder tipear en un INFORM.
   @
   @ Los dos limites quedan tambien en la pila, por si el texto no entra
   @ en la caja.
@@ -20,55 +19,27 @@
   { } { } { }
   INFORM
   IF THEN
-    OBJ\-> DROP \-> FI0 FD0 A
+    OBJ\-> DROP DCONTC OBJ\-> DROP \-> LI LD IG ES
     \<<
-      FI0 IF DUP TYPE 2 == THEN STR\-> END \-> FI
-      \<<
-        FD0 IF DUP TYPE 2 == THEN STR\-> END \-> FD
-        \<<
-          0 0 0 0 \-> LI LD IG ES
-          \<<
-            IFERR FI 'X' A = LIMIT EVAL THEN "INDEF" END 'LI' STO
-            IFERR FD 'X' A = LIMIT EVAL THEN "INDEF" END 'LD' STO
-            IFERR LI \->NUM LD \->NUM - ABS .0000001 < THEN LI LD SAME END 'IG' STO
-            @ Deteccion del infinito POR EL CARACTER, no por SAME contra INF.
-            @ Probado en la maquina: con rama izq '1/X' y corte 0, LIMIT
-            @ devuelve +oo (con el signo pegado, que es como la calculadora
-            @ lo escribe sola) y el INF guardado por DINF es el oo pelado,
-            @ asi que SAME daba falso y el veredicto salia "SALTO FINITO".
-            @ El caracter oo tiene codigo 159 (medido con DINF) y aparece
-            @ igual en +oo, -oo o 2*oo, asi que POS lo encuentra en todos.
-            LI \->STR 159 CHR POS LD \->STR 159 CHR POS + 'ES' STO
-            @ Red de seguridad: si el CAS devolvio un numero gigante en vez
-            @ del simbolo, tambien es asintota vertical. Todo adentro del
-            @ IFERR porque con un simbolico el > puede no dar flag.
-            IFERR
-              LI \->NUM ABS LD \->NUM ABS MAX 1000000000 >
-              IF THEN 1 'ES' STO END
-            THEN
-            END
-            "Lim izq: " LI \->STR + 10 CHR +
-            "Lim der: " + LD \->STR +
-            MSGBOX
-            IF ES 0 >
-            THEN
-              "ESENCIAL (2a esp.)" 10 CHR +
-              "Asint. vert. X=" + A \->STR +
-            ELSE
-              IF IG
-              THEN
-                "LIMITES IGUALES" 10 CHR +
-                "Ver f(a): evitable?" +
-              ELSE
-                "SALTO FINITO" 10 CHR +
-                "(1a especie)" +
-              END
-            END
-            MSGBOX
-            LI LD
-          \>>
-        \>>
-      \>>
+      "Lim izq: " LI \->STR + 10 CHR +
+      "Lim der: " + LD \->STR +
+      MSGBOX
+      IF ES 0 >
+      THEN
+        "ESENCIAL (2a esp.)" 10 CHR +
+        "Asint. vertical" +
+      ELSE
+        IF IG
+        THEN
+          "LIMITES IGUALES" 10 CHR +
+          "Ver f(a): evitable?" +
+        ELSE
+          "SALTO FINITO" 10 CHR +
+          "(1a especie)" +
+        END
+      END
+      MSGBOX
+      LI LD
     \>>
   END
 \>>
