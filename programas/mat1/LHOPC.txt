@@ -1,0 +1,45 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ LHOPC - nucleo de LHOP. Un paso de L'Hopital, con el paso a la vista.
+  @ Uso:  'f(X)' 'g(X)' 'X=a' LHOPC
+  @ Deja: n1 = { L0 Q L1 }
+  @         L0 = limite original (confirma que hay indeterminada),
+  @         Q  = f'/g' simplificado (esto es lo que se copia a la hoja),
+  @         L1 = limite del cociente de derivadas.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en LHOP.
+  @
+  @ No existe comando de L'Hopital en la 50g: LIMIT lo aplica por dentro
+  @ pero no muestra el paso, y los finales piden justificarlo.
+  @ Solo sirve para 0/0 y oo/oo. Las formas 0*oo y 1^oo hay que
+  @ reescribirlas como cociente a mano antes de entrar aca.
+  \-> F0 G0 PT0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+        \<<
+          PT0 IF DUP TYPE 2 == THEN STR\-> END \-> PT
+          \<<
+            IFERR F G / PT LIMIT EVAL THEN "INDEF" END
+            \-> L0
+            \<<
+              IFERR F DERVX EVAL G DERVX EVAL / SIMPLIFY
+              THEN "EL CAS NO PUDO DERIVAR" END
+              \-> Q
+              \<<
+                IFERR Q PT LIMIT EVAL THEN "EL CAS NO PUDO" END
+                \-> L1
+                \<<
+                  L0 Q L1 3 \->LIST
+                  \-> R \<< DEPTH D0 - DROPN R \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

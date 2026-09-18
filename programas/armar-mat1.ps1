@@ -25,7 +25,8 @@ $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
            'DVFGC','DVFG','DDOMPC','DDOMP','DCONTC','DCONT',
            'DDEFC','DDEF','DTANORC','DTANOR','DASVC','DASV',
            'DASHOC','DASHO','DOPFUNC','DOPFUN','DESTFUNC','DESTFUN',
-           'LHOP','DSEP','DSEPI','LAGR')
+           'LHOPC','LHOP','DSEPC','DSEP','DSEPIC','DSEPI',
+           'LAGRC','LAGR')
 
 $lineas = New-Object System.Collections.Generic.List[string]
 $lineas.Add('%%HP: T(3)A(R)F(.);')

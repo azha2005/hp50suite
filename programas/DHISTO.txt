@@ -32,7 +32,7 @@
         K H START FREQ DHISTOG
         PICT PICTURE
         DATA0
-        IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+        IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
         SIZE \-> N
         \<<
           "Inicio: " START \->STR + 10 CHR +

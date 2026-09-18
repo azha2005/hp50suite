@@ -903,96 +903,316 @@ DIR
       END
     END
   \>>
+  LHOPC
+  \<<
+    @ LHOPC - nucleo de LHOP. Un paso de L'Hopital, con el paso a la vista.
+    @ Uso:  'f(X)' 'g(X)' 'X=a' LHOPC
+    @ Deja: n1 = { L0 Q L1 }
+    @         L0 = limite original (confirma que hay indeterminada),
+    @         Q  = f'/g' simplificado (esto es lo que se copia a la hoja),
+    @         L1 = limite del cociente de derivadas.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en LHOP.
+    @
+    @ No existe comando de L'Hopital en la 50g: LIMIT lo aplica por dentro
+    @ pero no muestra el paso, y los finales piden justificarlo.
+    @ Solo sirve para 0/0 y oo/oo. Las formas 0*oo y 1^oo hay que
+    @ reescribirlas como cociente a mano antes de entrar aca.
+    \-> F0 G0 PT0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+          \<<
+            PT0 IF DUP TYPE 2 == THEN STR\-> END \-> PT
+            \<<
+              IFERR F G / PT LIMIT EVAL THEN "INDEF" END
+              \-> L0
+              \<<
+                IFERR F DERVX EVAL G DERVX EVAL / SIMPLIFY
+                THEN "EL CAS NO PUDO DERIVAR" END
+                \-> Q
+                \<<
+                  IFERR Q PT LIMIT EVAL THEN "EL CAS NO PUDO" END
+                  \-> L1
+                  \<<
+                    L0 Q L1 3 \->LIST
+                    \-> R \<< DEPTH D0 - DROPN R \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
   LHOP
   \<<
     @ LHOP - un paso de L'Hopital, con el paso a la vista.
-    @ Uso:  'f(X)' 'g(X)' 'X=a' LHOP
-    @ Deja: n3 = limite original (confirma que hay indeterminada),
-    @       n2 = f'/g' simplificado (esto es lo que se copia a la hoja),
-    @       n1 = limite del cociente de derivadas.
-    @ No existe comando de L'Hopital en la 50g: LIMIT lo aplica por
-    @ dentro pero no muestra el paso, y los finales piden justificarlo.
-    @ Solo sirve para 0/0 y oo/oo. Las formas 0*oo y 1^oo hay que
-    @ reescribirlas como cociente a mano antes de entrar aca.
-    \-> F G PT
-    \<<
-      IFERR F G / PT LIMIT EVAL THEN "INDEF" END
-      F DERVX EVAL G DERVX EVAL / SIMPLIFY \-> Q
+    @ Interfaz: el calculo esta en LHOPC, que toma 'f' 'g' 'X=a' de la pila
+    @ y devuelve { L0 Q L1 }.
+    @ Para el punto en el infinito se escribe 'X=INF' (correr DINF antes).
+    @ El cociente de derivadas queda tambien en la pila: casi nunca entra
+    @ en una caja de 2 lineas y es lo que hay que copiar a la hoja.
+    "Un paso de L'Hopital"
+    {
+      { "f(X) (numerador):" "'SIN(X)'" }
+      { "g(X) (denominador):" "'X'" }
+      { "Punto, ej 'X=0' o 'X=INF':" "'X=0'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP LHOPC OBJ\-> DROP \-> L0 Q L1
       \<<
-        Q
-        IFERR Q PT LIMIT EVAL THEN "EL CAS NO PUDO" END
+        "Limite original:" 10 CHR +
+        L0 \->STR +
+        MSGBOX
+        "f'/g' =" 10 CHR +
+        Q \->STR +
+        MSGBOX
+        "Limite de f'/g':" 10 CHR +
+        L1 \->STR +
+        MSGBOX
+        L0 Q L1
+      \>>
+    END
+  \>>
+  DSEPC
+  \<<
+    @ DSEPC - nucleo de DSEP. Ecuacion diferencial separable, general.
+    @ Uso:  'M(Y)' 'N(X)' DSEPC
+    @ Deja: n1 = { FY GX SOL }
+    @         FY  = primitiva de M(Y) en Y,
+    @         GX  = primitiva de N(X) en X,
+    @         SOL = 'F(Y) = G(X) + C'
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSEP.
+    @
+    @ El programa NO separa la ecuacion: la separacion algebraica es justo
+    @ lo que el profesor quiere ver escrito, y automatizarla en RPL no
+    @ termina nunca. Entras con M(Y) y N(X) ya separadas.
+    @
+    @ Guardian de profundidad (CLAUDE.md 2.11): IFERR no limpia la pila, y
+    @ este era el caso PEOR de la suite -- si una primitiva fallaba, los
+    @ argumentos quedaban apilados y el `=` final armaba la ecuacion con la
+    @ basura, devolviendo una respuesta equivocada SIN avisar.
+    \-> MY0 NX0
+    \<<
+      DEPTH \-> D0
+      \<<
+        MY0 IF DUP TYPE 2 == THEN STR\-> END \-> MY
+        \<<
+          NX0 IF DUP TYPE 2 == THEN STR\-> END \-> NX
+          \<<
+            0 0 \-> FY GX
+            \<<
+              IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
+              IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA M(Y)" END
+              'FY' STO
+              IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
+              IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA N(X)" END
+              'GX' STO
+              IFERR FY GX 'C' + = THEN "NO SE PUDO ARMAR LA SOLUCION" END
+              \-> SOL
+              \<<
+                FY GX SOL 3 \->LIST
+                \-> R \<< DEPTH D0 - DROPN R \>>
+              \>>
+            \>>
+          \>>
+        \>>
       \>>
     \>>
   \>>
   DSEP
   \<<
     @ DSEP - ecuacion diferencial separable, solucion general.
-    @ Uso:  'M(Y)' 'N(X)' DSEP
-    @ Deja: n1 = 'F(Y) = G(X) + C'
-    @ El programa NO separa la ecuacion: la separacion algebraica es
-    @ justo lo que el profesor quiere ver escrito, y automatizarla en
-    @ RPL no termina nunca. Entras con M(Y) y N(X) ya separadas y el
-    @ programa hace las dos primitivas, cada una en su variable.
-    \-> MY NX
+    @ Interfaz: el calculo esta en DSEPC, que toma 'M(Y)' 'N(X)' de la pila
+    @ y devuelve { FY GX SOL }.
+    @ Entras con la ecuacion YA separada: M(Y) dy = N(X) dx. La separacion
+    @ algebraica es justo lo que el profesor quiere ver escrito a mano.
+    @ La solucion queda tambien en la pila.
+    "EDO separable: M(Y)dy = N(X)dx"
+    {
+      { "M(Y), ej 'Y':" "'Y'" }
+      { "N(X), ej 'X':" "'X'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DSEPC OBJ\-> DROP \-> FY GX SOL
+      \<<
+        "Integral de M(Y):" 10 CHR +
+        FY \->STR +
+        MSGBOX
+        "Integral de N(X):" 10 CHR +
+        GX \->STR +
+        MSGBOX
+        "Solucion general:" 10 CHR +
+        SOL \->STR +
+        MSGBOX
+        SOL
+      \>>
+    END
+  \>>
+  DSEPIC
+  \<<
+    @ DSEPIC - nucleo de DSEPI. Separable con condicion inicial.
+    @ Uso:  'M(Y)' 'N(X)' X0 Y0 DSEPIC
+    @ Deja: n1 = { FY GX K SOL }
+    @         K   = F(Y0) - G(X0), la constante ya resuelta,
+    @         SOL = 'F(Y) = G(X) + K'
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSEPI.
+    @
+    @ K se calcula con SUBST y NO usa STO/PURGE sobre los globales X e Y:
+    @ ese era el punto mas fragil de la suite, porque pisaba lo que
+    @ tuvieras guardado ahi. Si el CAS no puede evaluar en el punto, deja
+    @ 'C' simbolica.
+    @
+    @ Guardian de profundidad (CLAUDE.md 2.11), por el mismo motivo que
+    @ DSEPC: sin el, una primitiva que falla hace que el `=` final arme la
+    @ ecuacion con basura y devuelva una respuesta equivocada sin avisar.
+    \-> MY0 NX0 X0 Y0
     \<<
-      IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
-      IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
-      'C' +
-      =
+      DEPTH \-> D0
+      \<<
+        MY0 IF DUP TYPE 2 == THEN STR\-> END \-> MY
+        \<<
+          NX0 IF DUP TYPE 2 == THEN STR\-> END \-> NX
+          \<<
+            0 0 0 \-> FY GX K
+            \<<
+              IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
+              IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA M(Y)" END
+              'FY' STO
+              IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
+              IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA N(X)" END
+              'GX' STO
+              IFERR
+                FY 'Y' Y0 = SUBST EVAL GX 'X' X0 = SUBST EVAL -
+              THEN
+                'C'
+              END
+              'K' STO
+              IFERR FY GX K + = THEN "NO SE PUDO ARMAR LA SOLUCION" END
+              \-> SOL
+              \<<
+                FY GX K SOL 4 \->LIST
+                \-> R \<< DEPTH D0 - DROPN R \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
     \>>
   \>>
   DSEPI
   \<<
     @ DSEPI - separable con condicion inicial (problema de valor inicial).
-    @ Uso:  'M(Y)' 'N(X)' X0 Y0 DSEPI
-    @ Deja: n1 = 'F(Y) = G(X) + K' con la constante ya resuelta.
-    @ K = F(Y0) - G(X0), calculada con SUBST. NO usa STO/PURGE sobre
-    @ los globales X e Y: ese era el punto mas fragil de la suite,
-    @ porque pisaba lo que tuvieras guardado ahi.
-    @ Si el CAS no puede evaluar en el punto, deja 'C' simbolica.
-    \-> MY NX X0 Y0
-    \<<
-      0 0 \-> FY GX
+    @ Interfaz: el calculo esta en DSEPIC, que toma 'M(Y)' 'N(X)' X0 Y0 de
+    @ la pila y devuelve { FY GX K SOL }.
+    @ Entras con la ecuacion YA separada. La constante sale resuelta con la
+    @ condicion y(X0) = Y0.
+    @ La solucion queda tambien en la pila.
+    "PVI separable: M(Y)dy = N(X)dx"
+    {
+      { "M(Y), ej 'Y':" "'Y'" }
+      { "N(X), ej 'X':" "'X'" }
+      { "X0:" "0" 0 }
+      { "Y0 = y(X0):" "1" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DSEPIC OBJ\-> DROP \-> FY GX K SOL
       \<<
-        IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END 'FY' STO
-        IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END 'GX' STO
-        FY
-        GX
-        IFERR
-          FY 'Y' Y0 = SUBST EVAL GX 'X' X0 = SUBST EVAL -
-        THEN
-          'C'
-        END
-        +
-        =
+        "Integral M(Y): " FY \->STR + 10 CHR +
+        "Integral N(X): " + GX \->STR +
+        MSGBOX
+        "Constante K:" 10 CHR +
+        K \->STR +
+        MSGBOX
+        "Solucion particular:" 10 CHR +
+        SOL \->STR +
+        MSGBOX
+        SOL
+      \>>
+    END
+  \>>
+  LAGRC
+  \<<
+    @ LAGRC - nucleo de LAGR. Multiplicadores de Lagrange.
+    @ Uso:  'f(X,Y)' 'g(X,Y)' c LAGRC
+    @ Deja: n1 = { LG SOL }
+    @         LG  = el lagrangiano L = f - LM*(g - c),
+    @         SOL = solucion del sistema, o un aviso si el CAS no pudo.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en LAGR.
+    @
+    @ Los examenes modelo nunca piden clasificar los puntos, asi que no
+    @ arma el hessiano orlado.
+    @ Usa LM como multiplicador y DERIV para las parciales (el escape de
+    @ derivada parcial no esta confirmado en esta suite).
+    @ Purgar X, Y y LM antes de correrlo si tenian valor.
+    \-> F0 G0 C
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+          \<<
+            F G C - 'LM' * - \-> LG
+            \<<
+              IFERR
+                LG 'X' DERIV 0 =
+                LG 'Y' DERIV 0 =
+                LG 'LM' DERIV 0 =
+                3 \->LIST { X Y LM } SOLVE
+              THEN
+                "EL CAS NO RESOLVIO EL SISTEMA: pasarlo a mano"
+              END
+              \-> SOL
+              \<<
+                LG SOL 2 \->LIST
+                \-> R \<< DEPTH D0 - DROPN R \>>
+              \>>
+            \>>
+          \>>
+        \>>
       \>>
     \>>
   \>>
   LAGR
   \<<
     @ LAGR - multiplicadores de Lagrange, puntos criticos restringidos.
-    @ Uso:  'f(X,Y)' 'g(X,Y)' c LAGR
-    @ Deja: n2 = el lagrangiano L = f - LM*(g - c),
-    @       n1 = solucion del sistema, o un aviso si el CAS no pudo.
-    @ Los examenes modelo nunca piden clasificar los puntos, asi que
-    @ no arma el hessiano orlado.
-    @ Usa LM como multiplicador y DERIV para las parciales (el escape
-    @ de derivada parcial no esta confirmado en esta suite).
+    @ Interfaz: el calculo esta en LAGRC, que toma 'f(X,Y)' 'g(X,Y)' c de
+    @ la pila y devuelve { LG SOL }.
+    @ Restriccion de la forma g(X,Y) = c.
+    @ NO clasifica los puntos (no arma el hessiano orlado): los examenes
+    @ modelo no lo piden.
     @ Purgar X, Y y LM antes de correrlo si tenian valor.
-    \-> F G C
-    \<<
-      F G C - 'LM' * - \-> LG
+    @ El lagrangiano y la solucion quedan tambien en la pila.
+    "Lagrange: max/min de f con g=c"
+    {
+      { "f(X,Y), ej 'X*Y':" "'X*Y'" }
+      { "g(X,Y), ej 'X+Y':" "'X+Y'" }
+      { "c (valor de la restriccion):" "10" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP LAGRC OBJ\-> DROP \-> LG SOL
       \<<
-        LG
-        IFERR
-          LG 'X' DERIV 0 =
-          LG 'Y' DERIV 0 =
-          LG 'LM' DERIV 0 =
-          3 \->LIST { X Y LM } SOLVE
-        THEN
-          "EL CAS NO RESOLVIO EL SISTEMA: pasarlo a mano"
-        END
+        "Lagrangiano:" 10 CHR +
+        LG \->STR +
+        MSGBOX
+        "Puntos criticos:" 10 CHR +
+        SOL \->STR +
+        MSGBOX
+        LG SOL
       \>>
-    \>>
+    END
   \>>
 END

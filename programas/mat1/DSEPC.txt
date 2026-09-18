@@ -1,0 +1,46 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DSEPC - nucleo de DSEP. Ecuacion diferencial separable, general.
+  @ Uso:  'M(Y)' 'N(X)' DSEPC
+  @ Deja: n1 = { FY GX SOL }
+  @         FY  = primitiva de M(Y) en Y,
+  @         GX  = primitiva de N(X) en X,
+  @         SOL = 'F(Y) = G(X) + C'
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSEP.
+  @
+  @ El programa NO separa la ecuacion: la separacion algebraica es justo
+  @ lo que el profesor quiere ver escrito, y automatizarla en RPL no
+  @ termina nunca. Entras con M(Y) y N(X) ya separadas.
+  @
+  @ Guardian de profundidad (CLAUDE.md 2.11): IFERR no limpia la pila, y
+  @ este era el caso PEOR de la suite -- si una primitiva fallaba, los
+  @ argumentos quedaban apilados y el `=` final armaba la ecuacion con la
+  @ basura, devolviendo una respuesta equivocada SIN avisar.
+  \-> MY0 NX0
+  \<<
+    DEPTH \-> D0
+    \<<
+      MY0 IF DUP TYPE 2 == THEN STR\-> END \-> MY
+      \<<
+        NX0 IF DUP TYPE 2 == THEN STR\-> END \-> NX
+        \<<
+          0 0 \-> FY GX
+          \<<
+            IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
+            IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA M(Y)" END
+            'FY' STO
+            IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
+            IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA N(X)" END
+            'GX' STO
+            IFERR FY GX 'C' + = THEN "NO SE PUDO ARMAR LA SOLUCION" END
+            \-> SOL
+            \<<
+              FY GX SOL 3 \->LIST
+              \-> R \<< DEPTH D0 - DROPN R \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

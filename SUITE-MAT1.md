@@ -51,14 +51,18 @@ generada para transferir (ver §3).
 | `DESTFUN` | Parcial 1 y 2 | TP 8+ | INFORM + `DESTFUNC` | **4 de 4**. Las asíntotas las calcula `DASHOC`, ya no una copia. Requiere `INF` |
 | `DVFG` | Parcial 1 | TP 0/1 | INFORM + `DVFGC` | **2 de 2** (simplificación buena y mala) |
 | `DDOMP` | Parcial 1 | TP 1 | INFORM + `DDOMPC` | **2 de 2**. Contaba √(-1) como dentro del dominio con modo Complex; arreglado por tipo |
-| `LHOP` | Parcial 2 y final | — | pila | **3 de 3** (0/0 y ∞/∞). La pila alcanza: una línea de entrada |
-| `DSEP` / `DSEPI` | Final | — | pila | **3 de 3**. Falta el guardián de profundidad (§2.11 de CLAUDE.md) |
-| `LAGR` | Final | — | pila | **1 de 1**: arma bien el lagrangiano |
+| `LHOP` | Parcial 2 y final | — | INFORM + `LHOPC` | **3 de 3** (0/0 y ∞/∞) |
+| `DSEP` / `DSEPI` | Final | — | INFORM + `DSEPC`/`DSEPIC` | **8 de 8**. Con guardián de profundidad, y ahora avisan cuando `RISCH` deja la integral sin resolver (§2.17) |
+| `LAGR` | Final | — | INFORM + `LAGRC` | **1 de 1**: arma bien el lagrangiano |
 | `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | **5 de 5**: 7 y 8 casos, y los accesores devuelven lo que dicen |
 
 Parcial 1 está cubierto entero y ya en el estilo de la suite. `LHOP`, `DSEP`,
-`DSEPI` y `LAGR` **quedan con interfaz por pila a propósito**: son de una sola
-línea de entrada y un formulario no aportaría nada.
+`DSEPI` y `LAGR` **también**: se convirtieron a `INFORM` + núcleo `XXXC`. Acá
+había dicho antes que quedaban por pila "a propósito", y no era cierto — este
+mismo archivo decía "falta convertir", y `CLAUDE.md` tiene la decisión tomada de
+que todo Matemática I va con formulario. Los 13 programas abren formulario; los
+únicos objetos que entran por pila son los 5 de prueba y los 13 núcleos, que no
+los usa el alumno.
 
 Dos programas desaparecieron en el camino, y no por error:
 

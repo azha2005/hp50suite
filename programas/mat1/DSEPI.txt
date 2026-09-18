@@ -1,27 +1,33 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DSEPI - separable con condicion inicial (problema de valor inicial).
-  @ Uso:  'M(Y)' 'N(X)' X0 Y0 DSEPI
-  @ Deja: n1 = 'F(Y) = G(X) + K' con la constante ya resuelta.
-  @ K = F(Y0) - G(X0), calculada con SUBST. NO usa STO/PURGE sobre
-  @ los globales X e Y: ese era el punto mas fragil de la suite,
-  @ porque pisaba lo que tuvieras guardado ahi.
-  @ Si el CAS no puede evaluar en el punto, deja 'C' simbolica.
-  \-> MY NX X0 Y0
-  \<<
-    0 0 \-> FY GX
+  @ Interfaz: el calculo esta en DSEPIC, que toma 'M(Y)' 'N(X)' X0 Y0 de
+  @ la pila y devuelve { FY GX K SOL }.
+  @ Entras con la ecuacion YA separada. La constante sale resuelta con la
+  @ condicion y(X0) = Y0.
+  @ La solucion queda tambien en la pila.
+  "PVI separable: M(Y)dy = N(X)dx"
+  {
+    { "M(Y), ej 'Y':" "'Y'" }
+    { "N(X), ej 'X':" "'X'" }
+    { "X0:" "0" 0 }
+    { "Y0 = y(X0):" "1" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DSEPIC OBJ\-> DROP \-> FY GX K SOL
     \<<
-      IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END 'FY' STO
-      IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END 'GX' STO
-      FY
-      GX
-      IFERR
-        FY 'Y' Y0 = SUBST EVAL GX 'X' X0 = SUBST EVAL -
-      THEN
-        'C'
-      END
-      +
-      =
+      "Integral M(Y): " FY \->STR + 10 CHR +
+      "Integral N(X): " + GX \->STR +
+      MSGBOX
+      "Constante K:" 10 CHR +
+      K \->STR +
+      MSGBOX
+      "Solucion particular:" 10 CHR +
+      SOL \->STR +
+      MSGBOX
+      SOL
     \>>
-  \>>
+  END
 \>>

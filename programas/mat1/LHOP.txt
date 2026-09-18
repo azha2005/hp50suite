@@ -1,21 +1,32 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ LHOP - un paso de L'Hopital, con el paso a la vista.
-  @ Uso:  'f(X)' 'g(X)' 'X=a' LHOP
-  @ Deja: n3 = limite original (confirma que hay indeterminada),
-  @       n2 = f'/g' simplificado (esto es lo que se copia a la hoja),
-  @       n1 = limite del cociente de derivadas.
-  @ No existe comando de L'Hopital en la 50g: LIMIT lo aplica por
-  @ dentro pero no muestra el paso, y los finales piden justificarlo.
-  @ Solo sirve para 0/0 y oo/oo. Las formas 0*oo y 1^oo hay que
-  @ reescribirlas como cociente a mano antes de entrar aca.
-  \-> F G PT
-  \<<
-    IFERR F G / PT LIMIT EVAL THEN "INDEF" END
-    F DERVX EVAL G DERVX EVAL / SIMPLIFY \-> Q
+  @ Interfaz: el calculo esta en LHOPC, que toma 'f' 'g' 'X=a' de la pila
+  @ y devuelve { L0 Q L1 }.
+  @ Para el punto en el infinito se escribe 'X=INF' (correr DINF antes).
+  @ El cociente de derivadas queda tambien en la pila: casi nunca entra
+  @ en una caja de 2 lineas y es lo que hay que copiar a la hoja.
+  "Un paso de L'Hopital"
+  {
+    { "f(X) (numerador):" "'SIN(X)'" }
+    { "g(X) (denominador):" "'X'" }
+    { "Punto, ej 'X=0' o 'X=INF':" "'X=0'" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP LHOPC OBJ\-> DROP \-> L0 Q L1
     \<<
-      Q
-      IFERR Q PT LIMIT EVAL THEN "EL CAS NO PUDO" END
+      "Limite original:" 10 CHR +
+      L0 \->STR +
+      MSGBOX
+      "f'/g' =" 10 CHR +
+      Q \->STR +
+      MSGBOX
+      "Limite de f'/g':" 10 CHR +
+      L1 \->STR +
+      MSGBOX
+      L0 Q L1
     \>>
-  \>>
+  END
 \>>

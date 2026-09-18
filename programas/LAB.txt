@@ -45,7 +45,7 @@ DIR
     @ Deja: n1 = { N XBAR VARZ DESV CV }
     @ Varianza MUESTRAL (divide por N-1), que es la de la catedra.
     @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSTATS.
-    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
     \-> L
     \<<
       L SIZE \-> N
@@ -107,7 +107,7 @@ DIR
     @ Deja: n1 = { MODES MAXFREQ }
     @         Si MAXFREQ es 1 no hay moda: todos los valores son distintos.
     @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DMODA.
-    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
     SORT
     \-> L
     \<<
@@ -190,7 +190,7 @@ DIR
     \-> DATA0 P
     \<<
       DATA0
-      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
       SORT \-> S
       \<<
         S SIZE \-> N
@@ -261,7 +261,7 @@ DIR
     \-> DATA0 KWANT HWANT SWANT
     \<<
       DATA0
-      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
       SORT
       \-> L
       \<<
@@ -442,7 +442,7 @@ DIR
           K H START FREQ DHISTOG
           PICT PICTURE
           DATA0
-          IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+          IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
           SIZE \-> N
           \<<
             "Inicio: " START \->STR + 10 CHR +
@@ -478,7 +478,7 @@ DIR
     @ supera LSUP es el mayor no atipico), por eso no compara.
     @
     @ Sin INFORM ni graficos a proposito: eso lo pone DBOXPLOT.
-    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
     SORT
     \-> L
     \<<
@@ -563,7 +563,7 @@ DIR
                       RES 12 GET \-> OUTS
                       \<<
                         DATA0
-                        IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+                        IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
                         SORT \-> L
                         \<<
                           ERASE
@@ -671,9 +671,9 @@ DIR
     @ Sin INFORM ni graficos a proposito: eso lo pone DCOVCORR.
     \-> DX0 DY0
     \<<
-      DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+      DX0 IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LX
       \<<
-        DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+        DY0 IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LY
         \<<
           LX SIZE \-> N
           \<<
@@ -740,9 +740,9 @@ DIR
         \<<
           RES 9 GET \-> B1
           \<<
-            DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+            DX0 IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LX
             \<<
-              DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+              DY0 IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LY
               \<<
                 LX SORT \-> LXS
                 \<<

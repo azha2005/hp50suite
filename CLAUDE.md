@@ -466,6 +466,76 @@ Decidir por `TYPE` vale con el modo Complex prendido o apagado. Depender de que
 el usuario tenga la máquina configurada como esperamos es una suposición que en
 un parcial no se cumple. Ya aplicado en `DDOMPC` y `DOPFUNC`.
 
+### 2.16 ⚠️ La bandera −105 decide cómo compila `STR\->`
+
+El modo **Aproximado/Exacto** es la bandera **−105**, y no es solo cómo se
+muestran los números: cambia **lo que compila un string**. Con la máquina en
+aproximado, `"1" STR\-> TYPE` da **0** (real) en vez de **28** (entero exacto), y
+con enteros aproximados **`RISCH` directamente falla**.
+
+Importa porque el harness compila el fuente en la máquina (`\<< "..." STR\-> EVAL \>>`).
+Una batería entera volvió con `.5*Y^2.` y `"ERR: RISCH"` en vez de `Y^2/2`, **sin
+un solo error a la vista**: los resultados se veían plausibles y estaban mal.
+
+Dos detalles que costaron tres intentos de diagnóstico:
+
+- **La bandera actúa en tiempo de compilación, no de evaluación.** Las dos
+  primeras sondas fallaron porque operaban sobre literales **ya compilados** a
+  ZINT por el mismo `STR\->`, así que daban exacto igual. La sonda que sirve
+  compila un string *después* de tocar la bandera.
+- **No se puede arreglar desde adentro del fuente**: cuando el `-105 CF` del
+  fuente corriera, el fuente ya está compilado. Tiene que ir en un `STR\->`
+  **anterior**. `herramientas/compilar.py` emite `"-105 CF" STR\-> EVAL` como par
+  propio antes del fuente (`PROLOGO_EXACTO`, se desactiva con `--sin-modo`).
+
+`casos-mat1b.txt` tiene el canario: `"1" STR\-> TYPE` tiene que dar `28.`.
+**Probado dejando la máquina en aproximado a propósito** (`casos-ensuciar.txt`) y
+comprobando que la batería sale verde igual: 23 de 23. Un canario que nunca vio
+la condición que detecta no es un canario.
+
+### 2.17 ⚠️ `RISCH` no falla cuando no hay primitiva: devuelve `INT(...)`
+
+`'EXP(Y^2)' 'Y' RISCH` **no da error**. Devuelve `'INT(EXP(Yttt^2),Yttt,Y)'`, un
+algebraico (`TYPE` 9) con la integral **sin resolver adentro**. Medido en
+`harness/casos-risch.txt`.
+
+O sea que el `IFERR ... THEN "NO INTEGRA" END` de `DSEPC` y `DSEPIC` era **código
+muerto para el caso que decía cubrir**, y la ecuación final salía armada con la
+integral sin resolver: una no-respuesta con forma de respuesta. Es el mismo
+patrón de `\.oo` y de la cancelación de `domain49`.
+
+Se detecta por el texto, que es la técnica de §2.1 para el infinito:
+
+```
+IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
+IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA M(Y)" END
+```
+
+El `IFERR` **se queda igual**: cubre los fallos de verdad (argumento mal tipado).
+Son dos modos de falla distintos y hacen falta los dos chequeos.
+
+### 2.18 ⚠️ `TYPE` 29: un vector de enteros exactos no es un array real
+
+En modo exacto, `[ 2 4 6 8 10 ]` (enteros **sin punto**, que es como los tipea
+cualquiera) compila como **array simbólico, `TYPE` 29**, no como array real
+(`TYPE` 3). Con punto — `[ 2. 4. 6. 8. 10. ]` — sí da 3.
+
+Los diez núcleos de Lab que aceptan vector hacían `IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END`,
+así que con `TYPE` 29 **no convertían**, `SIZE` devolvía la lista `{ 5. }` en vez
+del número 5, y el `FOR` de adentro reventaba con `ERROR`. Arreglado en los diez:
+
+```
+IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
+```
+
+Es el mismo error de fondo que §2.14 (decidir por bandera lo que hay que decidir
+por tipo), y apareció **solo** después de forzar modo exacto en el harness
+(§2.16): en aproximado los literales enteros ya son reales y el caso no existe.
+Vale la pena notar que este bug estuvo **latente y visto**: el caso
+`stats-vector` había fallado una vez y "no reproducía", y se anotó como
+inexplicado. Lo que pasaba era que la máquina quedaba en un modo u otro según la
+corrida anterior.
+
 ### 2.15 ⚠️ Bytes de control: el bug que el chequeo de ASCII no ve
 
 `CLAUDE.md` §1 exige ASCII de 7 bits. Un **byte de control** (0x00–0x1F) cumple
@@ -656,7 +726,7 @@ cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
 
 ### Matemática I (suite aparte)
 
-18 objetos más en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+31 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
 
 Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 
@@ -672,9 +742,14 @@ Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 | `DVFG` | Verifica una simplificación evaluando en seis puntos | 0/1 |
 | `DDOMP` | Sondea qué puntos pertenecen al dominio | 1 |
 
-Parcial 2 y final, con interfaz por pila **a propósito** (son de una sola línea
-de entrada y no necesitan formulario): `LHOP`, `DSEP`, `DSEPI`, `LAGR`.
+Parcial 2 y final, **ya con `INFORM` como el resto**: `LHOP`, `DSEP`, `DSEPI`,
+`LAGR`. Estaban con entrada por pila y acá se había escrito que era "a
+propósito"; era una racionalización mía, no una decisión: `SUITE-MAT1.md` decía
+"falta convertir", y la entrada al final de esta sección dice que los programas
+de Matemática I van con `INFORM`. Convertidos, con núcleo `XXXC` aparte.
 Pruebas: `TCHK`, `TDSEP`, `TD`, `TEFUN`, `TF`.
+
+Son **31 objetos**: 13 interfaces + 13 núcleos + 5 de prueba.
 
 La columna TP refiere al recopilado `MEGA_TODOS_LOS_TPS (1).txt` (raíz del
 repo): el temario y las resoluciones de cátedra contra las que se diseñaron.
@@ -683,12 +758,11 @@ Usan `IFERR` en todos lados para que un fallo del CAS no tire abajo el resto del
 cálculo.
 
 **Los 18 están partidos en núcleo + interfaz y probados en el emulador con ROM de
-50g: 44 de 44 casos.** Los 9 que tienen formulario se dividieron en `XXXC` (el
-cálculo, entra y sale por pila) y `XXX` (el `INFORM` y las cajas, que llama al
-núcleo). El motivo es que `INFORM` es interactivo por definición y una batería no
+50g: 54 de 54 casos** (`casos-mat1.txt` 31 + `casos-mat1b.txt` 23). Los 13 se dividieron en `XXXC` (el cálculo, entra y sale por
+pila) y `XXX` (el `INFORM` y las cajas, que llama al núcleo). El motivo es que `INFORM` es interactivo por definición y una batería no
 puede tipear en un formulario: con el cálculo soldado al formulario, el harness
 no podía probar **ningún** programa, y había 18 programas escritos con 0
-ejecuciones. Son 27 objetos en total (18 + 9 núcleos).
+ejecuciones. Son 31 objetos en total (13 interfaces + 13 núcleos + 5 de prueba).
 
 Emulador **no es hardware** (§9 de `SUITE-MAT1.md`): es la ROM de la 50g, pero no
 corre código ARM ni toca el teclado, la SD o la memoria real. Un verde acá es
@@ -718,10 +792,13 @@ cálculo salió a un objeto `XXXC` que entra y sale por pila, y `XXX` quedó con
 `INFORM`, las cajas y los gráficos. Sin eso el harness no podía probar ninguno,
 porque `INFORM` es interactivo por definición.
 
-**114 de 114 casos** en el emulador con ROM de 50g, y contra los **datasets
-reales de la cátedra**, no contra datos inventados: 72 de cálculo
+**120 de 120 casos** en el emulador con ROM de 50g, y contra los **datasets
+reales de la cátedra**, no contra datos inventados: 78 de cálculo
 (`harness/casos-lab.txt`, `casos-lab-datos.txt`, `casos-fisc.txt`) y **42 de
 dibujo** (`casos-graf-histo.txt`, `casos-graf.txt`).
+
+Los 6 casos nuevos son de **vector de enteros exactos** (§2.18), que es como un
+alumno escribe los datos y daba `ERROR` en los diez núcleos que aceptan vector.
 
 Los que dibujan quedaron en **tres capas**, no dos:
 
@@ -857,16 +934,18 @@ cumple por construcción porque hay una sola implementación.
   **Hecho el aviso**: `DOPFUN` muestra una caja extra después del cociente.
   Queda pendiente lo de mostrar las dos formas.
 
-- **Arreglar los `IFERR` que dejan basura** (§2.11). **Hecho en los 9 núcleos
-  `XXXC`**, que cierran con el guardián de profundidad y devuelven exactamente
-  una lista. **Falta en `DSEP` y `DSEPI`**, que siguen con interfaz por pila y
-  son los que pueden devolver una respuesta equivocada sin avisar.
+- ~~**Arreglar los `IFERR` que dejan basura**~~ (§2.11). **Hecho en los 13
+  núcleos `XXXC`**, que cierran con el guardián de profundidad y devuelven
+  exactamente una lista. `DSEPC` y `DSEPIC` —el caso peor, los que podían
+  devolver una respuesta equivocada sin avisar— tienen cuatro casos que lo
+  verifican: `DEPTH` antes y después tiene que dar 0 incluso cuando algo falla
+  por dentro.
 - ~~**Correr el harness.**~~ **Hecho, y ahora prueba la suite y no solo el
   lenguaje.** `harness/armar-mat1.py` genera una batería que **se lleva puestos
   los programas**: emite `\<< ...cuerpo del .txt... \>> 'NOMBRE' STO` por cada
   objeto y después corre los casos, así la corrida es reproducible desde cero y
-  no hereda una versión vieja residente (el bug de §3.5). Resultado: **44 de 44**
-  (`casos-mat1.txt` 31 + `casos-mat1b.txt` 13). Lo viejo, que probaba comandos
+  no hereda una versión vieja residente (el bug de §3.5). Resultado: **54 de 54**
+  (`casos-mat1.txt` 31 + `casos-mat1b.txt` 23). Lo viejo, que probaba comandos
   sueltos de la máquina, sigue en `casos.txt`. Descripción original:
   una tabla de casos, un programa `BATERIA` generado, y el resultado que vuelve
   por `DDE48 r` como objeto y se compara en la PC. Corre sobre el `Emu48` de **Debug4x**, que
@@ -885,7 +964,7 @@ cumple por construcción porque hay una sola implementación.
 - **Una sola compuerta.** Hoy hay cinco scripts sueltos (`verificar.ps1`,
   `armar-mat1.ps1`, `armar-bateria.ps1`, `armar-mat1.py`, `correr-emu.ps1`) y
   ninguno es *el* comando que dice sí o no. Debería haber un `probar-todo.ps1`
-  que encadene: `verificar.ps1` sobre los 27 fuentes + compilar los 27 con
+  que encadene: `verificar.ps1` sobre los 31 fuentes + compilar los 31 con
   `compilar.py` (que "¿compila?" ahora es una pregunta que se le puede hacer a
   la máquina, y es mucho más fuerte que las heurísticas de conteo) +
   `oraculo.py` + las dos baterías, y salga 0 o 1. Es la regla que el otro

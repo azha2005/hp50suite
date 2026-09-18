@@ -17,7 +17,7 @@
   @ supera LSUP es el mayor no atipico), por eso no compara.
   @
   @ Sin INFORM ni graficos a proposito: eso lo pone DBOXPLOT.
-  IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+  IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
   SORT
   \-> L
   \<<

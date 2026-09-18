@@ -1,27 +1,31 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ LAGR - multiplicadores de Lagrange, puntos criticos restringidos.
-  @ Uso:  'f(X,Y)' 'g(X,Y)' c LAGR
-  @ Deja: n2 = el lagrangiano L = f - LM*(g - c),
-  @       n1 = solucion del sistema, o un aviso si el CAS no pudo.
-  @ Los examenes modelo nunca piden clasificar los puntos, asi que
-  @ no arma el hessiano orlado.
-  @ Usa LM como multiplicador y DERIV para las parciales (el escape
-  @ de derivada parcial no esta confirmado en esta suite).
+  @ Interfaz: el calculo esta en LAGRC, que toma 'f(X,Y)' 'g(X,Y)' c de
+  @ la pila y devuelve { LG SOL }.
+  @ Restriccion de la forma g(X,Y) = c.
+  @ NO clasifica los puntos (no arma el hessiano orlado): los examenes
+  @ modelo no lo piden.
   @ Purgar X, Y y LM antes de correrlo si tenian valor.
-  \-> F G C
-  \<<
-    F G C - 'LM' * - \-> LG
+  @ El lagrangiano y la solucion quedan tambien en la pila.
+  "Lagrange: max/min de f con g=c"
+  {
+    { "f(X,Y), ej 'X*Y':" "'X*Y'" }
+    { "g(X,Y), ej 'X+Y':" "'X+Y'" }
+    { "c (valor de la restriccion):" "10" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP LAGRC OBJ\-> DROP \-> LG SOL
     \<<
-      LG
-      IFERR
-        LG 'X' DERIV 0 =
-        LG 'Y' DERIV 0 =
-        LG 'LM' DERIV 0 =
-        3 \->LIST { X Y LM } SOLVE
-      THEN
-        "EL CAS NO RESOLVIO EL SISTEMA: pasarlo a mano"
-      END
+      "Lagrangiano:" 10 CHR +
+      LG \->STR +
+      MSGBOX
+      "Puntos criticos:" 10 CHR +
+      SOL \->STR +
+      MSGBOX
+      LG SOL
     \>>
-  \>>
+  END
 \>>
