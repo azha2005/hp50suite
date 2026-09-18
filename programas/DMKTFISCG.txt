@@ -1,0 +1,108 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DMKTFISCG - el DIBUJO de DMKTFISC, sin formulario y sin PICTURE.
+  @ Uso:  a b c d T PMax PMin RES DMKTFISCG   (RES = lo de DMKTFISCC)
+  @ Deja: nada. Dibuja en PICT.
+  @ XRNG/YRNG con el rango REAL (0 a QMAX, 0 a PMAX), dibujando con los
+  @ valores directos: asi el cursor del modo interactivo muestra
+  @ Cantidad y Precio reales.
+  \-> A B C D T PMAXW PMINW RES
+  \<<
+    RES 1 GET \-> PB
+    \<<
+      RES 2 GET \-> QE
+      \<<
+        RES 3 GET \-> PS
+        \<<
+          RES 5 GET \-> Q0
+          \<<
+            PB 2. * \->NUM \-> PMAX0
+            \<<
+              IF PMAXW PMAX0 > THEN PMAXW ELSE PMAX0 END \->NUM \-> PMAX1
+              \<<
+                IF PMINW PMAX1 > THEN PMINW ELSE PMAX1 END \->NUM \-> PMAX
+                \<<
+                  C D PMAX * + \->NUM \-> SMAX
+                  \<<
+                    IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
+                    \<<
+                      ERASE
+                      0 QMAX XRNG 0 PMAX YRNG
+                      
+                      @ Ejes: horizontal (Q) en P=0; vertical (P) en Q=0
+                      0 0 R\->C QMAX 0 R\->C LINE
+                      0 0 R\->C 0 PMAX R\->C LINE
+                      
+                      @ Lineas de Precio Maximo/Minimo
+                      IF PMAXW 0 == NOT THEN
+                        0 PMAXW R\->C QMAX PMAXW R\->C LINE
+                      END
+                      IF PMINW 0 == NOT THEN
+                        0 PMINW R\->C QMAX PMINW R\->C LINE
+                      END
+                      
+                      @ Demanda: (Q=A,P=0) a (Q=A-B*PMAX,P=PMAX)
+                      A 0 R\->C A B PMAX * - PMAX R\->C LINE
+                      
+                      @ Oferta: (Q=C,P=0) a (Q=SMAX,P=PMAX)
+                      C 0 R\->C SMAX PMAX R\->C LINE
+                      
+                      @ Cruz de equilibrio en (QE,PB)
+                      QMAX 40. / \-> QOFFS
+                      \<<
+                        PMAX 40. / \-> POFFS
+                        \<<
+                          QE QOFFS - PB R\->C QE QOFFS + PB R\->C LINE
+                          QE PB POFFS - R\->C QE PB POFFS + R\->C LINE
+                          
+                          IF T 0 == NOT THEN
+                            @ Brecha de impuesto: vertical en Q=QE, de PS a PB
+                            QE PS R\->C QE PB R\->C LINE
+                            
+                            @ Relleno de Recaudacion: 16 lineas horizontales
+                            IF PS PB < THEN PS ELSE PB END \-> PLO
+                            \<<
+                              IF PS PB < THEN PB ELSE PS END \-> PHI
+                              \<<
+                                0 15 FOR i
+                                  PHI PLO - 15. / i * PLO + \-> PATI
+                                  \<<
+                                    0. PATI R\->C QE PATI R\->C LINE
+                                  \>>
+                                NEXT
+                                
+                                @ Relleno del PIE: 16 lineas verticales
+                                IF QE Q0 < THEN QE ELSE Q0 END \-> QLO
+                                \<<
+                                  IF QE Q0 < THEN Q0 ELSE QE END \-> QHI
+                                  \<<
+                                    0 15 FOR i
+                                      QHI QLO - 15. / i * QLO + \-> QATI
+                                      \<<
+                                        A QATI - B / \->NUM \-> PDATI
+                                        \<<
+                                          QATI C - D / \->NUM \-> PSATI
+                                          \<<
+                                            QATI PSATI R\->C QATI PDATI R\->C LINE
+                                          \>>
+                                        \>>
+                                      \>>
+                                    NEXT
+                                  \>>
+                                \>>
+                              \>>
+                            \>>
+                          END
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

@@ -1,0 +1,60 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCOVCORRG - el DIBUJO de DCOVCORR, sin formulario y sin PICTURE.
+  @ Uso:  DatosX DatosY RES DCOVCORRG   (RES = lo de DCOVCORRC)
+  @ Deja: nada. Dibuja en PICT: dispersion + recta de regresion.
+  @ XRNG/YRNG con el rango REAL de X e Y, dibujando con los valores
+  @ directos. Los puntos se recorren en el orden ORIGINAL de los datos,
+  @ no el ordenado: los pares (x,y) tienen que quedar emparejados.
+  \-> DX0 DY0 RES
+  \<<
+    RES 1 GET \-> N
+    \<<
+      RES 8 GET \-> B0
+      \<<
+        RES 9 GET \-> B1
+        \<<
+          DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+          \<<
+            DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+            \<<
+              LX SORT \-> LXS
+              \<<
+                LY SORT \-> LYS
+                \<<
+                  LXS 1 GET \-> XMIN
+                  \<<
+                    LXS N GET \-> XMAX
+                    \<<
+                      LYS 1 GET \-> YMIN
+                      \<<
+                        LYS N GET \-> YMAX
+                        \<<
+                          ERASE
+                          XMIN XMAX XRNG YMIN YMAX YRNG
+                          
+                          @ Ejes: horizontal en Y=YMIN, vertical en X=XMIN
+                          XMIN YMIN R\->C XMAX YMIN R\->C LINE
+                          XMIN YMIN R\->C XMIN YMAX R\->C LINE
+                          
+                          @ Puntos de dispersion
+                          1 N FOR i
+                            LX i GET LY i GET R\->C PIXON
+                          NEXT
+                          
+                          @ Recta de regresion, de XMIN a XMAX
+                          XMIN B0 B1 XMIN * + R\->C
+                          XMAX B0 B1 XMAX * + R\->C LINE
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

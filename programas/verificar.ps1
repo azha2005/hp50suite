@@ -48,6 +48,22 @@ function Test-ArchivoRPL {
     #    `DUP \-> K \<< ... \>>`. Es legitimo y la suite no lo usa, pero el
     #    codigo de terceros si (analisis\calcnum en el fork): sin esto la
     #    bateria marcaba 8 archivos ajenos que estaban bien.
+    #    Excepcion 3: la linea previa termina en STO. Es el formato de los
+    #    INSTALADORES generados (`\<< ... \>> 'NOMBRE' STO` uno tras otro,
+    #    ver armar-emu.ps1): despues del STO la pila quedo limpia y lo que
+    #    empieza es el objeto siguiente, no un bloque suelto. Sin esto,
+    #    MAT1-EMU.txt marcaba 26 falsos positivos en CADA corrida de la
+    #    bateria, y una compuerta que siempre se queja ensenia a ignorarla.
+    #    OJO con la excepcion del NOMBRE: aceptar cualquier identificador
+    #    solo tambien acepta un comando suelto. `DROP` parece un nombre de
+    #    objeto, asi que un `\<<` huerfano justo despues de un DROP pasaba
+    #    sin ser visto. Se detecto con un archivo roto a proposito. Ahora la
+    #    excepcion vale SOLO en archivos que tienen un DIR, que son los
+    #    paquetes generados (MAT1.txt, LAB.txt): ahi la linea previa a un
+    #    bloque si es el nombre del objeto. Los archivos de un solo programa
+    #    -- que son los que se editan a mano -- quedan con el chequeo
+    #    estricto, que es donde hace falta.
+    $tieneDir = @($lineas | Where-Object { $_.Trim() -eq 'DIR' }).Count -gt 0
     $huerfanos = @()
     for ($i = 1; $i -lt $lineas.Count; $i++) {
         if ($lineas[$i] -notlike '*\<<*') { continue }
@@ -56,8 +72,9 @@ function Test-ArchivoRPL {
         if ($posFlecha -ge 0 -and $posFlecha -lt $posBloque) { continue }
         $prev = $lineas[$i-1].Trim()
         if ($prev -like '*\->*')                  { continue }
-        if ($prev -match '^[A-Za-z][A-Za-z0-9]*$') { continue }
+        if ($tieneDir -and $prev -match '^[A-Za-z][A-Za-z0-9]*$') { continue }
         if ($prev -eq 'DIR')                       { continue }
+        if ($prev -match "STO$")                   { continue }
         $huerfanos += ($i + 1)
     }
     if ($huerfanos.Count -gt 1) {

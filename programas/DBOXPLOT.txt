@@ -1,8 +1,10 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DBOXPLOT - caja, bigotes, outliers, eje y puntos individuales.
-  @ Interfaz: el calculo esta en DBOXPLOTC, que toma los datos de la pila
-  @ y devuelve { N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS }.
+  @ Tres capas: DBOXPLOTC calcula los doce numeros, DBOXPLOTG dibuja, y
+  @ este objeto pone el formulario, el PICTURE y las cajas. PICTURE es
+  @ interactivo, asi que queda aca: de otro modo el harness no puede
+  @ probar el grafico.
   @ Los cuartiles son por INDICE; para el metodo interpolado de catedra
   @ (Lp = (p/100)*(n+1)) esta DPCTIL, y pueden dar valores distintos.
   @ Deja los cinco numeros en la pila.
@@ -13,74 +15,23 @@
   IF THEN
     1 GET \-> DATA0
     \<<
-      DATA0 DBOXPLOTC OBJ\-> DROP
-      \-> N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS
+      DATA0 DBOXPLOTC \-> RES
       \<<
-        DATA0
-        IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
-        SORT \-> L
-        \<<
-          ERASE
-          MINV MAXV XRNG 0 10 YRNG
-          IF MAXV MINV == THEN 1 ELSE MAXV MINV - END \-> SPAN
-          \<<
-            @ Caja (Q1 a Q3), fila 2.5 a 5.5 (arbitrario: el eje Y no
-            @ representa ningun dato real)
-            Q1 2.5 R\->C Q3 5.5 R\->C BOX
-            @ Mediana
-            Q2 2.5 R\->C Q2 5.5 R\->C LINE
-            @ Bigotes
-            WMIN 4. R\->C Q1 4. R\->C LINE
-            Q3 4. R\->C WMAX 4. R\->C LINE
-            WMIN 3.3 R\->C WMIN 4.7 R\->C LINE
-            WMAX 3.3 R\->C WMAX 4.7 R\->C LINE
-            
-            @ Outliers, con offset proporcional al rango de los datos
-            @ (los valores son reales, no columnas de pixel)
-            SPAN 40. / \-> OFFS
-            \<<
-              IF OUTS SIZE 0 > THEN
-                1 OUTS SIZE FOR j
-                  OUTS j GET \-> OX
-                  \<<
-                    OX OFFS - 4. R\->C OX OFFS + 4. R\->C LINE
-                    OX 3.8 R\->C OX 4.2 R\->C LINE
-                  \>>
-                NEXT
-              END
-              
-              @ Puntos de datos individuales, fila 1.5 (arriba de la caja)
-              1 N FOR i
-                L i GET 1.5 R\->C PIXON
-              NEXT
-              
-              @ Eje de referencia con marcas en Min, Q1, Mediana, Q3, Max
-              MINV 6. R\->C MAXV 6. R\->C LINE
-              MINV 5.8 R\->C MINV 6.2 R\->C LINE
-              Q1 5.8 R\->C Q1 6.2 R\->C LINE
-              Q2 5.8 R\->C Q2 6.2 R\->C LINE
-              Q3 5.8 R\->C Q3 6.2 R\->C LINE
-              MAXV 5.8 R\->C MAXV 6.2 R\->C LINE
-              
-              PICT PICTURE
-              
-              "Min: " MINV \->STR + 10 CHR +
-              "Q1: " + Q1 \->STR +
-              MSGBOX
-              "Med: " Q2 \->STR + 10 CHR +
-              "Q3: " + Q3 \->STR +
-              MSGBOX
-              "Max: " MAXV \->STR + 10 CHR +
-              "RIC: " + IQR \->STR +
-              MSGBOX
-              "Outliers:" 10 CHR +
-              OUTS \->STR +
-              MSGBOX
-              
-              { MINV Q1 Q2 Q3 MAXV }
-            \>>
-          \>>
-        \>>
+        DATA0 RES DBOXPLOTG
+        PICT PICTURE
+        "Min: " RES 2 GET \->STR + 10 CHR +
+        "Q1: " + RES 3 GET \->STR +
+        MSGBOX
+        "Med: " RES 4 GET \->STR + 10 CHR +
+        "Q3: " + RES 5 GET \->STR +
+        MSGBOX
+        "Max: " RES 6 GET \->STR + 10 CHR +
+        "RIC: " + RES 7 GET \->STR +
+        MSGBOX
+        "Outliers:" 10 CHR +
+        RES 12 GET \->STR +
+        MSGBOX
+        RES 2 GET RES 3 GET RES 4 GET RES 5 GET RES 6 GET 5 \->LIST
       \>>
     \>>
   END

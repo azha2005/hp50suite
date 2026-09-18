@@ -1,0 +1,70 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DMKTG - el DIBUJO de DMKT, sin formulario y sin PICTURE.
+  @ Uso:  a b c d RES DMKTG        (RES = lo que devuelve DMKTC)
+  @ Deja: nada. Dibuja en PICT.
+  @
+  @ OJO: este grafico usa coordenadas estilo PIXEL con XRNG 0..130 y
+  @ YRNG 0..79, y escala los valores a mano (columnas 20 a 110, filas 10
+  @ a 60). Es el enfoque que CLAUDE.md 2.8 recomienda NO mezclar con
+  @ rangos reales; los demas graficos de la suite (DCOMPFIRM, DMKTFISC,
+  @ DHISTO, DBOXPLOT, DCOVCORR) ya usan rango real. Queda asi porque
+  @ anda y porque cambiarlo es rediseniar el grafico, no partirlo; pero
+  @ aca esta anotado que es el unico que quedo con el enfoque viejo.
+  @
+  @ Eje horizontal = Precio, de 0 a PMAX = 2*PE (centra el equilibrio).
+  @ Eje vertical = Cantidad, de 0 a QMAX = el mayor entre el intercepto
+  @ de demanda (a) y la oferta en PMAX, para que ninguna curva se salga.
+  \-> A B C D RES
+  \<<
+    RES 1 GET \-> PE
+    \<<
+      RES 2 GET \-> QE
+      \<<
+        PE 2. * \->NUM \-> PMAX
+        \<<
+          C D PMAX * + \->NUM \-> SMAX
+          \<<
+            IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
+            \<<
+              ERASE
+              0 130 XRNG 0 79 YRNG
+              
+              @ Ejes de referencia
+              20. 60. R\->C 110. 60. R\->C LINE
+              20. 10. R\->C 20. 60. R\->C LINE
+              
+              @ Demanda: (P=0,Q=A) a (P=PMAX,Q=A-B*PMAX)
+              A QMAX / 50. * 60. SWAP - 0 RND \-> DPY1
+              \<<
+                A B PMAX * - QMAX / 50. * 60. SWAP - 0 RND \-> DPY2
+                \<<
+                  20. DPY1 R\->C 110. DPY2 R\->C LINE
+                  
+                  @ Oferta: (P=0,Q=C) a (P=PMAX,Q=SMAX)
+                  C QMAX / 50. * 60. SWAP - 0 RND \-> SPY1
+                  \<<
+                    SMAX QMAX / 50. * 60. SWAP - 0 RND \-> SPY2
+                    \<<
+                      20. SPY1 R\->C 110. SPY2 R\->C LINE
+                      
+                      @ Punto de equilibrio (cruz +)
+                      PE PMAX / 90. * 20. + 0 RND \-> EPX
+                      \<<
+                        QE QMAX / 50. * 60. SWAP - 0 RND \-> EPY
+                        \<<
+                          EPX 3 - EPY R\->C EPX 3 + EPY R\->C LINE
+                          EPX EPY 3 - R\->C EPX EPY 3 + R\->C LINE
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

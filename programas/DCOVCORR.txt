@@ -1,11 +1,12 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DCOVCORR - covarianza, correlacion y dispersion con recta de regresion.
-  @ Interfaz: el calculo esta en DCOVCORRC, que toma las dos listas de la
-  @ pila y devuelve { N XB YB COVXY SDX SDY R B0 B1 }. Esa es la unica
-  @ copia de las sumatorias en la suite: DOLSC tambien llama ahi, asi que
-  @ los dos programas dan el MISMO numero por construccion y no porque
-  @ alguien se acuerde de mantener las dos copias sincronizadas.
+  @ Tres capas: DCOVCORRC calcula, DCOVCORRG dibuja, y este objeto pone
+  @ el formulario, el PICTURE y las cajas. PICTURE es interactivo, asi
+  @ que queda aca: de otro modo el harness no puede probar el grafico.
+  @ DCOVCORRC es la UNICA copia de estas sumatorias en la suite: DOLSC
+  @ tambien llama ahi, asi que los dos programas dan el MISMO numero por
+  @ construccion y no porque alguien mantenga dos copias sincronizadas.
   @ Pide dos listas separadas (X e Y), no una matriz.
   "Covarianza y Correlacion (Manual)"
   {
@@ -17,67 +18,22 @@
   IF THEN
     OBJ\-> DROP \-> DX0 DY0
     \<<
-      DX0 DY0 DCOVCORRC OBJ\-> DROP \-> N XB YB COVXY SDX SDY R B0 B1
+      DX0 DY0 DCOVCORRC \-> RES
       \<<
-        DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END SORT \-> LXS
-        \<<
-          DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END SORT \-> LYS
-          \<<
-            LXS 1 GET \-> XMIN
-            \<<
-              LXS N GET \-> XMAX
-              \<<
-                LYS 1 GET \-> YMIN
-                \<<
-                  LYS N GET \-> YMAX
-                  \<<
-                    @ XRNG/YRNG con el rango REAL de X e Y, dibujando con
-                    @ los valores directos: XRNG/YRNG reescalan de verdad
-                    @ las coordenadas de LINE/PIXON/R\->C. Asi el cursor
-                    @ del modo interactivo muestra los valores reales.
-                    ERASE
-                    XMIN XMAX XRNG YMIN YMAX YRNG
-                    
-                    @ Ejes: horizontal en Y=YMIN, vertical en X=XMIN
-                    XMIN YMIN R\->C XMAX YMIN R\->C LINE
-                    XMIN YMIN R\->C XMIN YMAX R\->C LINE
-                    
-                    @ Puntos de dispersion. Se recorren los datos en su
-                    @ orden ORIGINAL (no el ordenado): los pares (x,y)
-                    @ tienen que mantenerse emparejados.
-                    DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
-                    \<<
-                      DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
-                      \<<
-                        1 N FOR i
-                          LX i GET LY i GET R\->C PIXON
-                        NEXT
-                      \>>
-                    \>>
-                    
-                    @ Recta de regresion, de XMIN a XMAX
-                    XMIN B0 B1 XMIN * + R\->C
-                    XMAX B0 B1 XMAX * + R\->C LINE
-                    
-                    PICT PICTURE
-                    
-                    "Media X: " XB \->STR + 10 CHR +
-                    "Media Y: " + YB \->STR +
-                    MSGBOX
-                    "sX: " SDX \->STR + 10 CHR +
-                    "sY: " + SDY \->STR +
-                    MSGBOX
-                    "sXY: " COVXY \->STR + 10 CHR +
-                    "r (Pearson): " + R \->STR +
-                    MSGBOX
-                    "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
-                    MSGBOX
-                  \>>
-                \>>
-              \>>
-            \>>
-          \>>
-        \>>
+        DX0 DY0 RES DCOVCORRG
+        PICT PICTURE
+        "Media X: " RES 2 GET \->STR + 10 CHR +
+        "Media Y: " + RES 3 GET \->STR +
+        MSGBOX
+        "sX: " RES 5 GET \->STR + 10 CHR +
+        "sY: " + RES 6 GET \->STR +
+        MSGBOX
+        "sXY: " RES 4 GET \->STR + 10 CHR +
+        "r (Pearson): " + RES 7 GET \->STR +
+        MSGBOX
+        "Y = " RES 8 GET 4 SIGFIG \->STR + " + " +
+        RES 9 GET 4 SIGFIG \->STR + "*X" +
+        MSGBOX
       \>>
     \>>
   END

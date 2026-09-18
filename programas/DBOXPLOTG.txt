@@ -1,0 +1,84 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DBOXPLOTG - el DIBUJO de DBOXPLOT, sin formulario y sin PICTURE.
+  @ Uso:  Datos RES DBOXPLOTG        (RES = lo que devuelve DBOXPLOTC)
+  @ Deja: nada. Dibuja en PICT.
+  @ Tres capas: DBOXPLOTC calcula, DBOXPLOTG dibuja, DBOXPLOT es la
+  @ interfaz. PICTURE es interactivo y tiene que quedar en la interfaz,
+  @ si no el harness no puede probar el grafico.
+  @ El eje Y no representa ningun dato: las filas 1.5 a 6.2 son un
+  @ reparto arbitrario de la pantalla.
+  \-> DATA0 RES
+  \<<
+    RES 1 GET \-> N
+    \<<
+      RES 2 GET \-> MINV
+      \<<
+        RES 3 GET \-> Q1
+        \<<
+          RES 4 GET \-> Q2
+          \<<
+            RES 5 GET \-> Q3
+            \<<
+              RES 6 GET \-> MAXV
+              \<<
+                RES 10 GET \-> WMIN
+                \<<
+                  RES 11 GET \-> WMAX
+                  \<<
+                    RES 12 GET \-> OUTS
+                    \<<
+                      DATA0
+                      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+                      SORT \-> L
+                      \<<
+                        ERASE
+                        MINV MAXV XRNG 0 10 YRNG
+                        IF MAXV MINV == THEN 1 ELSE MAXV MINV - END \-> SPAN
+                        \<<
+                          @ Caja (Q1 a Q3)
+                          Q1 2.5 R\->C Q3 5.5 R\->C BOX
+                          @ Mediana
+                          Q2 2.5 R\->C Q2 5.5 R\->C LINE
+                          @ Bigotes
+                          WMIN 4. R\->C Q1 4. R\->C LINE
+                          Q3 4. R\->C WMAX 4. R\->C LINE
+                          WMIN 3.3 R\->C WMIN 4.7 R\->C LINE
+                          WMAX 3.3 R\->C WMAX 4.7 R\->C LINE
+                          @ Outliers, con offset proporcional al rango
+                          SPAN 40. / \-> OFFS
+                          \<<
+                            IF OUTS SIZE 0 > THEN
+                              1 OUTS SIZE FOR j
+                                OUTS j GET \-> OX
+                                \<<
+                                  OX OFFS - 4. R\->C OX OFFS + 4. R\->C LINE
+                                  OX 3.8 R\->C OX 4.2 R\->C LINE
+                                \>>
+                              NEXT
+                            END
+                            @ Puntos de datos individuales, fila 1.5
+                            1 N FOR i
+                              L i GET 1.5 R\->C PIXON
+                            NEXT
+                            @ Eje de referencia con marcas en Min, Q1, Med, Q3, Max
+                            MINV 6. R\->C MAXV 6. R\->C LINE
+                            MINV 5.8 R\->C MINV 6.2 R\->C LINE
+                            Q1 5.8 R\->C Q1 6.2 R\->C LINE
+                            Q2 5.8 R\->C Q2 6.2 R\->C LINE
+                            Q3 5.8 R\->C Q3 6.2 R\->C LINE
+                            MAXV 5.8 R\->C MAXV 6.2 R\->C LINE
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

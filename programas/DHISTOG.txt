@@ -1,0 +1,42 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DHISTOG - el DIBUJO de DHISTO, sin el formulario y sin PICTURE.
+  @ Uso:  K H START FREQ DHISTOG
+  @ Deja: nada. Dibuja en PICT.
+  @
+  @ Esta partido en tres capas a proposito:
+  @   DFRECTABLAC  calcula las clases (entra y sale por pila)
+  @   DHISTOG      dibuja en PICT
+  @   DHISTO       formulario, PICTURE y cajas
+  @ El motivo es el mismo que para los nucleos: PICTURE es interactivo
+  @ (espera una tecla), asi que un programa que lo llame no se puede
+  @ correr desde una bateria. Con el dibujo aparte, el harness dibuja y
+  @ despues mide con PIX? en coordenadas reales.
+  @
+  @ XRNG con el rango real de clases (START a START+K*H) y YRNG con el
+  @ rango real de frecuencia (0 a MAXF). Cada barra se dibuja con los
+  @ valores reales directos, sin formula de escalado a pixel: XRNG/YRNG
+  @ reescalan de verdad las coordenadas de LINE/BOX/R\->C.
+  \-> K H START FREQ
+  \<<
+    1. \-> MAXF0
+    \<<
+      MAXF0 'MAXF' STO
+      1 K FOR i
+        IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
+      NEXT
+      ERASE
+      START START K H * + XRNG 0 MAXF YRNG
+      1 K FOR i
+        START i 1 - H * + \-> XLO
+        \<<
+          XLO H + \-> XHI
+          \<<
+            XLO 0 R\->C XHI FREQ i GET R\->C BOX
+          \>>
+        \>>
+      NEXT
+      'MAXF' PURGE
+    \>>
+  \>>
+\>>

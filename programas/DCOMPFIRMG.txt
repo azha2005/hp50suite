@@ -1,0 +1,55 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCOMPFIRMG - el DIBUJO de DCOMPFIRM, sin formulario y sin PICTURE.
+  @ Uso:  CF b c P RES DCOMPFIRMG     (RES = lo que devuelve DCOMPFIRMC)
+  @ Deja: nada. Dibuja en PICT.
+  @ XRNG/YRNG con el rango real (0 a QMAX, 0 a PMAX), dibujando con los
+  @ valores directos: asi el cursor del modo interactivo muestra Cantidad
+  @ y Costo/Precio reales.
+  \-> CF B C P RES
+  \<<
+    RES 1 GET \-> Q
+    \<<
+      IF Q 0 == THEN 10. ELSE Q 2. * END \->NUM \-> QMAX
+      \<<
+        B 2. C * QMAX * + \->NUM \-> CMGMAX
+        \<<
+          IF P CMGMAX > THEN P ELSE CMGMAX END 1.1 * \->NUM \-> PMAX
+          \<<
+            ERASE
+            0 QMAX XRNG 0 PMAX YRNG
+            
+            @ Ejes
+            0 0 R\->C QMAX 0 R\->C LINE
+            0 0 R\->C 0 PMAX R\->C LINE
+            
+            @ CMg: (Q=0,B) a (Q=QMAX,CMGMAX)
+            0 B R\->C QMAX CMGMAX R\->C LINE
+            
+            @ CVMe: (Q=0,B) a (Q=QMAX,AVCMAX)
+            B C QMAX * + \->NUM \-> AVCMAX
+            \<<
+              0 B R\->C QMAX AVCMAX R\->C LINE
+              
+              @ Linea horizontal de Precio
+              0 P R\->C QMAX P R\->C LINE
+              
+              @ Cruz de equilibrio (solo si no cerro), con offset
+              @ proporcional a la escala de cada eje
+              IF Q 0 > THEN
+                QMAX 40. / \-> QOFFS
+                \<<
+                  PMAX 40. / \-> POFFS
+                  \<<
+                    Q QOFFS - P R\->C Q QOFFS + P R\->C LINE
+                    Q P POFFS - R\->C Q P POFFS + R\->C LINE
+                  \>>
+                \>>
+              END
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

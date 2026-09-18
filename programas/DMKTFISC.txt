@@ -1,10 +1,10 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DMKTFISC - mercado con impuesto/subsidio, controles de precio y grafico.
-  @ Interfaz: el calculo esta en DMKTFISCC, que toma a b c d T PMax PMin
-  @ de la pila y devuelve
-  @ { PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES }.
-  @ Aca quedan los dos formularios, el dibujo y las seis cajas.
+  @ Tres capas: DMKTFISCC calcula los trece numeros, DMKTFISCG dibuja, y
+  @ este objeto pone los dos formularios, el PICTURE y las seis cajas.
+  @ PICTURE es interactivo, asi que queda aca: de otro modo el harness no
+  @ puede probar el grafico.
   @ Van dos INFORM porque el limite practico es ~4 campos por pantalla.
   "Mercado + Impuestos: Qd=a-b*P, Qs=c+d*P"
   {
@@ -29,120 +29,28 @@
       IF THEN
         OBJ\-> DROP \-> T PMAXW PMINW
         \<<
-          A B C D T PMAXW PMINW DMKTFISCC OBJ\-> DROP
-          \-> PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES
+          A B C D T PMAXW PMINW DMKTFISCC \-> RES
           \<<
-            @ XRNG/YRNG con el rango REAL (0 a QMAX, 0 a PMAX), dibujando
-            @ con los valores reales directos: XRNG/YRNG reescalan de
-            @ verdad las coordenadas de LINE/BOX/R\->C, y asi el cursor
-            @ del modo interactivo muestra Cantidad y Precio reales.
-            PB 2. * \->NUM \-> PMAX0
-            \<<
-              IF PMAXW PMAX0 > THEN PMAXW ELSE PMAX0 END \->NUM \-> PMAX1
-              \<<
-                IF PMINW PMAX1 > THEN PMINW ELSE PMAX1 END \->NUM \-> PMAX
-                \<<
-                  C D PMAX * + \->NUM \-> SMAX
-                  \<<
-                    IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
-                    \<<
-                      ERASE
-                      0 QMAX XRNG 0 PMAX YRNG
-                      
-                      @ Ejes: horizontal (Q) en P=0; vertical (P) en Q=0
-                      0 0 R\->C QMAX 0 R\->C LINE
-                      0 0 R\->C 0 PMAX R\->C LINE
-                      
-                      @ Lineas de Precio Maximo/Minimo
-                      IF PMAXW 0 == NOT THEN
-                        0 PMAXW R\->C QMAX PMAXW R\->C LINE
-                      END
-                      IF PMINW 0 == NOT THEN
-                        0 PMINW R\->C QMAX PMINW R\->C LINE
-                      END
-                      
-                      @ Demanda: (Q=A,P=0) a (Q=A-B*PMAX,P=PMAX)
-                      A 0 R\->C A B PMAX * - PMAX R\->C LINE
-                      
-                      @ Oferta: (Q=C,P=0) a (Q=SMAX,P=PMAX)
-                      C 0 R\->C SMAX PMAX R\->C LINE
-                      
-                      @ Cruz de equilibrio en (QE,PB), con offset
-                      @ proporcional a la escala de cada eje
-                      QMAX 40. / \-> QOFFS
-                      \<<
-                        PMAX 40. / \-> POFFS
-                        \<<
-                          QE QOFFS - PB R\->C QE QOFFS + PB R\->C LINE
-                          QE PB POFFS - R\->C QE PB POFFS + R\->C LINE
-                          
-                          IF T 0 == NOT THEN
-                            @ Brecha de impuesto: vertical en Q=QE, de PS a PB
-                            QE PS R\->C QE PB R\->C LINE
-                            
-                            @ Relleno de Recaudacion: 16 lineas horizontales
-                            IF PS PB < THEN PS ELSE PB END \-> PLO
-                            \<<
-                              IF PS PB < THEN PB ELSE PS END \-> PHI
-                              \<<
-                                0 15 FOR i
-                                  PHI PLO - 15. / i * PLO + \-> PATI
-                                  \<<
-                                    0. PATI R\->C QE PATI R\->C LINE
-                                  \>>
-                                NEXT
-                                
-                                @ Relleno del PIE: 16 lineas verticales
-                                @ entre QE y Q0
-                                IF QE Q0 < THEN QE ELSE Q0 END \-> QLO
-                                \<<
-                                  IF QE Q0 < THEN Q0 ELSE QE END \-> QHI
-                                  \<<
-                                    0 15 FOR i
-                                      QHI QLO - 15. / i * QLO + \-> QATI
-                                      \<<
-                                        A QATI - B / \->NUM \-> PDATI
-                                        \<<
-                                          QATI C - D / \->NUM \-> PSATI
-                                          \<<
-                                            QATI PSATI R\->C QATI PDATI R\->C LINE
-                                          \>>
-                                        \>>
-                                      \>>
-                                    NEXT
-                                  \>>
-                                \>>
-                              \>>
-                            \>>
-                          END
-                          
-                          PICT PICTURE
-                          
-                          "Pb (comprador): " PB \->STR + 10 CHR +
-                          "Ps (vendedor): " + PS \->STR +
-                          MSGBOX
-                          "Q*: " QE \->STR + 10 CHR +
-                          "Recaudacion: " + RECAUD \->STR +
-                          MSGBOX
-                          "PIE (DWL): " PIE \->STR + 10 CHR +
-                          "Q sin imp: " + Q0 \->STR +
-                          MSGBOX
-                          "Inc.Comprador: " INCC \->STR + "%" + 10 CHR +
-                          "Inc.Vendedor: " + INCP \->STR + "%" +
-                          MSGBOX
-                          "Escasez (techo): " ESCASEZ \->STR + 10 CHR +
-                          "Excedente (piso): " + EXCEDENTE \->STR +
-                          MSGBOX
-                          "Ed (demanda): " ED \->STR + 10 CHR +
-                          "Es (oferta): " + ES \->STR +
-                          MSGBOX
-                        \>>
-                      \>>
-                    \>>
-                  \>>
-                \>>
-              \>>
-            \>>
+            A B C D T PMAXW PMINW RES DMKTFISCG
+            PICT PICTURE
+            "Pb (comprador): " RES 1 GET \->STR + 10 CHR +
+            "Ps (vendedor): " + RES 3 GET \->STR +
+            MSGBOX
+            "Q*: " RES 2 GET \->STR + 10 CHR +
+            "Recaudacion: " + RES 8 GET \->STR +
+            MSGBOX
+            "PIE (DWL): " RES 9 GET \->STR + 10 CHR +
+            "Q sin imp: " + RES 5 GET \->STR +
+            MSGBOX
+            "Inc.Comprador: " RES 10 GET \->STR + "%" + 10 CHR +
+            "Inc.Vendedor: " + RES 11 GET \->STR + "%" +
+            MSGBOX
+            "Escasez (techo): " RES 6 GET \->STR + 10 CHR +
+            "Excedente (piso): " + RES 7 GET \->STR +
+            MSGBOX
+            "Ed (demanda): " RES 12 GET \->STR + 10 CHR +
+            "Es (oferta): " + RES 13 GET \->STR +
+            MSGBOX
           \>>
         \>>
       END

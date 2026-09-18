@@ -1,12 +1,13 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DHISTO - histograma de barras.
-  @ Interfaz: el binning NO se calcula aca. Lo hace DFRECTABLAC, que es
-  @ el mismo que usa la tabla de frecuencias y devuelve
-  @ { K H START FREQ MAT }. Antes estaba escrito dos veces, identico,
-  @ en DHISTO y en DFRECTABLA: dos copias de un conteo de clases que
-  @ tienen que coincidir siempre, porque la tabla y el grafico del
-  @ mismo ejercicio no pueden dar clases distintas.
+  @ Tres capas: DFRECTABLAC calcula las clases, DHISTOG dibuja, y este
+  @ objeto pone el formulario, el PICTURE y las cajas. PICTURE es
+  @ interactivo, asi que tiene que quedar aca y no en el dibujo: de otro
+  @ modo el harness no puede probar el grafico.
+  @ El binning NO se calcula aca ni se repite: es el mismo de la tabla
+  @ de frecuencias. La tabla y el grafico del mismo ejercicio no pueden
+  @ dar clases distintas.
   @
   @ Campos K/Ancho/Inicio opcionales: algunos ejemplos de catedra (ej.
   @ horas trabajadas por semana) NO usan Sturges ni el minimo real como
@@ -28,34 +29,12 @@
       DATA0 KWANT HWANT SWANT DFRECTABLAC OBJ\-> DROP
       DROP \-> K H START FREQ
       \<<
+        K H START FREQ DHISTOG
+        PICT PICTURE
         DATA0
         IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
         SIZE \-> N
         \<<
-          1. 'MAXF' STO
-          1 K FOR i
-            IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
-          NEXT
-          @ XRNG con el rango real de clases (START a START+K*H) y YRNG
-          @ con el rango real de frecuencia (0 a MAXF). Cada barra se
-          @ dibuja con los valores reales directos, sin formula de
-          @ escalado a pixel: XRNG/YRNG reescalan de verdad las
-          @ coordenadas de LINE/BOX/R\->C. Asi el cursor del modo
-          @ interactivo muestra clase y frecuencia reales.
-          ERASE
-          START START K H * + XRNG 0 MAXF YRNG
-          1 K FOR i
-            START i 1 - H * + \-> XLO
-            \<<
-              XLO H + \-> XHI
-              \<<
-                XLO 0 R\->C XHI FREQ i GET R\->C BOX
-              \>>
-            \>>
-          NEXT
-          
-          PICT PICTURE
-          
           "Inicio: " START \->STR + 10 CHR +
           "Ancho (H): " + H \->STR +
           MSGBOX
@@ -65,7 +44,6 @@
           "Frecuencias:" 10 CHR +
           FREQ \->STR +
           MSGBOX
-          'MAXF' PURGE
         \>>
       \>>
     \>>

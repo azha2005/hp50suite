@@ -262,6 +262,32 @@ MSGBOX
   (nivel 3, el más profundo): `PICT grob posicion GOR`.
 - `\->GROB` (string → gráfico de texto) es válido.
 
+**Cómo probar un gráfico desde la PC** (medido en el emulador,
+`harness/casos-graf.txt`):
+
+- **`PICT` en la pila NO es un GROB** (da `TYPE` 19). Para traerlo:
+  `PICT RCL`, que sí da `TYPE` 11 y se decodifica con `herramientas/hpobj.py`.
+  El `PICT` de la 50g mide **131x80**, no 131x64.
+- **`PIX?` entiende las coordenadas reales de `XRNG`/`YRNG`**, igual que
+  `LINE`/`BOX`/`PIXON`. O sea que se puede afirmar "en el valor 17.5 y la
+  frecuencia 8 hay un pixel encendido" sin traducir a píxel a mano.
+- **Es exacto en bordes horizontales y verticales, en los extremos de una
+  línea y en un `PIXON`.** En el **punto medio de una diagonal falla**: la
+  línea rasterizada pasa por el píxel de al lado, y ni una vecindad de ±1
+  píxel lo salva. Las aserciones se hacen sobre lo axis-aligned (techos de
+  barras, la caja, la mediana, la cruz de equilibrio, la línea de precio) y
+  sobre los extremos de las diagonales, que sí son los píxeles que se le
+  pasaron.
+- **`BOX` dibuja el contorno, no rellena**: el interior de una barra da 0.
+  Sirve como aserción negativa.
+- El par de aserciones que verifica la **orientación del eje Y** (lo de arriba
+  de esta sección) es: en la barra alta hay píxel a la altura máxima, y en la
+  barra baja NO lo hay a esa misma altura. Si el eje estuviera invertido, las
+  dos fallarían a la vez.
+- Medir no reemplaza **mirar**: `harness/ver-dibujo.py` dibuja el GROB en ASCII
+  en la terminal. Las aserciones dicen que tal píxel está donde va; el dibujo
+  entero dice si el gráfico tiene sentido.
+
 ### 2.9 Camino nativo de graficación (leído en código de terceros, sin probar)
 
 ```
@@ -529,6 +555,20 @@ solo: dentro de un `DIR` esa línea es el **nombre** del objeto, y es legítima.
 Así un archivo con varios objetos en un mismo `DIR` (`programas/MAT1.txt`) no
 dispara falsos positivos.
 
+**Dos agujeros de la compuerta, tapados (los dos encontrados con un archivo
+roto a propósito, que es la única forma de probar un detector):**
+
+1. La excepción del **nombre de objeto** aceptaba cualquier identificador
+   suelto, y `DROP` parece un nombre: un `\<<` huérfano justo después de un
+   `DROP` pasaba sin verse. Ahora la excepción vale **solo en archivos que
+   tienen un `DIR`**, que son los paquetes generados. Los archivos de un solo
+   programa —los que se editan a mano— quedan con el chequeo estricto.
+2. Los **instaladores generados** (`MAT1-EMU.txt`, formato
+   `\<< ... \>> 'NOMBRE' STO` en cadena) disparaban 26 falsos positivos en
+   cada corrida. Se exceptúa el `\<<` cuya línea previa termina en `STO`:
+   ahí la pila quedó limpia y lo que empieza es el objeto siguiente. Una
+   compuerta que siempre se queja enseña a ignorarla.
+
 **Advertencia:** el conteo total de paréntesis **no detecta** un `\<<` mal
 ubicado si se compensó con cierres de más en otro lado. Por eso el chequeo de
 profundidad acumulada y el de huérfanos son los importantes — un total
@@ -678,9 +718,30 @@ cálculo salió a un objeto `XXXC` que entra y sale por pila, y `XXX` quedó con
 `INFORM`, las cajas y los gráficos. Sin eso el harness no podía probar ninguno,
 porque `INFORM` es interactivo por definición.
 
-**72 de 72 casos** en el emulador con ROM de 50g, repartidos en tres tablas
-(`harness/casos-lab.txt`, `casos-lab-datos.txt`, `casos-fisc.txt`), y contra los
-**datasets reales de la cátedra**, no contra datos inventados.
+**114 de 114 casos** en el emulador con ROM de 50g, y contra los **datasets
+reales de la cátedra**, no contra datos inventados: 72 de cálculo
+(`harness/casos-lab.txt`, `casos-lab-datos.txt`, `casos-fisc.txt`) y **42 de
+dibujo** (`casos-graf-histo.txt`, `casos-graf.txt`).
+
+Los que dibujan quedaron en **tres capas**, no dos:
+
+| Objeto | Qué es | Por qué aparte |
+|---|---|---|
+| `XXXC` | el cálculo, entra y sale por pila | `INFORM` es interactivo |
+| `XXXG` | el dibujo, dibuja en `PICT` | **`PICTURE` espera una tecla** |
+| `XXX` | `INFORM`, `PICTURE` y las cajas | es la parte que no se puede automatizar |
+
+La capa del medio es lo que hace probable un gráfico: la batería llama a `XXXG`,
+que dibuja y **no** abre `PICTURE`, y después mide con `PIX?` en coordenadas
+reales (§2.8). Tienen `XXXG`: `DHISTO`, `DBOXPLOT`, `DCOVCORR`, `DMKT`,
+`DMKTFISC` y `DCOMPFIRM`.
+
+`DMKT` es el **único que quedó con el enfoque de coordenadas estilo píxel**
+(`XRNG 0..130`, `YRNG 0..79`, escalado a mano), que es justamente lo que §2.8
+recomienda no mezclar. Por eso de su dibujo solo se pueden afirmar los ejes de
+referencia: todo lo demás se cruza con las diagonales de oferta y demanda y la
+aserción sería ambigua. Está anotado en el código; migrarlo a rango real es
+trabajo pendiente y aislado.
 
 Dos duplicaciones eliminadas en el camino, las dos del mismo tipo que la de
 `DESTFUN`/`DASHO`:
@@ -833,10 +894,13 @@ cumple por construcción porque hay una sola implementación.
   (§5). Quedó afuera `DTROZOS`, que no calcula nada, solo dibuja.
 - **Verificar el enunciado de `HORAS`** (§6): el dataset y la frecuencia
   documentada no coinciden, y uno de los dos está mal.
-- **Probar las salidas GRÁFICAS.** El harness ya sabe leer la pantalla (GROB +
-  OCR, usado para `domain49`), así que `DHISTO`, `DBOXPLOT`, `DMKT`, `DMKTFISC`,
-  `DCOMPFIRM` y `DTROZOS` pueden tener pantalla esperada. Hoy sus números están
-  probados pero el dibujo se sigue mirando a ojo, que es como no verificarlo.
+- ~~**Probar las salidas GRÁFICAS.**~~ **Hecho: 42 aserciones de píxel** sobre
+  `DHISTO`, `DBOXPLOT`, `DCOVCORR`, `DMKT`, `DMKTFISC` y `DCOMPFIRM` (§2.8 y
+  §5), más el volcado en ASCII para mirarlos. Queda afuera `DTROZOS`, que no se
+  partió.
+- **Migrar `DMKT` a coordenadas reales** (§5): es el único gráfico que sigue
+  escalando a píxel a mano, y por eso es el único cuyo dibujo no se puede
+  afirmar más allá de los ejes.
 - Alinear columnas de salida con padding de espacios donde se use texto.
 - `DTROZOS` no tiene protección contra asíntotas/discontinuidades dentro de un
   tramo (ej. `1/X` con un tramo que cruce 0) — va a fallar o dar resultados sin

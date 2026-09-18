@@ -12,10 +12,14 @@
 # Si SIGFIG falta, DOLS no da error: deja el nombre 'SIGFIG' SIN EVALUAR en
 # la pila y muestra un resultado equivocado. Medido en el emulador.
 #
-# Los objetos XXXC son los NUCLEOS de calculo; XXX es la interfaz que los
-# llama. Estan separados para que el harness pueda probar el calculo:
-# INFORM es interactivo por definicion y una bateria no puede tipear en un
-# formulario.
+# Tres capas por programa:
+#   XXXC  el calculo, entra y sale por pila
+#   XXXG  el dibujo, dibuja en PICT y no abre PICTURE
+#   XXX   la interfaz: INFORM, PICTURE y las cajas
+# Estan separados para que el harness pueda probarlos: INFORM es interactivo
+# por definicion (una bateria no puede tipear en un formulario) y PICTURE
+# espera una tecla. Con el dibujo aparte, la bateria dibuja en PICT y mide
+# con PIX? en coordenadas reales.
 #
 # Los archivos sueltos de programas\ y programas\datos\ siguen siendo la
 # fuente de verdad para editar y para verificar.ps1. LAB.txt es salida
@@ -37,11 +41,13 @@ $orden = @(
     'SIGFIG',
     # Estadistica descriptiva
     'DSTATSC','DSTATS','DMODAC','DMODA','DPCTILC','DPCTIL',
-    'DFRECTABLAC','DFRECTABLA','DHISTO','DBOXPLOTC','DBOXPLOT',
+    'DFRECTABLAC','DFRECTABLA','DHISTOG','DHISTO',
+    'DBOXPLOTC','DBOXPLOTG','DBOXPLOT',
     # Dos variables
-    'DCOVCORRC','DCOVCORR','DOLSC','DOLS',
+    'DCOVCORRC','DCOVCORRG','DCOVCORR','DOLSC','DOLS',
     # Economia
-    'DMKTC','DMKT','DMKTFISCC','DMKTFISC','DCOMPFIRMC','DCOMPFIRM',
+    'DMKTC','DMKTG','DMKT','DMKTFISCC','DMKTFISCG','DMKTFISC',
+    'DCOMPFIRMC','DCOMPFIRMG','DCOMPFIRM',
     'DPIBPPAC','DPIBPPA','DTCAMBIOC','DTCAMBIO','DCOMPZC','DCOMPZ',
     # Matematica
     'DTROZOS',

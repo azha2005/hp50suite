@@ -366,15 +366,58 @@ DIR
       \>>
     END
   \>>
+  DHISTOG
+  \<<
+    @ DHISTOG - el DIBUJO de DHISTO, sin el formulario y sin PICTURE.
+    @ Uso:  K H START FREQ DHISTOG
+    @ Deja: nada. Dibuja en PICT.
+    @
+    @ Esta partido en tres capas a proposito:
+    @   DFRECTABLAC  calcula las clases (entra y sale por pila)
+    @   DHISTOG      dibuja en PICT
+    @   DHISTO       formulario, PICTURE y cajas
+    @ El motivo es el mismo que para los nucleos: PICTURE es interactivo
+    @ (espera una tecla), asi que un programa que lo llame no se puede
+    @ correr desde una bateria. Con el dibujo aparte, el harness dibuja y
+    @ despues mide con PIX? en coordenadas reales.
+    @
+    @ XRNG con el rango real de clases (START a START+K*H) y YRNG con el
+    @ rango real de frecuencia (0 a MAXF). Cada barra se dibuja con los
+    @ valores reales directos, sin formula de escalado a pixel: XRNG/YRNG
+    @ reescalan de verdad las coordenadas de LINE/BOX/R\->C.
+    \-> K H START FREQ
+    \<<
+      1. \-> MAXF0
+      \<<
+        MAXF0 'MAXF' STO
+        1 K FOR i
+          IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
+        NEXT
+        ERASE
+        START START K H * + XRNG 0 MAXF YRNG
+        1 K FOR i
+          START i 1 - H * + \-> XLO
+          \<<
+            XLO H + \-> XHI
+            \<<
+              XLO 0 R\->C XHI FREQ i GET R\->C BOX
+            \>>
+          \>>
+        NEXT
+        'MAXF' PURGE
+      \>>
+    \>>
+  \>>
   DHISTO
   \<<
     @ DHISTO - histograma de barras.
-    @ Interfaz: el binning NO se calcula aca. Lo hace DFRECTABLAC, que es
-    @ el mismo que usa la tabla de frecuencias y devuelve
-    @ { K H START FREQ MAT }. Antes estaba escrito dos veces, identico,
-    @ en DHISTO y en DFRECTABLA: dos copias de un conteo de clases que
-    @ tienen que coincidir siempre, porque la tabla y el grafico del
-    @ mismo ejercicio no pueden dar clases distintas.
+    @ Tres capas: DFRECTABLAC calcula las clases, DHISTOG dibuja, y este
+    @ objeto pone el formulario, el PICTURE y las cajas. PICTURE es
+    @ interactivo, asi que tiene que quedar aca y no en el dibujo: de otro
+    @ modo el harness no puede probar el grafico.
+    @ El binning NO se calcula aca ni se repite: es el mismo de la tabla
+    @ de frecuencias. La tabla y el grafico del mismo ejercicio no pueden
+    @ dar clases distintas.
     @
     @ Campos K/Ancho/Inicio opcionales: algunos ejemplos de catedra (ej.
     @ horas trabajadas por semana) NO usan Sturges ni el minimo real como
@@ -396,32 +439,12 @@ DIR
         DATA0 KWANT HWANT SWANT DFRECTABLAC OBJ\-> DROP
         DROP \-> K H START FREQ
         \<<
+          K H START FREQ DHISTOG
+          PICT PICTURE
           DATA0
           IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
           SIZE \-> N
           \<<
-            1. 'MAXF' STO
-            1 K FOR i
-              IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
-            NEXT
-            @ XRNG con el rango real de clases (START a START+K*H) y YRNG
-            @ con el rango real de frecuencia (0 a MAXF). Cada barra se
-            @ dibuja con los valores reales directos, sin formula de
-            @ escalado a pixel: XRNG/YRNG reescalan de verdad las
-            @ coordenadas de LINE/BOX/R\->C. Asi el cursor del modo
-            @ interactivo muestra clase y frecuencia reales.
-            ERASE
-            START START K H * + XRNG 0 MAXF YRNG
-            1 K FOR i
-              START i 1 - H * + \-> XLO
-              \<<
-                XLO H + \-> XHI
-                \<<
-                  XLO 0 R\->C XHI FREQ i GET R\->C BOX
-                \>>
-              \>>
-            NEXT
-            PICT PICTURE
             "Inicio: " START \->STR + 10 CHR +
             "Ancho (H): " + H \->STR +
             MSGBOX
@@ -431,7 +454,6 @@ DIR
             "Frecuencias:" 10 CHR +
             FREQ \->STR +
             MSGBOX
-            'MAXF' PURGE
           \>>
         \>>
       \>>
@@ -510,11 +532,97 @@ DIR
       \>>
     \>>
   \>>
+  DBOXPLOTG
+  \<<
+    @ DBOXPLOTG - el DIBUJO de DBOXPLOT, sin formulario y sin PICTURE.
+    @ Uso:  Datos RES DBOXPLOTG        (RES = lo que devuelve DBOXPLOTC)
+    @ Deja: nada. Dibuja en PICT.
+    @ Tres capas: DBOXPLOTC calcula, DBOXPLOTG dibuja, DBOXPLOT es la
+    @ interfaz. PICTURE es interactivo y tiene que quedar en la interfaz,
+    @ si no el harness no puede probar el grafico.
+    @ El eje Y no representa ningun dato: las filas 1.5 a 6.2 son un
+    @ reparto arbitrario de la pantalla.
+    \-> DATA0 RES
+    \<<
+      RES 1 GET \-> N
+      \<<
+        RES 2 GET \-> MINV
+        \<<
+          RES 3 GET \-> Q1
+          \<<
+            RES 4 GET \-> Q2
+            \<<
+              RES 5 GET \-> Q3
+              \<<
+                RES 6 GET \-> MAXV
+                \<<
+                  RES 10 GET \-> WMIN
+                  \<<
+                    RES 11 GET \-> WMAX
+                    \<<
+                      RES 12 GET \-> OUTS
+                      \<<
+                        DATA0
+                        IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+                        SORT \-> L
+                        \<<
+                          ERASE
+                          MINV MAXV XRNG 0 10 YRNG
+                          IF MAXV MINV == THEN 1 ELSE MAXV MINV - END \-> SPAN
+                          \<<
+                            @ Caja (Q1 a Q3)
+                            Q1 2.5 R\->C Q3 5.5 R\->C BOX
+                            @ Mediana
+                            Q2 2.5 R\->C Q2 5.5 R\->C LINE
+                            @ Bigotes
+                            WMIN 4. R\->C Q1 4. R\->C LINE
+                            Q3 4. R\->C WMAX 4. R\->C LINE
+                            WMIN 3.3 R\->C WMIN 4.7 R\->C LINE
+                            WMAX 3.3 R\->C WMAX 4.7 R\->C LINE
+                            @ Outliers, con offset proporcional al rango
+                            SPAN 40. / \-> OFFS
+                            \<<
+                              IF OUTS SIZE 0 > THEN
+                                1 OUTS SIZE FOR j
+                                  OUTS j GET \-> OX
+                                  \<<
+                                    OX OFFS - 4. R\->C OX OFFS + 4. R\->C LINE
+                                    OX 3.8 R\->C OX 4.2 R\->C LINE
+                                  \>>
+                                NEXT
+                              END
+                              @ Puntos de datos individuales, fila 1.5
+                              1 N FOR i
+                                L i GET 1.5 R\->C PIXON
+                              NEXT
+                              @ Eje de referencia con marcas en Min, Q1, Med, Q3, Max
+                              MINV 6. R\->C MAXV 6. R\->C LINE
+                              MINV 5.8 R\->C MINV 6.2 R\->C LINE
+                              Q1 5.8 R\->C Q1 6.2 R\->C LINE
+                              Q2 5.8 R\->C Q2 6.2 R\->C LINE
+                              Q3 5.8 R\->C Q3 6.2 R\->C LINE
+                              MAXV 5.8 R\->C MAXV 6.2 R\->C LINE
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
   DBOXPLOT
   \<<
     @ DBOXPLOT - caja, bigotes, outliers, eje y puntos individuales.
-    @ Interfaz: el calculo esta en DBOXPLOTC, que toma los datos de la pila
-    @ y devuelve { N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS }.
+    @ Tres capas: DBOXPLOTC calcula los doce numeros, DBOXPLOTG dibuja, y
+    @ este objeto pone el formulario, el PICTURE y las cajas. PICTURE es
+    @ interactivo, asi que queda aca: de otro modo el harness no puede
+    @ probar el grafico.
     @ Los cuartiles son por INDICE; para el metodo interpolado de catedra
     @ (Lp = (p/100)*(n+1)) esta DPCTIL, y pueden dar valores distintos.
     @ Deja los cinco numeros en la pila.
@@ -525,68 +633,23 @@ DIR
     IF THEN
       1 GET \-> DATA0
       \<<
-        DATA0 DBOXPLOTC OBJ\-> DROP
-        \-> N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS
+        DATA0 DBOXPLOTC \-> RES
         \<<
-          DATA0
-          IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
-          SORT \-> L
-          \<<
-            ERASE
-            MINV MAXV XRNG 0 10 YRNG
-            IF MAXV MINV == THEN 1 ELSE MAXV MINV - END \-> SPAN
-            \<<
-              @ Caja (Q1 a Q3), fila 2.5 a 5.5 (arbitrario: el eje Y no
-              @ representa ningun dato real)
-              Q1 2.5 R\->C Q3 5.5 R\->C BOX
-              @ Mediana
-              Q2 2.5 R\->C Q2 5.5 R\->C LINE
-              @ Bigotes
-              WMIN 4. R\->C Q1 4. R\->C LINE
-              Q3 4. R\->C WMAX 4. R\->C LINE
-              WMIN 3.3 R\->C WMIN 4.7 R\->C LINE
-              WMAX 3.3 R\->C WMAX 4.7 R\->C LINE
-              @ Outliers, con offset proporcional al rango de los datos
-              @ (los valores son reales, no columnas de pixel)
-              SPAN 40. / \-> OFFS
-              \<<
-                IF OUTS SIZE 0 > THEN
-                  1 OUTS SIZE FOR j
-                    OUTS j GET \-> OX
-                    \<<
-                      OX OFFS - 4. R\->C OX OFFS + 4. R\->C LINE
-                      OX 3.8 R\->C OX 4.2 R\->C LINE
-                    \>>
-                  NEXT
-                END
-                @ Puntos de datos individuales, fila 1.5 (arriba de la caja)
-                1 N FOR i
-                  L i GET 1.5 R\->C PIXON
-                NEXT
-                @ Eje de referencia con marcas en Min, Q1, Mediana, Q3, Max
-                MINV 6. R\->C MAXV 6. R\->C LINE
-                MINV 5.8 R\->C MINV 6.2 R\->C LINE
-                Q1 5.8 R\->C Q1 6.2 R\->C LINE
-                Q2 5.8 R\->C Q2 6.2 R\->C LINE
-                Q3 5.8 R\->C Q3 6.2 R\->C LINE
-                MAXV 5.8 R\->C MAXV 6.2 R\->C LINE
-                PICT PICTURE
-                "Min: " MINV \->STR + 10 CHR +
-                "Q1: " + Q1 \->STR +
-                MSGBOX
-                "Med: " Q2 \->STR + 10 CHR +
-                "Q3: " + Q3 \->STR +
-                MSGBOX
-                "Max: " MAXV \->STR + 10 CHR +
-                "RIC: " + IQR \->STR +
-                MSGBOX
-                "Outliers:" 10 CHR +
-                OUTS \->STR +
-                MSGBOX
-                { MINV Q1 Q2 Q3 MAXV }
-              \>>
-            \>>
-          \>>
+          DATA0 RES DBOXPLOTG
+          PICT PICTURE
+          "Min: " RES 2 GET \->STR + 10 CHR +
+          "Q1: " + RES 3 GET \->STR +
+          MSGBOX
+          "Med: " RES 4 GET \->STR + 10 CHR +
+          "Q3: " + RES 5 GET \->STR +
+          MSGBOX
+          "Max: " RES 6 GET \->STR + 10 CHR +
+          "RIC: " + RES 7 GET \->STR +
+          MSGBOX
+          "Outliers:" 10 CHR +
+          RES 12 GET \->STR +
+          MSGBOX
+          RES 2 GET RES 3 GET RES 4 GET RES 5 GET RES 6 GET 5 \->LIST
         \>>
       \>>
     END
@@ -661,14 +724,72 @@ DIR
       \>>
     \>>
   \>>
+  DCOVCORRG
+  \<<
+    @ DCOVCORRG - el DIBUJO de DCOVCORR, sin formulario y sin PICTURE.
+    @ Uso:  DatosX DatosY RES DCOVCORRG   (RES = lo de DCOVCORRC)
+    @ Deja: nada. Dibuja en PICT: dispersion + recta de regresion.
+    @ XRNG/YRNG con el rango REAL de X e Y, dibujando con los valores
+    @ directos. Los puntos se recorren en el orden ORIGINAL de los datos,
+    @ no el ordenado: los pares (x,y) tienen que quedar emparejados.
+    \-> DX0 DY0 RES
+    \<<
+      RES 1 GET \-> N
+      \<<
+        RES 8 GET \-> B0
+        \<<
+          RES 9 GET \-> B1
+          \<<
+            DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+            \<<
+              DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+              \<<
+                LX SORT \-> LXS
+                \<<
+                  LY SORT \-> LYS
+                  \<<
+                    LXS 1 GET \-> XMIN
+                    \<<
+                      LXS N GET \-> XMAX
+                      \<<
+                        LYS 1 GET \-> YMIN
+                        \<<
+                          LYS N GET \-> YMAX
+                          \<<
+                            ERASE
+                            XMIN XMAX XRNG YMIN YMAX YRNG
+                            @ Ejes: horizontal en Y=YMIN, vertical en X=XMIN
+                            XMIN YMIN R\->C XMAX YMIN R\->C LINE
+                            XMIN YMIN R\->C XMIN YMAX R\->C LINE
+                            @ Puntos de dispersion
+                            1 N FOR i
+                              LX i GET LY i GET R\->C PIXON
+                            NEXT
+                            @ Recta de regresion, de XMIN a XMAX
+                            XMIN B0 B1 XMIN * + R\->C
+                            XMAX B0 B1 XMAX * + R\->C LINE
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
   DCOVCORR
   \<<
     @ DCOVCORR - covarianza, correlacion y dispersion con recta de regresion.
-    @ Interfaz: el calculo esta en DCOVCORRC, que toma las dos listas de la
-    @ pila y devuelve { N XB YB COVXY SDX SDY R B0 B1 }. Esa es la unica
-    @ copia de las sumatorias en la suite: DOLSC tambien llama ahi, asi que
-    @ los dos programas dan el MISMO numero por construccion y no porque
-    @ alguien se acuerde de mantener las dos copias sincronizadas.
+    @ Tres capas: DCOVCORRC calcula, DCOVCORRG dibuja, y este objeto pone
+    @ el formulario, el PICTURE y las cajas. PICTURE es interactivo, asi
+    @ que queda aca: de otro modo el harness no puede probar el grafico.
+    @ DCOVCORRC es la UNICA copia de estas sumatorias en la suite: DOLSC
+    @ tambien llama ahi, asi que los dos programas dan el MISMO numero por
+    @ construccion y no porque alguien mantenga dos copias sincronizadas.
     @ Pide dos listas separadas (X e Y), no una matriz.
     "Covarianza y Correlacion (Manual)"
     {
@@ -680,62 +801,22 @@ DIR
     IF THEN
       OBJ\-> DROP \-> DX0 DY0
       \<<
-        DX0 DY0 DCOVCORRC OBJ\-> DROP \-> N XB YB COVXY SDX SDY R B0 B1
+        DX0 DY0 DCOVCORRC \-> RES
         \<<
-          DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END SORT \-> LXS
-          \<<
-            DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END SORT \-> LYS
-            \<<
-              LXS 1 GET \-> XMIN
-              \<<
-                LXS N GET \-> XMAX
-                \<<
-                  LYS 1 GET \-> YMIN
-                  \<<
-                    LYS N GET \-> YMAX
-                    \<<
-                      @ XRNG/YRNG con el rango REAL de X e Y, dibujando con
-                      @ los valores directos: XRNG/YRNG reescalan de verdad
-                      @ las coordenadas de LINE/PIXON/R\->C. Asi el cursor
-                      @ del modo interactivo muestra los valores reales.
-                      ERASE
-                      XMIN XMAX XRNG YMIN YMAX YRNG
-                      @ Ejes: horizontal en Y=YMIN, vertical en X=XMIN
-                      XMIN YMIN R\->C XMAX YMIN R\->C LINE
-                      XMIN YMIN R\->C XMIN YMAX R\->C LINE
-                      @ Puntos de dispersion. Se recorren los datos en su
-                      @ orden ORIGINAL (no el ordenado): los pares (x,y)
-                      @ tienen que mantenerse emparejados.
-                      DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
-                      \<<
-                        DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
-                        \<<
-                          1 N FOR i
-                            LX i GET LY i GET R\->C PIXON
-                          NEXT
-                        \>>
-                      \>>
-                      @ Recta de regresion, de XMIN a XMAX
-                      XMIN B0 B1 XMIN * + R\->C
-                      XMAX B0 B1 XMAX * + R\->C LINE
-                      PICT PICTURE
-                      "Media X: " XB \->STR + 10 CHR +
-                      "Media Y: " + YB \->STR +
-                      MSGBOX
-                      "sX: " SDX \->STR + 10 CHR +
-                      "sY: " + SDY \->STR +
-                      MSGBOX
-                      "sXY: " COVXY \->STR + 10 CHR +
-                      "r (Pearson): " + R \->STR +
-                      MSGBOX
-                      "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
-                      MSGBOX
-                    \>>
-                  \>>
-                \>>
-              \>>
-            \>>
-          \>>
+          DX0 DY0 RES DCOVCORRG
+          PICT PICTURE
+          "Media X: " RES 2 GET \->STR + 10 CHR +
+          "Media Y: " + RES 3 GET \->STR +
+          MSGBOX
+          "sX: " RES 5 GET \->STR + 10 CHR +
+          "sY: " + RES 6 GET \->STR +
+          MSGBOX
+          "sXY: " RES 4 GET \->STR + 10 CHR +
+          "r (Pearson): " + RES 7 GET \->STR +
+          MSGBOX
+          "Y = " RES 8 GET 4 SIGFIG \->STR + " + " +
+          RES 9 GET 4 SIGFIG \->STR + "*X" +
+          MSGBOX
         \>>
       \>>
     END
@@ -814,11 +895,79 @@ DIR
       \>>
     \>>
   \>>
+  DMKTG
+  \<<
+    @ DMKTG - el DIBUJO de DMKT, sin formulario y sin PICTURE.
+    @ Uso:  a b c d RES DMKTG        (RES = lo que devuelve DMKTC)
+    @ Deja: nada. Dibuja en PICT.
+    @
+    @ OJO: este grafico usa coordenadas estilo PIXEL con XRNG 0..130 y
+    @ YRNG 0..79, y escala los valores a mano (columnas 20 a 110, filas 10
+    @ a 60). Es el enfoque que CLAUDE.md 2.8 recomienda NO mezclar con
+    @ rangos reales; los demas graficos de la suite (DCOMPFIRM, DMKTFISC,
+    @ DHISTO, DBOXPLOT, DCOVCORR) ya usan rango real. Queda asi porque
+    @ anda y porque cambiarlo es rediseniar el grafico, no partirlo; pero
+    @ aca esta anotado que es el unico que quedo con el enfoque viejo.
+    @
+    @ Eje horizontal = Precio, de 0 a PMAX = 2*PE (centra el equilibrio).
+    @ Eje vertical = Cantidad, de 0 a QMAX = el mayor entre el intercepto
+    @ de demanda (a) y la oferta en PMAX, para que ninguna curva se salga.
+    \-> A B C D RES
+    \<<
+      RES 1 GET \-> PE
+      \<<
+        RES 2 GET \-> QE
+        \<<
+          PE 2. * \->NUM \-> PMAX
+          \<<
+            C D PMAX * + \->NUM \-> SMAX
+            \<<
+              IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
+              \<<
+                ERASE
+                0 130 XRNG 0 79 YRNG
+                @ Ejes de referencia
+                20. 60. R\->C 110. 60. R\->C LINE
+                20. 10. R\->C 20. 60. R\->C LINE
+                @ Demanda: (P=0,Q=A) a (P=PMAX,Q=A-B*PMAX)
+                A QMAX / 50. * 60. SWAP - 0 RND \-> DPY1
+                \<<
+                  A B PMAX * - QMAX / 50. * 60. SWAP - 0 RND \-> DPY2
+                  \<<
+                    20. DPY1 R\->C 110. DPY2 R\->C LINE
+                    @ Oferta: (P=0,Q=C) a (P=PMAX,Q=SMAX)
+                    C QMAX / 50. * 60. SWAP - 0 RND \-> SPY1
+                    \<<
+                      SMAX QMAX / 50. * 60. SWAP - 0 RND \-> SPY2
+                      \<<
+                        20. SPY1 R\->C 110. SPY2 R\->C LINE
+                        @ Punto de equilibrio (cruz +)
+                        PE PMAX / 90. * 20. + 0 RND \-> EPX
+                        \<<
+                          QE QMAX / 50. * 60. SWAP - 0 RND \-> EPY
+                          \<<
+                            EPX 3 - EPY R\->C EPX 3 + EPY R\->C LINE
+                            EPX EPY 3 - R\->C EPX EPY 3 + R\->C LINE
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
   DMKT
   \<<
     @ DMKT - equilibrio de mercado simple, con grafico.
-    @ Interfaz: el calculo esta en DMKTC, que toma a b c d T de la pila y
-    @ devuelve { PE QE }. Aca quedan el formulario y el dibujo.
+    @ Tres capas: DMKTC calcula { PE QE }, DMKTG dibuja, y este objeto
+    @ pone los formularios, el PICTURE y la caja. PICTURE es interactivo,
+    @ asi que queda aca: de otro modo el harness no puede probar el
+    @ grafico.
     @ Van dos INFORM seguidos porque el limite practico es ~4 campos por
     @ pantalla (con 5 el ultimo queda inalcanzable con las flechas).
     "Mercado: Qd=a-b*P, Qs=c+d*P"
@@ -840,56 +989,14 @@ DIR
         IF THEN
           1 GET \-> T
           \<<
-            A B C D T DMKTC OBJ\-> DROP \-> PE QE
+            A B C D T DMKTC \-> RES
             \<<
-              @ Grafico de Oferta y Demanda.
-              @ Eje horizontal = Precio (P), de 0 a PMAX = 2*PE (centra el
-              @ equilibrio). Eje vertical = Cantidad (Q), de 0 a QMAX, el
-              @ mayor entre el intercepto de demanda (A) y la oferta en
-              @ PMAX, para que ninguna curva se salga de la pantalla.
-              PE 2. * \->NUM \-> PMAX
-              \<<
-                C D PMAX * + \->NUM \-> SMAX
-                \<<
-                  IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
-                  \<<
-                    ERASE
-                    0 130 XRNG 0 79 YRNG
-                    @ Ejes de referencia
-                    20. 60. R\->C 110. 60. R\->C LINE
-                    20. 10. R\->C 20. 60. R\->C LINE
-                    @ Demanda: (P=0,Q=A) a (P=PMAX,Q=A-B*PMAX)
-                    A QMAX / 50. * 60. SWAP - 0 RND \-> DPY1
-                    \<<
-                      A B PMAX * - QMAX / 50. * 60. SWAP - 0 RND \-> DPY2
-                      \<<
-                        20. DPY1 R\->C 110. DPY2 R\->C LINE
-                        @ Oferta: (P=0,Q=C) a (P=PMAX,Q=SMAX)
-                        C QMAX / 50. * 60. SWAP - 0 RND \-> SPY1
-                        \<<
-                          SMAX QMAX / 50. * 60. SWAP - 0 RND \-> SPY2
-                          \<<
-                            20. SPY1 R\->C 110. SPY2 R\->C LINE
-                            @ Punto de equilibrio (cruz +)
-                            PE PMAX / 90. * 20. + 0 RND \-> EPX
-                            \<<
-                              QE QMAX / 50. * 60. SWAP - 0 RND \-> EPY
-                              \<<
-                                EPX 3 - EPY R\->C EPX 3 + EPY R\->C LINE
-                                EPX EPY 3 - R\->C EPX EPY 3 + R\->C LINE
-                                PICT PICTURE
-                                "Precio (P*): " PE \->STR + 10 CHR +
-                                "Cantidad (Q*): " + QE \->STR +
-                                MSGBOX
-                              \>>
-                            \>>
-                          \>>
-                        \>>
-                      \>>
-                    \>>
-                  \>>
-                \>>
-              \>>
+              A B C D RES DMKTG
+              PICT PICTURE
+              "Precio (P*): " RES 1 GET \->STR + 10 CHR +
+              "Cantidad (Q*): " + RES 2 GET \->STR +
+              MSGBOX
+              RES 1 GET RES 2 GET
             \>>
           \>>
         END
@@ -982,44 +1089,24 @@ DIR
       \>>
     \>>
   \>>
-  DMKTFISC
+  DMKTFISCG
   \<<
-    @ DMKTFISC - mercado con impuesto/subsidio, controles de precio y grafico.
-    @ Interfaz: el calculo esta en DMKTFISCC, que toma a b c d T PMax PMin
-    @ de la pila y devuelve
-    @ { PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES }.
-    @ Aca quedan los dos formularios, el dibujo y las seis cajas.
-    @ Van dos INFORM porque el limite practico es ~4 campos por pantalla.
-    "Mercado + Impuestos: Qd=a-b*P, Qs=c+d*P"
-    {
-      { "a (Demanda Auto):" "0" 0 }
-      { "b (Sensib. Dem):" "0" 0 }
-      { "c (Oferta Auto):" "0" 0 }
-      { "d (Sensib. Of):" "0" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> A B C D
+    @ DMKTFISCG - el DIBUJO de DMKTFISC, sin formulario y sin PICTURE.
+    @ Uso:  a b c d T PMax PMin RES DMKTFISCG   (RES = lo de DMKTFISCC)
+    @ Deja: nada. Dibuja en PICT.
+    @ XRNG/YRNG con el rango REAL (0 a QMAX, 0 a PMAX), dibujando con los
+    @ valores directos: asi el cursor del modo interactivo muestra
+    @ Cantidad y Precio reales.
+    \-> A B C D T PMAXW PMINW RES
+    \<<
+      RES 1 GET \-> PB
       \<<
-        "Impuesto y Controles de Precio"
-        {
-          { "Impuesto T (0=sin imp):" "0" 0 }
-          { "Precio Maximo (0=sin techo):" "0" 0 }
-          { "Precio Minimo (0=sin piso):" "0" 0 }
-        }
-        { } { } { }
-        INFORM
-        IF THEN
-          OBJ\-> DROP \-> T PMAXW PMINW
+        RES 2 GET \-> QE
+        \<<
+          RES 3 GET \-> PS
           \<<
-            A B C D T PMAXW PMINW DMKTFISCC OBJ\-> DROP
-            \-> PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES
+            RES 5 GET \-> Q0
             \<<
-              @ XRNG/YRNG con el rango REAL (0 a QMAX, 0 a PMAX), dibujando
-              @ con los valores reales directos: XRNG/YRNG reescalan de
-              @ verdad las coordenadas de LINE/BOX/R\->C, y asi el cursor
-              @ del modo interactivo muestra Cantidad y Precio reales.
               PB 2. * \->NUM \-> PMAX0
               \<<
                 IF PMAXW PMAX0 > THEN PMAXW ELSE PMAX0 END \->NUM \-> PMAX1
@@ -1046,8 +1133,7 @@ DIR
                         A 0 R\->C A B PMAX * - PMAX R\->C LINE
                         @ Oferta: (Q=C,P=0) a (Q=SMAX,P=PMAX)
                         C 0 R\->C SMAX PMAX R\->C LINE
-                        @ Cruz de equilibrio en (QE,PB), con offset
-                        @ proporcional a la escala de cada eje
+                        @ Cruz de equilibrio en (QE,PB)
                         QMAX 40. / \-> QOFFS
                         \<<
                           PMAX 40. / \-> POFFS
@@ -1069,7 +1155,6 @@ DIR
                                     \>>
                                   NEXT
                                   @ Relleno del PIE: 16 lineas verticales
-                                  @ entre QE y Q0
                                   IF QE Q0 < THEN QE ELSE Q0 END \-> QLO
                                   \<<
                                     IF QE Q0 < THEN Q0 ELSE QE END \-> QHI
@@ -1091,25 +1176,6 @@ DIR
                                 \>>
                               \>>
                             END
-                            PICT PICTURE
-                            "Pb (comprador): " PB \->STR + 10 CHR +
-                            "Ps (vendedor): " + PS \->STR +
-                            MSGBOX
-                            "Q*: " QE \->STR + 10 CHR +
-                            "Recaudacion: " + RECAUD \->STR +
-                            MSGBOX
-                            "PIE (DWL): " PIE \->STR + 10 CHR +
-                            "Q sin imp: " + Q0 \->STR +
-                            MSGBOX
-                            "Inc.Comprador: " INCC \->STR + "%" + 10 CHR +
-                            "Inc.Vendedor: " + INCP \->STR + "%" +
-                            MSGBOX
-                            "Escasez (techo): " ESCASEZ \->STR + 10 CHR +
-                            "Excedente (piso): " + EXCEDENTE \->STR +
-                            MSGBOX
-                            "Ed (demanda): " ED \->STR + 10 CHR +
-                            "Es (oferta): " + ES \->STR +
-                            MSGBOX
                           \>>
                         \>>
                       \>>
@@ -1117,6 +1183,65 @@ DIR
                   \>>
                 \>>
               \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DMKTFISC
+  \<<
+    @ DMKTFISC - mercado con impuesto/subsidio, controles de precio y grafico.
+    @ Tres capas: DMKTFISCC calcula los trece numeros, DMKTFISCG dibuja, y
+    @ este objeto pone los dos formularios, el PICTURE y las seis cajas.
+    @ PICTURE es interactivo, asi que queda aca: de otro modo el harness no
+    @ puede probar el grafico.
+    @ Van dos INFORM porque el limite practico es ~4 campos por pantalla.
+    "Mercado + Impuestos: Qd=a-b*P, Qs=c+d*P"
+    {
+      { "a (Demanda Auto):" "0" 0 }
+      { "b (Sensib. Dem):" "0" 0 }
+      { "c (Oferta Auto):" "0" 0 }
+      { "d (Sensib. Of):" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> A B C D
+      \<<
+        "Impuesto y Controles de Precio"
+        {
+          { "Impuesto T (0=sin imp):" "0" 0 }
+          { "Precio Maximo (0=sin techo):" "0" 0 }
+          { "Precio Minimo (0=sin piso):" "0" 0 }
+        }
+        { } { } { }
+        INFORM
+        IF THEN
+          OBJ\-> DROP \-> T PMAXW PMINW
+          \<<
+            A B C D T PMAXW PMINW DMKTFISCC \-> RES
+            \<<
+              A B C D T PMAXW PMINW RES DMKTFISCG
+              PICT PICTURE
+              "Pb (comprador): " RES 1 GET \->STR + 10 CHR +
+              "Ps (vendedor): " + RES 3 GET \->STR +
+              MSGBOX
+              "Q*: " RES 2 GET \->STR + 10 CHR +
+              "Recaudacion: " + RES 8 GET \->STR +
+              MSGBOX
+              "PIE (DWL): " RES 9 GET \->STR + 10 CHR +
+              "Q sin imp: " + RES 5 GET \->STR +
+              MSGBOX
+              "Inc.Comprador: " RES 10 GET \->STR + "%" + 10 CHR +
+              "Inc.Vendedor: " + RES 11 GET \->STR + "%" +
+              MSGBOX
+              "Escasez (techo): " RES 6 GET \->STR + 10 CHR +
+              "Excedente (piso): " + RES 7 GET \->STR +
+              MSGBOX
+              "Ed (demanda): " RES 12 GET \->STR + 10 CHR +
+              "Es (oferta): " + RES 13 GET \->STR +
+              MSGBOX
             \>>
           \>>
         END
@@ -1151,12 +1276,63 @@ DIR
       \>>
     \>>
   \>>
+  DCOMPFIRMG
+  \<<
+    @ DCOMPFIRMG - el DIBUJO de DCOMPFIRM, sin formulario y sin PICTURE.
+    @ Uso:  CF b c P RES DCOMPFIRMG     (RES = lo que devuelve DCOMPFIRMC)
+    @ Deja: nada. Dibuja en PICT.
+    @ XRNG/YRNG con el rango real (0 a QMAX, 0 a PMAX), dibujando con los
+    @ valores directos: asi el cursor del modo interactivo muestra Cantidad
+    @ y Costo/Precio reales.
+    \-> CF B C P RES
+    \<<
+      RES 1 GET \-> Q
+      \<<
+        IF Q 0 == THEN 10. ELSE Q 2. * END \->NUM \-> QMAX
+        \<<
+          B 2. C * QMAX * + \->NUM \-> CMGMAX
+          \<<
+            IF P CMGMAX > THEN P ELSE CMGMAX END 1.1 * \->NUM \-> PMAX
+            \<<
+              ERASE
+              0 QMAX XRNG 0 PMAX YRNG
+              @ Ejes
+              0 0 R\->C QMAX 0 R\->C LINE
+              0 0 R\->C 0 PMAX R\->C LINE
+              @ CMg: (Q=0,B) a (Q=QMAX,CMGMAX)
+              0 B R\->C QMAX CMGMAX R\->C LINE
+              @ CVMe: (Q=0,B) a (Q=QMAX,AVCMAX)
+              B C QMAX * + \->NUM \-> AVCMAX
+              \<<
+                0 B R\->C QMAX AVCMAX R\->C LINE
+                @ Linea horizontal de Precio
+                0 P R\->C QMAX P R\->C LINE
+                @ Cruz de equilibrio (solo si no cerro), con offset
+                @ proporcional a la escala de cada eje
+                IF Q 0 > THEN
+                  QMAX 40. / \-> QOFFS
+                  \<<
+                    PMAX 40. / \-> POFFS
+                    \<<
+                      Q QOFFS - P R\->C Q QOFFS + P R\->C LINE
+                      Q P POFFS - R\->C Q P POFFS + R\->C LINE
+                    \>>
+                  \>>
+                END
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
   DCOMPFIRM
   \<<
     @ DCOMPFIRM - empresa competitiva, con grafico CMg/CVMe/P.
-    @ Interfaz: el calculo esta en DCOMPFIRMC, que toma CF b c P de la
-    @ pila y devuelve { Q PROFIT CIERRA }. Aca quedan el formulario,
-    @ el dibujo y el veredicto.
+    @ Tres capas: DCOMPFIRMC calcula { Q PROFIT CIERRA }, DCOMPFIRMG
+    @ dibuja, y este objeto pone el formulario, el PICTURE y las cajas.
+    @ PICTURE es interactivo, asi que queda aca: de otro modo el harness
+    @ no puede probar el grafico.
     "Empresa Competitiva: CT=CF+b*q+c*q^2"
     {
       { "CF (Costo Fijo):" "0" 0 }
@@ -1169,63 +1345,25 @@ DIR
     IF THEN
       OBJ\-> DROP \-> CF B C P
       \<<
-        CF B C P DCOMPFIRMC OBJ\-> DROP \-> Q PROFIT CIERRA
+        CF B C P DCOMPFIRMC \-> RES
         \<<
-          IF Q 0 == THEN 10. ELSE Q 2. * END \->NUM \-> QMAX
-          \<<
-            B 2. C * QMAX * + \->NUM \-> CMGMAX
-            \<<
-              IF P CMGMAX > THEN P ELSE CMGMAX END 1.1 * \->NUM \-> PMAX
-              \<<
-                ERASE
-                @ XRNG/YRNG con el rango real (0 a QMAX, 0 a PMAX),
-                @ dibujando con los valores directos: asi el cursor del
-                @ modo interactivo muestra Cantidad y Costo/Precio reales.
-                0 QMAX XRNG 0 PMAX YRNG
-                @ Ejes
-                0 0 R\->C QMAX 0 R\->C LINE
-                0 0 R\->C 0 PMAX R\->C LINE
-                @ CMg: (Q=0,B) a (Q=QMAX,CMGMAX)
-                0 B R\->C QMAX CMGMAX R\->C LINE
-                @ CVMe: (Q=0,B) a (Q=QMAX,AVCMAX)
-                B C QMAX * + \->NUM \-> AVCMAX
-                \<<
-                  0 B R\->C QMAX AVCMAX R\->C LINE
-                  @ Linea horizontal de Precio
-                  0 P R\->C QMAX P R\->C LINE
-                  @ Punto de equilibrio (solo si no cerro), con offset
-                  @ proporcional a la escala de cada eje.
-                  IF Q 0 > THEN
-                    QMAX 40. / \-> QOFFS
-                    \<<
-                      PMAX 40. / \-> POFFS
-                      \<<
-                        Q QOFFS - P R\->C Q QOFFS + P R\->C LINE
-                        Q P POFFS - R\->C Q P POFFS + R\->C LINE
-                      \>>
-                    \>>
-                  END
-                  PICT PICTURE
-                  "Q*: " Q \->STR + 10 CHR +
-                  "Beneficio: " + PROFIT \->STR +
-                  MSGBOX
-                  IF CIERRA 1 == THEN
-                    @ La semilla NO lleva + adelante: el MSGBOX de arriba ya
-                    @ consumio el string anterior y la pila quedo vacia, asi
-                    @ que el + no tenia con que concatenar (CLAUDE.md 2.4).
-                    @ Estaba asi desde antes de partir el programa.
-                    "La empresa CIERRA en el corto" 10 CHR +
-                    "plazo (P menor al CMg minimo)." +
-                    MSGBOX
-                  ELSE
-                    "La empresa sigue produciendo" 10 CHR +
-                    "en el corto plazo." +
-                    MSGBOX
-                  END
-                \>>
-              \>>
-            \>>
-          \>>
+          CF B C P RES DCOMPFIRMG
+          PICT PICTURE
+          "Q*: " RES 1 GET \->STR + 10 CHR +
+          "Beneficio: " + RES 2 GET \->STR +
+          MSGBOX
+          @ La semilla NO lleva + adelante: el MSGBOX de arriba ya consumio
+          @ el string y la pila quedo vacia, asi que el + no tendria con que
+          @ concatenar (CLAUDE.md 2.4). Estaba mal desde antes.
+          IF RES 3 GET 1 == THEN
+            "La empresa CIERRA en el corto" 10 CHR +
+            "plazo (P menor al CMg minimo)." +
+            MSGBOX
+          ELSE
+            "La empresa sigue produciendo" 10 CHR +
+            "en el corto plazo." +
+            MSGBOX
+          END
         \>>
       \>>
     END
