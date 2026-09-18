@@ -1,181 +1,178 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DTROZOS
-  \<<
-    "Ventana de Grafico"
-    {
-      { "Xmin ventana:" "-10" 0 }
-      { "Xmax ventana:" "10" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> WXMIN WXMAX
-      \<<
-        "Funcion a Trozos"
-        { { "Cuantos tramos?:" "1" 0 } }
-        { } { } { }
-        INFORM
-        IF THEN
-          1 GET \-> N
-          \<<
-            { } 'EXPRS' STO
-            { } 'TIZQ' STO
-            { } 'VIZQ' STO
-            { } 'TDER' STO
-            { } 'VDER' STO
-            1 N FOR i
-              "Tramo " i \->STR + " - Expresion e Izquierda"
-              {
-                { "Expresion, ej 'X^2':" "'X'" }
-                { "Izq con comillas dobles (menor o menor-igual):" "" }
-                { "Valor izq (ignorado si Extremo izq vacio):" "0" 0 }
-              }
-              { } { } { }
-              INFORM
-              IF THEN
-                OBJ\-> DROP \-> EXPR0 TI VI
-                \<<
-                  @ Por si el campo devuelve un string en vez de un
-                  @ objeto algebraico ya interpretado.
-                  EXPR0 IF DUP TYPE 2 == THEN STR\-> END \-> EXPR
-                  \<<
-                    "Tramo " i \->STR + " - Derecha"
-                    {
-                      { "Der con comillas dobles (mayor o mayor-igual):" "" }
-                      { "Valor der (ignorado si Extremo der vacio):" "0" 0 }
-                    }
-                    { } { } { }
-                    INFORM
-                    IF THEN
-                      OBJ\-> DROP \-> TD VD
-                      \<<
-                        EXPRS EXPR + 'EXPRS' STO
-                        TIZQ TI + 'TIZQ' STO
-                        VIZQ VI + 'VIZQ' STO
-                        TDER TD + 'TDER' STO
-                        VDER VD + 'VDER' STO
-                      \>>
-                    END
-                  \>>
-                \>>
-              END
-            NEXT
-            
-            @ Semilla inicial de Y (para escalar el eje; usa el
-            @ primer punto real de dibujo del primer tramo)
-            IF TIZQ 1 GET 0 == THEN WXMIN ELSE VIZQ 1 GET END \->NUM \-> YSEEDX
-            \<<
-              YSEEDX 'X' STO
-              EXPRS 1 GET EVAL \->NUM \-> YMIN
+\<<
+  "Ventana de Grafico"
+  {
+    { "Xmin ventana:" "-10" 0 }
+    { "Xmax ventana:" "10" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> WXMIN WXMAX
+    \<<
+      "Funcion a Trozos"
+      { { "Cuantos tramos?:" "1" 0 } }
+      { } { } { }
+      INFORM
+      IF THEN
+        1 GET \-> N
+        \<<
+          { } 'EXPRS' STO
+          { } 'TIZQ' STO
+          { } 'VIZQ' STO
+          { } 'TDER' STO
+          { } 'VDER' STO
+          1 N FOR i
+            "Tramo " i \->STR + " - Expresion e Izquierda"
+            {
+              { "Expresion, ej 'X^2':" "'X'" }
+              { "Izq con comillas dobles (menor o menor-igual):" "" }
+              { "Valor izq (ignorado si Extremo izq vacio):" "0" 0 }
+            }
+            { } { } { }
+            INFORM
+            IF THEN
+              OBJ\-> DROP \-> EXPR0 TI VI
               \<<
-                YMIN \-> YMAX
+                @ Por si el campo devuelve un string en vez de un
+                @ objeto algebraico ya interpretado.
+                EXPR0 IF DUP TYPE 2 == THEN STR\-> END \-> EXPR
                 \<<
-                  1 N FOR i
-                    IF TIZQ i GET "" == THEN WXMIN ELSE VIZQ i GET END \->NUM \-> ALEFT
+                  "Tramo " i \->STR + " - Derecha"
+                  {
+                    { "Der con comillas dobles (mayor o mayor-igual):" "" }
+                    { "Valor der (ignorado si Extremo der vacio):" "0" 0 }
+                  }
+                  { } { } { }
+                  INFORM
+                  IF THEN
+                    OBJ\-> DROP \-> TD VD
                     \<<
-                      IF TDER i GET "" == THEN WXMAX ELSE VDER i GET END \->NUM \-> ARIGHT
-                      \<<
-                        0 9 FOR j
-                          ARIGHT ALEFT - 9. / j * ALEFT + \-> XJ
-                          \<<
-                            XJ 'X' STO
-                            EXPRS i GET EVAL \->NUM \-> YJ
-                            \<<
-                              IF YJ YMIN < THEN YJ 'YMIN' STO END
-                              IF YJ YMAX > THEN YJ 'YMAX' STO END
-                            \>>
-                          \>>
-                        NEXT
-                      \>>
+                      EXPRS EXPR + 'EXPRS' STO
+                      TIZQ TI + 'TIZQ' STO
+                      VIZQ VI + 'VIZQ' STO
+                      TDER TD + 'TDER' STO
+                      VDER VD + 'VDER' STO
                     \>>
-                  NEXT
-                  
-                  @ Salvaguarda de rango degenerado (aprendida con
-                  @ el error anterior de XRNG bad argument value)
-                  IF YMAX YMIN == THEN YMAX 1. + 'YMAX' STO END
-                  
-                  ERASE
-                  WXMIN WXMAX XRNG YMIN YMAX YRNG
-                  
-                  WXMAX WXMIN - 60. / \-> QOFFS
+                  END
+                \>>
+              \>>
+            END
+          NEXT
+          
+          @ Semilla inicial de Y (para escalar el eje; usa el
+          @ primer punto real de dibujo del primer tramo)
+          IF TIZQ 1 GET 0 == THEN WXMIN ELSE VIZQ 1 GET END \->NUM \-> YSEEDX
+          \<<
+            YSEEDX 'X' STO
+            EXPRS 1 GET EVAL \->NUM \-> YMIN
+            \<<
+              YMIN \-> YMAX
+              \<<
+                1 N FOR i
+                  IF TIZQ i GET "" == THEN WXMIN ELSE VIZQ i GET END \->NUM \-> ALEFT
                   \<<
-                    YMAX YMIN - 40. / \-> YOFFS
+                    IF TDER i GET "" == THEN WXMAX ELSE VDER i GET END \->NUM \-> ARIGHT
                     \<<
-                      1 N FOR i
-                        IF TIZQ i GET "" == THEN WXMIN ELSE VIZQ i GET END \->NUM \-> ALEFT
+                      0 9 FOR j
+                        ARIGHT ALEFT - 9. / j * ALEFT + \-> XJ
                         \<<
-                          IF TDER i GET "" == THEN WXMAX ELSE VDER i GET END \->NUM \-> ARIGHT
+                          XJ 'X' STO
+                          EXPRS i GET EVAL \->NUM \-> YJ
                           \<<
-                            ALEFT 'X' STO
-                            EXPRS i GET EVAL \->NUM \-> PREVY
-                            \<<
-                              ALEFT \-> PREVX
-                              \<<
-                                1 9 FOR j
-                                  ARIGHT ALEFT - 9. / j * ALEFT + \-> XJ
-                                  \<<
-                                    XJ 'X' STO
-                                    EXPRS i GET EVAL \->NUM \-> YJ
-                                    \<<
-                                      PREVX PREVY R\->C XJ YJ R\->C LINE
-                                      XJ 'PREVX' STO
-                                      YJ 'PREVY' STO
-                                    \>>
-                                  \>>
-                                NEXT
-                                
-                                @ Marcador izquierdo, SOLO si hay un
-                                @ limite real (no se dibuja nada en
-                                @ el borde de la ventana, porque ahi
-                                @ no es un extremo real del tramo)
-                                IF TIZQ i GET "" == NOT THEN
-                                  ALEFT 'X' STO
-                                  EXPRS i GET EVAL \->NUM \-> LY
-                                  \<<
-                                    ALEFT QOFFS - LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS - R\->C LINE
-                                    ALEFT QOFFS + LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS + R\->C LINE
-                                    ALEFT QOFFS + LY YOFFS + R\->C ALEFT QOFFS - LY YOFFS + R\->C LINE
-                                    ALEFT QOFFS - LY YOFFS + R\->C ALEFT QOFFS - LY YOFFS - R\->C LINE
-                                    IF TIZQ i GET "<=" == THEN
-                                      ALEFT QOFFS - LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS + R\->C LINE
-                                      ALEFT QOFFS + LY YOFFS - R\->C ALEFT QOFFS - LY YOFFS + R\->C LINE
-                                    END
-                                  \>>
-                                END
-                                
-                                @ Marcador derecho, SOLO si hay limite real
-                                IF TDER i GET "" == NOT THEN
-                                  ARIGHT 'X' STO
-                                  EXPRS i GET EVAL \->NUM \-> RY
-                                  \<<
-                                    ARIGHT QOFFS - RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS - R\->C LINE
-                                    ARIGHT QOFFS + RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS + R\->C LINE
-                                    ARIGHT QOFFS + RY YOFFS + R\->C ARIGHT QOFFS - RY YOFFS + R\->C LINE
-                                    ARIGHT QOFFS - RY YOFFS + R\->C ARIGHT QOFFS - RY YOFFS - R\->C LINE
-                                    IF TDER i GET "<=" == THEN
-                                      ARIGHT QOFFS - RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS + R\->C LINE
-                                      ARIGHT QOFFS + RY YOFFS - R\->C ARIGHT QOFFS - RY YOFFS + R\->C LINE
-                                    END
-                                  \>>
-                                END
-                              \>>
-                            \>>
+                            IF YJ YMIN < THEN YJ 'YMIN' STO END
+                            IF YJ YMAX > THEN YJ 'YMAX' STO END
                           \>>
                         \>>
                       NEXT
-                      
-                      PICT PICTURE
                     \>>
+                  \>>
+                NEXT
+                
+                @ Salvaguarda de rango degenerado (aprendida con
+                @ el error anterior de XRNG bad argument value)
+                IF YMAX YMIN == THEN YMAX 1. + 'YMAX' STO END
+                
+                ERASE
+                WXMIN WXMAX XRNG YMIN YMAX YRNG
+                
+                WXMAX WXMIN - 60. / \-> QOFFS
+                \<<
+                  YMAX YMIN - 40. / \-> YOFFS
+                  \<<
+                    1 N FOR i
+                      IF TIZQ i GET "" == THEN WXMIN ELSE VIZQ i GET END \->NUM \-> ALEFT
+                      \<<
+                        IF TDER i GET "" == THEN WXMAX ELSE VDER i GET END \->NUM \-> ARIGHT
+                        \<<
+                          ALEFT 'X' STO
+                          EXPRS i GET EVAL \->NUM \-> PREVY
+                          \<<
+                            ALEFT \-> PREVX
+                            \<<
+                              1 9 FOR j
+                                ARIGHT ALEFT - 9. / j * ALEFT + \-> XJ
+                                \<<
+                                  XJ 'X' STO
+                                  EXPRS i GET EVAL \->NUM \-> YJ
+                                  \<<
+                                    PREVX PREVY R\->C XJ YJ R\->C LINE
+                                    XJ 'PREVX' STO
+                                    YJ 'PREVY' STO
+                                  \>>
+                                \>>
+                              NEXT
+                              
+                              @ Marcador izquierdo, SOLO si hay un
+                              @ limite real (no se dibuja nada en
+                              @ el borde de la ventana, porque ahi
+                              @ no es un extremo real del tramo)
+                              IF TIZQ i GET "" == NOT THEN
+                                ALEFT 'X' STO
+                                EXPRS i GET EVAL \->NUM \-> LY
+                                \<<
+                                  ALEFT QOFFS - LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS - R\->C LINE
+                                  ALEFT QOFFS + LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS + R\->C LINE
+                                  ALEFT QOFFS + LY YOFFS + R\->C ALEFT QOFFS - LY YOFFS + R\->C LINE
+                                  ALEFT QOFFS - LY YOFFS + R\->C ALEFT QOFFS - LY YOFFS - R\->C LINE
+                                  IF TIZQ i GET "<=" == THEN
+                                    ALEFT QOFFS - LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS + R\->C LINE
+                                    ALEFT QOFFS + LY YOFFS - R\->C ALEFT QOFFS - LY YOFFS + R\->C LINE
+                                  END
+                                \>>
+                              END
+                              
+                              @ Marcador derecho, SOLO si hay limite real
+                              IF TDER i GET "" == NOT THEN
+                                ARIGHT 'X' STO
+                                EXPRS i GET EVAL \->NUM \-> RY
+                                \<<
+                                  ARIGHT QOFFS - RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS - R\->C LINE
+                                  ARIGHT QOFFS + RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS + R\->C LINE
+                                  ARIGHT QOFFS + RY YOFFS + R\->C ARIGHT QOFFS - RY YOFFS + R\->C LINE
+                                  ARIGHT QOFFS - RY YOFFS + R\->C ARIGHT QOFFS - RY YOFFS - R\->C LINE
+                                  IF TDER i GET "<=" == THEN
+                                    ARIGHT QOFFS - RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS + R\->C LINE
+                                    ARIGHT QOFFS + RY YOFFS - R\->C ARIGHT QOFFS - RY YOFFS + R\->C LINE
+                                  END
+                                \>>
+                              END
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    NEXT
+                    
+                    PICT PICTURE
                   \>>
                 \>>
               \>>
             \>>
-            
-            { EXPRS TIZQ VIZQ TDER VDER } PURGE
           \>>
-        END
-      \>>
-    END
-  \>>
-END
+          
+          { EXPRS TIZQ VIZQ TDER VDER } PURGE
+        \>>
+      END
+    \>>
+  END
+\>>

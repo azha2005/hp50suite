@@ -1,0 +1,70 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCOVCORRC - nucleo de DCOVCORR. Covarianza, correlacion y la recta.
+  @ Uso:  DatosX DatosY DCOVCORRC
+  @ Deja: n1 = { N XB YB COVXY SDX SDY R B0 B1 }
+  @ Todo muestral: divide por N-1.
+  @
+  @ Esta es la UNICA implementacion de estas sumatorias en la suite:
+  @ DOLSC llama aca en vez de repetirlas. Antes estaban escritas dos
+  @ veces, y el comentario de DOLS advertia que habia que mantener la
+  @ secuencia de operaciones IDENTICA para que los dos programas dieran
+  @ el mismo numero en punto flotante y no solo uno equivalente. Con una
+  @ sola copia eso deja de ser una promesa que hay que recordar.
+  @
+  @ Sin INFORM ni graficos a proposito: eso lo pone DCOVCORR.
+  \-> DX0 DY0
+  \<<
+    DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+    \<<
+      DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+      \<<
+        LX SIZE \-> N
+        \<<
+          0. 'SX' STO 0. 'SY' STO 0. 'SXY' STO 0. 'SXX' STO 0. 'SYY' STO
+          1 N FOR i
+            SX LX i GET + 'SX' STO
+            SY LY i GET + 'SY' STO
+          NEXT
+          SX N / \->NUM \-> XB
+          \<<
+            SY N / \->NUM \-> YB
+            \<<
+              1 N FOR i
+                LX i GET XB - \-> DXI
+                \<<
+                  LY i GET YB - \-> DYI
+                  \<<
+                    SXY DXI DYI * + 'SXY' STO
+                    SXX DXI SQ + 'SXX' STO
+                    SYY DYI SQ + 'SYY' STO
+                  \>>
+                \>>
+              NEXT
+              SXY N 1 - / \->NUM \-> COVXY
+              \<<
+                SXX N 1 - / \v/ \->NUM \-> SDX
+                \<<
+                  SYY N 1 - / \v/ \->NUM \-> SDY
+                  \<<
+                    COVXY SDX SDY * / \->NUM \-> R
+                    \<<
+                      SXY SXX / \->NUM \-> B1
+                      \<<
+                        YB B1 XB * - \->NUM \-> B0
+                        \<<
+                          N XB YB COVXY SDX SDY R B0 B1 9 \->LIST
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+          { SX SY SXY SXX SYY } PURGE
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

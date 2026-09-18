@@ -1,0 +1,27 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCOMPZ - valor Z estandarizado, Z = (x - u) / s.
+  @ Interfaz: el calculo esta en DCOMPZC, que devuelve { ZV ATIP }.
+  @ El criterio de atipico es |Z| > 3, estricto: un |Z| de exactamente 3
+  @ NO es atipico.
+  "Estandarizacion Z = (x-u)/s"
+  {
+    { "Valor Obs (x):" "" 0 }
+    { "Media (u):" "" 0 }
+    { "Desvio Est. (s):" "" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DCOMPZC OBJ\-> DROP \-> ZV ATIP
+    \<<
+      "Valor Z = " ZV \->STR + 10 CHR +
+      IF ATIP 1 == THEN
+        "Clasif: Atipico (|Z| > 3)"
+      ELSE
+        "Clasif: Rango Normal"
+      END +
+      MSGBOX
+    \>>
+  END
+\>>

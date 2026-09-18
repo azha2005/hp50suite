@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCOMPZC - nucleo de DCOMPZ. Valor Z estandarizado.
+  @ Uso:  x media desvio DCOMPZC
+  @ Deja: n1 = { ZV ATIP }
+  @         ATIP = 1 si |Z| > 3 (atipico), 0 si no.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DCOMPZ.
+  \-> X U S
+  \<<
+    X U - S / \->NUM \-> ZV
+    \<<
+      ZV
+      IF ZV ABS 3. > THEN 1 ELSE 0 END
+      2 \->LIST
+    \>>
+  \>>
+\>>

@@ -1,0 +1,11 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DTCAMBIOC - nucleo de DTCAMBIO. Tasa anual compuesta (CAGR).
+  @ Uso:  VarTotalPct T1 T2 DTCAMBIOC
+  @ Deja: n1 = { RC }        RC en por ciento anual.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DTCAMBIO.
+  \-> VT T1 T2
+  \<<
+    1 VT 100. / + 1 T2 T1 - / ^ 1 - 100. * \->NUM 1 \->LIST
+  \>>
+\>>

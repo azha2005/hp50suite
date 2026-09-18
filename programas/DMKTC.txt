@@ -1,0 +1,19 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DMKTC - nucleo de DMKT. Equilibrio de mercado con impuesto.
+  @ Uso:  a b c d T DMKTC        (Qd = a - b*P, Qs = c + d*P)
+  @ Deja: n1 = { PE QE }
+  @ PE = (a - c + d*T) / (b + d); QE = a - b*PE.
+  @ Con T=0 es el equilibrio simple. Sin INFORM ni graficos a
+  @ proposito: eso lo pone DMKT.
+  \-> A B C D T
+  \<<
+    A C - D T * + B D + / \->NUM \-> PE
+    \<<
+      A B PE * - \->NUM \-> QE
+      \<<
+        PE QE 2 \->LIST
+      \>>
+    \>>
+  \>>
+\>>

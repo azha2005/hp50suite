@@ -660,10 +660,42 @@ Documentación propia en `SUITE-MAT1.md`, que se subordina a este archivo.
 
 | Programa | Qué hace |
 |---|---|
-| `SIGFIG` | Redondea a N cifras significativas. **DEBE estar en HOME**, no en subcarpeta, para que `DOLS`/`DCOVCORR` lo encuentren |
+| `SIGFIG` | Redondea a N cifras significativas. Lo usan `DOLS` y `DCOVCORR` |
 
 **Regla de scope:** `HOME` es visible desde cualquier subcarpeta (la búsqueda de
 nombres sube). Entre carpetas hermanas NO hay visibilidad.
+
+**Con el paquete `LAB.txt` la regla deja de morder.** Todo cae en un mismo `DIR`,
+y ahí los nombres se ven entre sí: cada interfaz encuentra a su núcleo y `DOLS`
+encuentra a `SIGFIG`. Ya no hace falta que `SIGFIG` esté en `HOME`. Importa
+porque si falta **no da error**: `DOLS` deja el nombre `'SIGFIG'` sin evaluar en
+la pila y muestra un resultado equivocado. Medido en el emulador.
+
+### Estado: partidos en núcleo + interfaz, y probados
+
+Los 16 de esta suite siguieron el mismo camino que los de Matemática I: el
+cálculo salió a un objeto `XXXC` que entra y sale por pila, y `XXX` quedó con el
+`INFORM`, las cajas y los gráficos. Sin eso el harness no podía probar ninguno,
+porque `INFORM` es interactivo por definición.
+
+**72 de 72 casos** en el emulador con ROM de 50g, repartidos en tres tablas
+(`harness/casos-lab.txt`, `casos-lab-datos.txt`, `casos-fisc.txt`), y contra los
+**datasets reales de la cátedra**, no contra datos inventados.
+
+Dos duplicaciones eliminadas en el camino, las dos del mismo tipo que la de
+`DESTFUN`/`DASHO`:
+
+- **`DOLS` y `DCOVCORR` calculaban las mismas sumatorias por separado.** El
+  comentario de `DOLS` advertía que había que mantener el **orden de las
+  operaciones** idéntico para que los dos dieran el mismo número en punto
+  flotante y no solo uno equivalente. Ahora `DOLSC` llama a `DCOVCORRC`: una sola
+  copia, y la coincidencia es por construcción. Hay dos casos que la verifican.
+- **`DHISTO` y `DFRECTABLA` tenían el mismo conteo de clases escrito dos veces.**
+  `DHISTO` ahora llama a `DFRECTABLAC`. La tabla y el gráfico del mismo ejercicio
+  no pueden dar clases distintas.
+
+`DTROZOS` quedó **sin partir**: no calcula ningún resultado, solo dibuja, así que
+no hay núcleo que probar. Coherente con la decisión de §7 de no invertirle más.
 
 ---
 
@@ -674,12 +706,32 @@ nombres sube). Entre carpetas hermanas NO hay visibilidad.
 | `BM5X` / `BM5Y` | PIB pc PPA y precio Big Mac, 5 países | Par X/Y. `r ≈ 0.9781` |
 | `BMHIST` | 45 precios Big Mac | Una variable. Moda: `5.31` (frec 3) |
 | `BMSCX` / `BMSCY` | PIB y precio, 46 países | Par X/Y. `r ≈ 0.7579` |
-| `HORAS` | 20 valores de horas trabajadas | K=5, Ancho=5, Inicio=10 → frec `2,2,6,6,4` |
+| `HORAS` | 20 valores de horas trabajadas | K=5, Ancho=5, Inicio=10 → frec `4,8,5,2,1` ⚠️ ver abajo |
+
+Los archivos están en `programas/datos/` y entran en el paquete `LAB.txt`.
 
 **Se pueden usar escribiendo el nombre de la variable en el campo "Datos"** en
 vez de tipear la lista entera. Confirmado que funciona.
 
+⚠️ **`HORAS` no da las frecuencias que esta tabla decía.** Acá figuraba
+`2,2,6,6,4`, pero con el `datos/HORAS.txt` que tenemos, K=5 / Ancho=5 /
+Inicio=10 da **`4,8,5,2,1`**. No es un problema del programa ni del criterio de
+intervalo: con clases cerradas por derecha daría `6,7,4,2,1`, que tampoco es
+`2,2,6,6,4`. Las dos versiones suman 20, así que son 20 datos **distintos**: o el
+dataset o el número del apunte quedaron viejos. Hay que mirar el enunciado
+original antes de usar este caso como verificación. Medido en el emulador;
+`harness/casos-lab-datos.txt` guarda el valor real.
+
+El resto de los valores de abajo **sí** se reprodujeron todos, exactos.
+
 ### Casos de verificación conocidos
+
+Todos los de esta lista **están corridos** contra los datasets reales
+(`harness/casos-lab-datos.txt` y `casos-fisc.txt`), salvo la nota de `HORAS` de
+arriba. Dos que no estaban y ahora sí: el desvío de X que da `DCOVCORR` tiene que
+ser **exactamente** el mismo que el de `DSTATS`, y su `r` el mismo que el de
+`DOLS`. Antes eso era una promesa; ahora hay dos casos que lo verifican, y se
+cumple por construcción porque hay una sola implementación.
 
 - `DSTATS` con `BM5X`: Media=32172.2, sX=32930.3
 - `DCOVCORR` con `BM5X`/`BM5Y`: sXY=62909.8, r=0.9781 (valores del apunte de cátedra)
@@ -777,9 +829,14 @@ vez de tipear la lista entera. Confirmado que funciona.
   la máquina, y es mucho más fuerte que las heurísticas de conteo) +
   `oraculo.py` + las dos baterías, y salga 0 o 1. Es la regla que el otro
   proyecto del mismo autor ya tiene con `verify.sh`.
-- **Partir también los programas de Lab de Datos.** Los 16 de la suite original
-  tienen el mismo `INFORM` soldado al cálculo, así que ninguno es probable por
-  el harness. El patrón `XXXC` + `XXX` ya está validado en los 9 de Mat1.
+- ~~**Partir también los programas de Lab de Datos.**~~ **Hecho: 72 de 72**
+  (§5). Quedó afuera `DTROZOS`, que no calcula nada, solo dibuja.
+- **Verificar el enunciado de `HORAS`** (§6): el dataset y la frecuencia
+  documentada no coinciden, y uno de los dos está mal.
+- **Probar las salidas GRÁFICAS.** El harness ya sabe leer la pantalla (GROB +
+  OCR, usado para `domain49`), así que `DHISTO`, `DBOXPLOT`, `DMKT`, `DMKTFISC`,
+  `DCOMPFIRM` y `DTROZOS` pueden tener pantalla esperada. Hoy sus números están
+  probados pero el dibujo se sigue mirando a ojo, que es como no verificarlo.
 - Alinear columnas de salida con padding de espacios donde se use texto.
 - `DTROZOS` no tiene protección contra asíntotas/discontinuidades dentro de un
   tramo (ej. `1/X` con un tramo que cruce 0) — va a fallar o dar resultados sin

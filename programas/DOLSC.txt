@@ -1,0 +1,25 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DOLSC - nucleo de DOLS. Regresion lineal por sumatorias.
+  @ Uso:  DatosX DatosY DOLSC        (dos listas o vectores, no una matriz)
+  @ Deja: n1 = { N B0 B1 R R2 }      para la recta Y = B0 + B1*X
+  @
+  @ Las sumatorias NO se calculan aca: las hace DCOVCORRC, que es la
+  @ unica copia en la suite. Antes estaban escritas dos veces y habia
+  @ que acordarse de mantener identico el ORDEN de las operaciones,
+  @ porque en punto flotante un orden distinto da un redondeo distinto
+  @ y los dos programas mostraban numeros que no coincidian del todo.
+  @ Con una sola copia el problema desaparece por construccion.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DOLS, que es
+  @ la que redondea con SIGFIG para mostrar.
+  DCOVCORRC \-> CC
+  \<<
+    CC 1 GET
+    CC 8 GET
+    CC 9 GET
+    CC 7 GET
+    CC 7 GET SQ \->NUM
+    5 \->LIST
+  \>>
+\>>

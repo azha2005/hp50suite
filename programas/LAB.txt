@@ -1,0 +1,1569 @@
+%%HP: T(3)A(R)F(.);
+DIR
+  BM5X
+  { 1489 5651 24359 48586 80776 }
+  BM5Y
+  { 1.62 2.74 3.59 4.33 6.81 }
+  BMHIST
+  { 1.62 2.28 2.36 2.47 2.65 2.66 2.74 2.77 2.83 2.84 2.9 2.96 3.12 3.14 3.18 3.25 3.28 3.4 3.45 3.59 3.59 3.65 3.67 3.7 3.71 3.74 3.98 4.04 4.09 4.18 4.2 4.33 4.49 4.71 4.86 4.94 5.08 5.31 5.31 5.31 5.45 5.77 5.88 6.81 7.06 }
+  BMSCX
+  { 11006 56611 44986 42630 8764 38674 40005 14560 5651 6273 18288 6105 16809 41048 39720 41831 36707 12580 1489 3551 45910 33059 46552 13490 14124 10302 9659 46922 37905 99410 1241 6419 2580 12711 14103 52051 7504 24359 28211 2890 55140 80776 20328 5390 3873 48586 }
+  BMSCY
+  { 4.19 4.18 4.49 5.31 5.88 4.2 4.09 3.65 2.74 3.28 3.12 2.65 3.98 5.45 4.71 5.31 2.28 3.59 1.62 2.9 4.94 5.08 3.7 3.74 3.71 2.84 3.25 5.31 4.04 7.06 3.4 3.67 2.96 3.18 3.14 3.45 2.47 3.59 4.86 2.66 5.77 6.81 2.77 2.83 2.36 4.33 }
+  HORAS
+  { 12 14 19 18 15 15 18 17 20 27 22 23 22 21 33 28 14 18 16 13 }
+  SIGFIG
+  \<<
+    @ Redondea un valor a N cifras significativas (no decimales
+    @ fijos). Uso: valor N SIGFIG -> valor redondeado.
+    @ Ejemplo: 0.000058013220973 4 SIGFIG -> 0.00005801
+    @ IMPORTANTE: guardar esto en HOME (no dentro de una subcarpeta)
+    @ para que otros programas (DOLS, etc.) lo puedan llamar por
+    @ nombre sin importar en que subcarpeta esten ellos.
+    \-> V N
+    \<<
+      IF V 0 == THEN
+        0
+      ELSE
+        V ABS LOG FLOOR \-> M
+        \<<
+          N 1 - M - \-> EXPN
+          \<<
+            10 EXPN ^ \-> ESCALA
+            \<<
+              V ESCALA * 0 RND ESCALA / \->NUM
+            \>>
+          \>>
+        \>>
+      END
+    \>>
+  \>>
+  DSTATSC
+  \<<
+    @ DSTATSC - nucleo de DSTATS. Media, varianza, desvio y CV.
+    @ Uso:  Datos DSTATSC        (vector [x] o lista {x})
+    @ Deja: n1 = { N XBAR VARZ DESV CV }
+    @ Varianza MUESTRAL (divide por N-1), que es la de la catedra.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSTATS.
+    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    \-> L
+    \<<
+      L SIZE \-> N
+      \<<
+        0. 'S' STO
+        1 N FOR i
+          S L i GET + 'S' STO
+        NEXT
+        S N / \->NUM \-> XBAR
+        \<<
+          0. 'SS' STO
+          1 N FOR i
+            SS L i GET XBAR - SQ + 'SS' STO
+          NEXT
+          SS N 1 - / \->NUM \-> VARZ
+          \<<
+            VARZ \v/ \->NUM \-> DESV
+            \<<
+              DESV XBAR / 100. * \->NUM \-> CV
+              \<<
+                N XBAR VARZ DESV CV 5 \->LIST
+              \>>
+            \>>
+          \>>
+        \>>
+        { S SS } PURGE
+      \>>
+    \>>
+  \>>
+  DSTATS
+  \<<
+    @ DSTATS - media, varianza, desvio y CV.
+    @ Interfaz: el calculo esta en DSTATSC, que toma los datos de la pila
+    @ y devuelve { N XBAR VARZ DESV CV }.
+    @ Se parte en 3 cajas de 2 lineas sin encabezado decorativo: 6 lineas
+    @ en una sola caja se cortan y se pierde el CV (MSGBOX no hace scroll).
+    "Media, Varianza, Desvio, CV"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET DSTATSC OBJ\-> DROP \-> N XBAR VARZ DESV CV
+      \<<
+        "N: " N \->STR + 10 CHR +
+        "Media: " + XBAR \->STR +
+        MSGBOX
+        "Var: " VARZ \->STR + 10 CHR +
+        "Desvio: " + DESV \->STR +
+        MSGBOX
+        "CV: " CV \->STR + " %" +
+        MSGBOX
+      \>>
+    END
+  \>>
+  DMODAC
+  \<<
+    @ DMODAC - nucleo de DMODA. Moda(s) y su frecuencia.
+    @ Uso:  Datos DMODAC
+    @ Deja: n1 = { MODES MAXFREQ }
+    @         Si MAXFREQ es 1 no hay moda: todos los valores son distintos.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DMODA.
+    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    SORT
+    \-> L
+    \<<
+      L SIZE \-> N
+      \<<
+        @ MODES y MAXFREQ son globales (bare STO, se purgan al final).
+        @ CURVAL es local: se actualiza con 'CURVAL' STO dentro del mismo
+        @ scope y NO entra en el PURGE.
+        { } 'MODES' STO
+        0 'MAXFREQ' STO
+        L 1 GET \-> CURVAL
+        \<<
+          1 'CURFREQ' STO
+          2 N FOR i
+            L i GET \-> V
+            \<<
+              IF V CURVAL == THEN
+                CURFREQ 1 + 'CURFREQ' STO
+              ELSE
+                @ cerrar la racha del valor anterior
+                IF CURFREQ MAXFREQ > THEN
+                  CURVAL 1 \->LIST 'MODES' STO
+                  CURFREQ 'MAXFREQ' STO
+                ELSE
+                  IF CURFREQ MAXFREQ == THEN
+                    MODES CURVAL + 'MODES' STO
+                  END
+                END
+                V 'CURVAL' STO
+                1 'CURFREQ' STO
+              END
+            \>>
+          NEXT
+          @ el FOR no cierra la ULTIMA racha -- se repite aca
+          IF CURFREQ MAXFREQ > THEN
+            CURVAL 1 \->LIST 'MODES' STO
+            CURFREQ 'MAXFREQ' STO
+          ELSE
+            IF CURFREQ MAXFREQ == THEN
+              MODES CURVAL + 'MODES' STO
+            END
+          END
+          MODES MAXFREQ 2 \->LIST
+          { MODES MAXFREQ CURFREQ } PURGE
+        \>>
+      \>>
+    \>>
+  \>>
+  DMODA
+  \<<
+    @ DMODA - moda(s) de un conjunto de datos.
+    @ Interfaz: el calculo esta en DMODAC, que devuelve { MODES MAXFREQ }.
+    @ Frecuencia maxima 1 significa que todos los valores son distintos:
+    @ no hay moda.
+    "Moda"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET DMODAC OBJ\-> DROP \-> MODES MAXFREQ
+      \<<
+        IF MAXFREQ 1 == THEN
+          "Sin moda: todos los valores son distintos entre si."
+          MSGBOX
+        ELSE
+          "Moda(s): " MODES \->STR + 10 CHR +
+          "Frecuencia: " + MAXFREQ \->STR +
+          MSGBOX
+        END
+      \>>
+    END
+  \>>
+  DPCTILC
+  \<<
+    @ DPCTILC - nucleo de DPCTIL. Percentil interpolado de la catedra.
+    @ Uso:  Datos P DPCTILC        (P de 0 a 100; la mediana es P=50)
+    @ Deja: n1 = { N LP VAL }
+    @         LP = (P/100)*(N+1), la posicion; VAL = el valor interpolado.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPCTIL.
+    \-> DATA0 P
+    \<<
+      DATA0
+      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      SORT \-> S
+      \<<
+        S SIZE \-> N
+        \<<
+          P 100. / N 1 + * \-> LP
+          \<<
+            LP IP \-> I
+            \<<
+              LP FP \-> F
+              \<<
+                CASE
+                  I 1 < THEN S 1 GET END
+                  I N < NOT THEN S N GET END
+                  S I 1 + GET S I GET - F * S I GET +
+                END
+                \->NUM \-> VAL
+                \<<
+                  N LP VAL 3 \->LIST
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DPCTIL
+  \<<
+    @ DPCTIL - percentil interpolado, formula de catedra Lp=(p/100)(n+1).
+    @ La mediana es el percentil 50.
+    @ Interfaz: el calculo esta en DPCTILC, que devuelve { N LP VAL }.
+    "Percentil Interpolado (Catedra)"
+    {
+      { "Datos:" "Vector [x] o Lista {x}" }
+      { "Percentil p (0-100):" "50" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> DATA0 P
+      \<<
+        DATA0 P DPCTILC OBJ\-> DROP \-> N LP VAL
+        \<<
+          "P: " P \->STR + 10 CHR +
+          "N: " + N \->STR +
+          MSGBOX
+          "Lp: " LP \->STR + 10 CHR +
+          "Valor: " + VAL \->STR +
+          MSGBOX
+        \>>
+      \>>
+    END
+  \>>
+  DFRECTABLAC
+  \<<
+    @ DFRECTABLAC - nucleo de DFRECTABLA. Tabla de frecuencias.
+    @ Uso:  Datos K H Inicio DFRECTABLAC     (K/H/Inicio en 0 = automatico)
+    @ Deja: n1 = { K H START FREQ MAT }
+    @         FREQ = vector de frecuencias absolutas por clase,
+    @         MAT  = matriz K x 6: Inicio, Fin, Abs, Acum.Abs, %, Acum.%
+    @ Con K=0 usa Sturges: K = 1 + 3.322*log(N), redondeado.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DFRECTABLA.
+    @
+    @ El bucle de filas deja los 6 valores de cada fila en la pila sin
+    @ consumirlos: ahi se acumulan las K*6 celdas hasta el \->ARRY final.
+    @ Por eso este nucleo NO lleva guardian de profundidad (CLAUDE.md
+    @ 2.11): la acumulacion en la pila es intencional, no basura.
+    \-> DATA0 KWANT HWANT SWANT
+    \<<
+      DATA0
+      IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+      SORT
+      \-> L
+      \<<
+        L SIZE \-> N
+        \<<
+          L 1 GET \-> XMIN
+          \<<
+            L N GET \-> XMAX
+            \<<
+              IF KWANT 0 == THEN
+                1 3.322 N LOG * + 0 RND
+              ELSE
+                KWANT
+              END
+              \->NUM \-> K
+              \<<
+                IF HWANT 0 == THEN
+                  IF XMAX XMIN == THEN 1 ELSE XMAX XMIN - K / END
+                ELSE
+                  HWANT
+                END
+                \->NUM \-> H
+                \<<
+                  IF SWANT 0 == THEN XMIN ELSE SWANT END \-> START
+                  \<<
+                    {K} 0. CON \-> FREQ
+                    \<<
+                      1 N FOR i
+                        L i GET \-> V
+                        \<<
+                          V START - H / FLOOR 1 + \-> IDX
+                          \<<
+                            IF IDX K > THEN K 'IDX' STO END
+                            IF IDX 1 < THEN 1 'IDX' STO END
+                            FREQ IDX FREQ IDX GET 1 + PUT 'FREQ' STO
+                          \>>
+                        \>>
+                      NEXT
+                      0. 'ACUM' STO
+                      0. 'CUMFREQ' STO
+                      1 K FOR i
+                        START i 1 - H * + \->NUM \-> CLASEINF
+                        \<<
+                          CLASEINF H + \->NUM \-> CLASESUP
+                          \<<
+                            FREQ i GET \-> FI
+                            \<<
+                              CUMFREQ FI + \->NUM 'CUMFREQ' STO
+                              FI N / 100. * \->NUM \-> PCT
+                              \<<
+                                ACUM PCT + \->NUM 'ACUM' STO
+                                CLASEINF CLASESUP FI CUMFREQ PCT ACUM
+                              \>>
+                            \>>
+                          \>>
+                        \>>
+                      NEXT
+                      { K 6 } \->ARRY
+                      \-> MAT
+                      \<<
+                        K H START FREQ MAT 5 \->LIST
+                      \>>
+                      { ACUM CUMFREQ } PURGE
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DFRECTABLA
+  \<<
+    @ DFRECTABLA - tabla de frecuencias como MATRIZ.
+    @ Interfaz: el calculo esta en DFRECTABLAC, que devuelve
+    @ { K H START FREQ MAT }. La matriz queda en la pila.
+    @ K/Ancho/Inicio en 0 = automatico (Sturges para K). Se pueden fijar a
+    @ mano para reproducir ejercicios que eligen K arbitrariamente.
+    @ En modo algebraico, EDIT sobre la matriz abre un editor de celdas
+    @ tipo planilla; en RPN solo edita la matriz plana.
+    "Tabla de Frecuencias"
+    {
+      { "Datos:" "Vector [x] o Lista {x}" }
+      { "K deseado (0=Sturges):" "0" 0 }
+      { "Ancho deseado (0=auto):" "0" 0 }
+      { "Inicio deseado (0=Min real):" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DFRECTABLAC OBJ\-> DROP \-> K H START FREQ MAT
+      \<<
+        "K: " K \->STR + 10 CHR +
+        "Ancho: " + H \->STR +
+        MSGBOX
+        "Inicio: " START \->STR + 10 CHR +
+        "Tabla en la pila" +
+        MSGBOX
+        MAT
+      \>>
+    END
+  \>>
+  DHISTO
+  \<<
+    @ DHISTO - histograma de barras.
+    @ Interfaz: el binning NO se calcula aca. Lo hace DFRECTABLAC, que es
+    @ el mismo que usa la tabla de frecuencias y devuelve
+    @ { K H START FREQ MAT }. Antes estaba escrito dos veces, identico,
+    @ en DHISTO y en DFRECTABLA: dos copias de un conteo de clases que
+    @ tienen que coincidir siempre, porque la tabla y el grafico del
+    @ mismo ejercicio no pueden dar clases distintas.
+    @
+    @ Campos K/Ancho/Inicio opcionales: algunos ejemplos de catedra (ej.
+    @ horas trabajadas por semana) NO usan Sturges ni el minimo real como
+    @ punto de partida -- el profesor elige K a mano y arranca los
+    @ intervalos en un entero comodo MENOR al minimo real (ej. 10 en vez
+    @ de 12) para que el eje se lea mejor. Con 0 se calcula automatico.
+    "Histograma Sturges"
+    {
+      { "Datos:" "Vector [x] o Lista {x}" }
+      { "K deseado (0=Sturges):" "0" 0 }
+      { "Ancho deseado (0=auto):" "0" 0 }
+      { "Inicio deseado (0=Min real):" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> DATA0 KWANT HWANT SWANT
+      \<<
+        DATA0 KWANT HWANT SWANT DFRECTABLAC OBJ\-> DROP
+        DROP \-> K H START FREQ
+        \<<
+          DATA0
+          IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+          SIZE \-> N
+          \<<
+            1. 'MAXF' STO
+            1 K FOR i
+              IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
+            NEXT
+            @ XRNG con el rango real de clases (START a START+K*H) y YRNG
+            @ con el rango real de frecuencia (0 a MAXF). Cada barra se
+            @ dibuja con los valores reales directos, sin formula de
+            @ escalado a pixel: XRNG/YRNG reescalan de verdad las
+            @ coordenadas de LINE/BOX/R\->C. Asi el cursor del modo
+            @ interactivo muestra clase y frecuencia reales.
+            ERASE
+            START START K H * + XRNG 0 MAXF YRNG
+            1 K FOR i
+              START i 1 - H * + \-> XLO
+              \<<
+                XLO H + \-> XHI
+                \<<
+                  XLO 0 R\->C XHI FREQ i GET R\->C BOX
+                \>>
+              \>>
+            NEXT
+            PICT PICTURE
+            "Inicio: " START \->STR + 10 CHR +
+            "Ancho (H): " + H \->STR +
+            MSGBOX
+            "Clases (K): " K \->STR + 10 CHR +
+            "N datos: " + N \->STR +
+            MSGBOX
+            "Frecuencias:" 10 CHR +
+            FREQ \->STR +
+            MSGBOX
+            'MAXF' PURGE
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DBOXPLOTC
+  \<<
+    @ DBOXPLOTC - nucleo de DBOXPLOT. Los cinco numeros y los outliers.
+    @ Uso:  Datos DBOXPLOTC
+    @ Deja: n1 = { N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS }
+    @         LINF/LSUP = vallas de Tukey (Q1-1.5*RIC y Q3+1.5*RIC),
+    @         WMIN/WMAX = extremos de los bigotes (el dato adyacente),
+    @         OUTS = lista de valores atipicos.
+    @
+    @ Cuartiles por INDICE (metodo simplificado), no por la interpolacion
+    @ Lp=(p/100)*(n+1) de la catedra: los dos metodos pueden dar valores
+    @ distintos. Para el metodo exacto de catedra esta DPCTIL.
+    @
+    @ WMIN arranca en MAXV y no en MINV: si el minimo de los datos es un
+    @ outlier, la comparacion "V < WMIN" tiene que poder disparar igual.
+    @ WMAX se apoya en que la lista esta ORDENADA (el ultimo V que no
+    @ supera LSUP es el mayor no atipico), por eso no compara.
+    @
+    @ Sin INFORM ni graficos a proposito: eso lo pone DBOXPLOT.
+    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    SORT
+    \-> L
+    \<<
+      L SIZE \-> N
+      \<<
+        L 1 GET \-> MINV
+        \<<
+          L N GET \-> MAXV
+          \<<
+            IF N 2 MOD 0 == THEN
+              L N 2 / GET L N 2 / 1 + GET + 2 /
+            ELSE
+              L N 2 / CEIL GET
+            END
+            \-> Q2
+            \<<
+              L N 4 / CEIL GET \-> Q1
+              \<<
+                L N 3 * 4 / CEIL GET \-> Q3
+                \<<
+                  Q3 Q1 - \-> IQR
+                  \<<
+                    Q1 1.5 IQR * - \-> LINF
+                    \<<
+                      Q3 1.5 IQR * + \-> LSUP
+                      \<<
+                        { } 'OUTS' STO
+                        MAXV 'WMIN' STO
+                        MAXV 'WMAX' STO
+                        1 N FOR i
+                          L i GET \-> V
+                          \<<
+                            IF V LINF < V LSUP > OR THEN
+                              OUTS V + 'OUTS' STO
+                            END
+                            IF V LINF < NOT V WMIN < AND THEN V 'WMIN' STO END
+                            IF V LSUP > NOT THEN V 'WMAX' STO END
+                          \>>
+                        NEXT
+                        N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS
+                        12 \->LIST
+                        { OUTS WMIN WMAX } PURGE
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DBOXPLOT
+  \<<
+    @ DBOXPLOT - caja, bigotes, outliers, eje y puntos individuales.
+    @ Interfaz: el calculo esta en DBOXPLOTC, que toma los datos de la pila
+    @ y devuelve { N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS }.
+    @ Los cuartiles son por INDICE; para el metodo interpolado de catedra
+    @ (Lp = (p/100)*(n+1)) esta DPCTIL, y pueden dar valores distintos.
+    @ Deja los cinco numeros en la pila.
+    "Box Plot Univariado"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET \-> DATA0
+      \<<
+        DATA0 DBOXPLOTC OBJ\-> DROP
+        \-> N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS
+        \<<
+          DATA0
+          IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+          SORT \-> L
+          \<<
+            ERASE
+            MINV MAXV XRNG 0 10 YRNG
+            IF MAXV MINV == THEN 1 ELSE MAXV MINV - END \-> SPAN
+            \<<
+              @ Caja (Q1 a Q3), fila 2.5 a 5.5 (arbitrario: el eje Y no
+              @ representa ningun dato real)
+              Q1 2.5 R\->C Q3 5.5 R\->C BOX
+              @ Mediana
+              Q2 2.5 R\->C Q2 5.5 R\->C LINE
+              @ Bigotes
+              WMIN 4. R\->C Q1 4. R\->C LINE
+              Q3 4. R\->C WMAX 4. R\->C LINE
+              WMIN 3.3 R\->C WMIN 4.7 R\->C LINE
+              WMAX 3.3 R\->C WMAX 4.7 R\->C LINE
+              @ Outliers, con offset proporcional al rango de los datos
+              @ (los valores son reales, no columnas de pixel)
+              SPAN 40. / \-> OFFS
+              \<<
+                IF OUTS SIZE 0 > THEN
+                  1 OUTS SIZE FOR j
+                    OUTS j GET \-> OX
+                    \<<
+                      OX OFFS - 4. R\->C OX OFFS + 4. R\->C LINE
+                      OX 3.8 R\->C OX 4.2 R\->C LINE
+                    \>>
+                  NEXT
+                END
+                @ Puntos de datos individuales, fila 1.5 (arriba de la caja)
+                1 N FOR i
+                  L i GET 1.5 R\->C PIXON
+                NEXT
+                @ Eje de referencia con marcas en Min, Q1, Mediana, Q3, Max
+                MINV 6. R\->C MAXV 6. R\->C LINE
+                MINV 5.8 R\->C MINV 6.2 R\->C LINE
+                Q1 5.8 R\->C Q1 6.2 R\->C LINE
+                Q2 5.8 R\->C Q2 6.2 R\->C LINE
+                Q3 5.8 R\->C Q3 6.2 R\->C LINE
+                MAXV 5.8 R\->C MAXV 6.2 R\->C LINE
+                PICT PICTURE
+                "Min: " MINV \->STR + 10 CHR +
+                "Q1: " + Q1 \->STR +
+                MSGBOX
+                "Med: " Q2 \->STR + 10 CHR +
+                "Q3: " + Q3 \->STR +
+                MSGBOX
+                "Max: " MAXV \->STR + 10 CHR +
+                "RIC: " + IQR \->STR +
+                MSGBOX
+                "Outliers:" 10 CHR +
+                OUTS \->STR +
+                MSGBOX
+                { MINV Q1 Q2 Q3 MAXV }
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DCOVCORRC
+  \<<
+    @ DCOVCORRC - nucleo de DCOVCORR. Covarianza, correlacion y la recta.
+    @ Uso:  DatosX DatosY DCOVCORRC
+    @ Deja: n1 = { N XB YB COVXY SDX SDY R B0 B1 }
+    @ Todo muestral: divide por N-1.
+    @
+    @ Esta es la UNICA implementacion de estas sumatorias en la suite:
+    @ DOLSC llama aca en vez de repetirlas. Antes estaban escritas dos
+    @ veces, y el comentario de DOLS advertia que habia que mantener la
+    @ secuencia de operaciones IDENTICA para que los dos programas dieran
+    @ el mismo numero en punto flotante y no solo uno equivalente. Con una
+    @ sola copia eso deja de ser una promesa que hay que recordar.
+    @
+    @ Sin INFORM ni graficos a proposito: eso lo pone DCOVCORR.
+    \-> DX0 DY0
+    \<<
+      DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+      \<<
+        DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+        \<<
+          LX SIZE \-> N
+          \<<
+            0. 'SX' STO 0. 'SY' STO 0. 'SXY' STO 0. 'SXX' STO 0. 'SYY' STO
+            1 N FOR i
+              SX LX i GET + 'SX' STO
+              SY LY i GET + 'SY' STO
+            NEXT
+            SX N / \->NUM \-> XB
+            \<<
+              SY N / \->NUM \-> YB
+              \<<
+                1 N FOR i
+                  LX i GET XB - \-> DXI
+                  \<<
+                    LY i GET YB - \-> DYI
+                    \<<
+                      SXY DXI DYI * + 'SXY' STO
+                      SXX DXI SQ + 'SXX' STO
+                      SYY DYI SQ + 'SYY' STO
+                    \>>
+                  \>>
+                NEXT
+                SXY N 1 - / \->NUM \-> COVXY
+                \<<
+                  SXX N 1 - / \v/ \->NUM \-> SDX
+                  \<<
+                    SYY N 1 - / \v/ \->NUM \-> SDY
+                    \<<
+                      COVXY SDX SDY * / \->NUM \-> R
+                      \<<
+                        SXY SXX / \->NUM \-> B1
+                        \<<
+                          YB B1 XB * - \->NUM \-> B0
+                          \<<
+                            N XB YB COVXY SDX SDY R B0 B1 9 \->LIST
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+            { SX SY SXY SXX SYY } PURGE
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DCOVCORR
+  \<<
+    @ DCOVCORR - covarianza, correlacion y dispersion con recta de regresion.
+    @ Interfaz: el calculo esta en DCOVCORRC, que toma las dos listas de la
+    @ pila y devuelve { N XB YB COVXY SDX SDY R B0 B1 }. Esa es la unica
+    @ copia de las sumatorias en la suite: DOLSC tambien llama ahi, asi que
+    @ los dos programas dan el MISMO numero por construccion y no porque
+    @ alguien se acuerde de mantener las dos copias sincronizadas.
+    @ Pide dos listas separadas (X e Y), no una matriz.
+    "Covarianza y Correlacion (Manual)"
+    {
+      { "Datos X:" "Vector [x] o Lista {x}" }
+      { "Datos Y:" "Vector [y] o Lista {y}" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> DX0 DY0
+      \<<
+        DX0 DY0 DCOVCORRC OBJ\-> DROP \-> N XB YB COVXY SDX SDY R B0 B1
+        \<<
+          DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END SORT \-> LXS
+          \<<
+            DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END SORT \-> LYS
+            \<<
+              LXS 1 GET \-> XMIN
+              \<<
+                LXS N GET \-> XMAX
+                \<<
+                  LYS 1 GET \-> YMIN
+                  \<<
+                    LYS N GET \-> YMAX
+                    \<<
+                      @ XRNG/YRNG con el rango REAL de X e Y, dibujando con
+                      @ los valores directos: XRNG/YRNG reescalan de verdad
+                      @ las coordenadas de LINE/PIXON/R\->C. Asi el cursor
+                      @ del modo interactivo muestra los valores reales.
+                      ERASE
+                      XMIN XMAX XRNG YMIN YMAX YRNG
+                      @ Ejes: horizontal en Y=YMIN, vertical en X=XMIN
+                      XMIN YMIN R\->C XMAX YMIN R\->C LINE
+                      XMIN YMIN R\->C XMIN YMAX R\->C LINE
+                      @ Puntos de dispersion. Se recorren los datos en su
+                      @ orden ORIGINAL (no el ordenado): los pares (x,y)
+                      @ tienen que mantenerse emparejados.
+                      DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
+                      \<<
+                        DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
+                        \<<
+                          1 N FOR i
+                            LX i GET LY i GET R\->C PIXON
+                          NEXT
+                        \>>
+                      \>>
+                      @ Recta de regresion, de XMIN a XMAX
+                      XMIN B0 B1 XMIN * + R\->C
+                      XMAX B0 B1 XMAX * + R\->C LINE
+                      PICT PICTURE
+                      "Media X: " XB \->STR + 10 CHR +
+                      "Media Y: " + YB \->STR +
+                      MSGBOX
+                      "sX: " SDX \->STR + 10 CHR +
+                      "sY: " + SDY \->STR +
+                      MSGBOX
+                      "sXY: " COVXY \->STR + 10 CHR +
+                      "r (Pearson): " + R \->STR +
+                      MSGBOX
+                      "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
+                      MSGBOX
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DOLSC
+  \<<
+    @ DOLSC - nucleo de DOLS. Regresion lineal por sumatorias.
+    @ Uso:  DatosX DatosY DOLSC        (dos listas o vectores, no una matriz)
+    @ Deja: n1 = { N B0 B1 R R2 }      para la recta Y = B0 + B1*X
+    @
+    @ Las sumatorias NO se calculan aca: las hace DCOVCORRC, que es la
+    @ unica copia en la suite. Antes estaban escritas dos veces y habia
+    @ que acordarse de mantener identico el ORDEN de las operaciones,
+    @ porque en punto flotante un orden distinto da un redondeo distinto
+    @ y los dos programas mostraban numeros que no coincidian del todo.
+    @ Con una sola copia el problema desaparece por construccion.
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DOLS, que es
+    @ la que redondea con SIGFIG para mostrar.
+    DCOVCORRC \-> CC
+    \<<
+      CC 1 GET
+      CC 8 GET
+      CC 9 GET
+      CC 7 GET
+      CC 7 GET SQ \->NUM
+      5 \->LIST
+    \>>
+  \>>
+  DOLS
+  \<<
+    @ DOLS - regresion lineal por sumatorias.
+    @ Interfaz: el calculo esta en DOLSC, que devuelve { N B0 B1 R R2 }.
+    @ Pide dos listas separadas (X e Y), no una matriz: el indexado de
+    @ matrices con M { i j } GET resulto mas fragil.
+    @ B0 y B1 se redondean con SIGFIG a 4 cifras significativas para
+    @ mostrar, si no salen cosas como "5.8013220973E-5".
+    @ SIGFIG tiene que ser visible: dentro del paquete LAB.txt lo es,
+    @ porque todos los objetos viven en el mismo DIR. Si falta, el
+    @ nombre 'SIGFIG' queda SIN EVALUAR en la pila y el resultado sale
+    @ mal sin avisar.
+    "Regresion OLS [X Y]"
+    {
+      { "Datos X:" "Vector [x] o Lista {x}" }
+      { "Datos Y:" "Vector [y] o Lista {y}" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DOLSC OBJ\-> DROP \-> N B0 B1 R R2
+      \<<
+        "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
+        MSGBOX
+        "r: " R \->STR + 10 CHR +
+        "R2: " + R2 \->STR +
+        MSGBOX
+      \>>
+    END
+  \>>
+  DMKTC
+  \<<
+    @ DMKTC - nucleo de DMKT. Equilibrio de mercado con impuesto.
+    @ Uso:  a b c d T DMKTC        (Qd = a - b*P, Qs = c + d*P)
+    @ Deja: n1 = { PE QE }
+    @ PE = (a - c + d*T) / (b + d); QE = a - b*PE.
+    @ Con T=0 es el equilibrio simple. Sin INFORM ni graficos a
+    @ proposito: eso lo pone DMKT.
+    \-> A B C D T
+    \<<
+      A C - D T * + B D + / \->NUM \-> PE
+      \<<
+        A B PE * - \->NUM \-> QE
+        \<<
+          PE QE 2 \->LIST
+        \>>
+      \>>
+    \>>
+  \>>
+  DMKT
+  \<<
+    @ DMKT - equilibrio de mercado simple, con grafico.
+    @ Interfaz: el calculo esta en DMKTC, que toma a b c d T de la pila y
+    @ devuelve { PE QE }. Aca quedan el formulario y el dibujo.
+    @ Van dos INFORM seguidos porque el limite practico es ~4 campos por
+    @ pantalla (con 5 el ultimo queda inalcanzable con las flechas).
+    "Mercado: Qd=a-b*P, Qs=c+d*P"
+    {
+      { "a (Demanda Auto):" "0" 0 }
+      { "b (Sensib. Dem):" "0" 0 }
+      { "c (Oferta Auto):" "0" 0 }
+      { "d (Sensib. Of):" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> A B C D
+      \<<
+        "Impuesto (T)"
+        { { "Impuesto T (0=sin imp):" "0" 0 } }
+        { } { } { }
+        INFORM
+        IF THEN
+          1 GET \-> T
+          \<<
+            A B C D T DMKTC OBJ\-> DROP \-> PE QE
+            \<<
+              @ Grafico de Oferta y Demanda.
+              @ Eje horizontal = Precio (P), de 0 a PMAX = 2*PE (centra el
+              @ equilibrio). Eje vertical = Cantidad (Q), de 0 a QMAX, el
+              @ mayor entre el intercepto de demanda (A) y la oferta en
+              @ PMAX, para que ninguna curva se salga de la pantalla.
+              PE 2. * \->NUM \-> PMAX
+              \<<
+                C D PMAX * + \->NUM \-> SMAX
+                \<<
+                  IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
+                  \<<
+                    ERASE
+                    0 130 XRNG 0 79 YRNG
+                    @ Ejes de referencia
+                    20. 60. R\->C 110. 60. R\->C LINE
+                    20. 10. R\->C 20. 60. R\->C LINE
+                    @ Demanda: (P=0,Q=A) a (P=PMAX,Q=A-B*PMAX)
+                    A QMAX / 50. * 60. SWAP - 0 RND \-> DPY1
+                    \<<
+                      A B PMAX * - QMAX / 50. * 60. SWAP - 0 RND \-> DPY2
+                      \<<
+                        20. DPY1 R\->C 110. DPY2 R\->C LINE
+                        @ Oferta: (P=0,Q=C) a (P=PMAX,Q=SMAX)
+                        C QMAX / 50. * 60. SWAP - 0 RND \-> SPY1
+                        \<<
+                          SMAX QMAX / 50. * 60. SWAP - 0 RND \-> SPY2
+                          \<<
+                            20. SPY1 R\->C 110. SPY2 R\->C LINE
+                            @ Punto de equilibrio (cruz +)
+                            PE PMAX / 90. * 20. + 0 RND \-> EPX
+                            \<<
+                              QE QMAX / 50. * 60. SWAP - 0 RND \-> EPY
+                              \<<
+                                EPX 3 - EPY R\->C EPX 3 + EPY R\->C LINE
+                                EPX EPY 3 - R\->C EPX EPY 3 + R\->C LINE
+                                PICT PICTURE
+                                "Precio (P*): " PE \->STR + 10 CHR +
+                                "Cantidad (Q*): " + QE \->STR +
+                                MSGBOX
+                              \>>
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        END
+      \>>
+    END
+  \>>
+  DMKTFISCC
+  \<<
+    @ DMKTFISCC - nucleo de DMKTFISC. Mercado con impuesto y controles.
+    @ Uso:  a b c d T PrecioMax PrecioMin DMKTFISCC
+    @ Deja: n1 = { PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES }
+    @
+    @ PB = precio que paga el comprador, PS = el que recibe el vendedor.
+    @ El modelo supone que el impuesto se descuenta del lado del vendedor:
+    @ Qs = c + d*(Pb - T), de ahi la formula de PB.
+    @ P0/Q0 son el equilibrio SIN impuesto, para comparar.
+    @ Un T negativo es un subsidio y funciona igual (recaudacion negativa).
+    @
+    @ Los controles de precio se evaluan sobre la oferta/demanda SIN
+    @ impuesto: son una politica ALTERNATIVA, no combinada con T. Si el
+    @ control no restringe de verdad (techo por encima de P0, o piso por
+    @ debajo), da 0.
+    @
+    @ Sin INFORM ni graficos a proposito: eso lo pone DMKTFISC.
+    \-> A B C D T PMAXW PMINW
+    \<<
+      A C - D T * + B D + / \->NUM \-> PB
+      \<<
+        A B PB * - \->NUM \-> QE
+        \<<
+          PB T - \->NUM \-> PS
+          \<<
+            A C - B D + / \->NUM \-> P0
+            \<<
+              A B P0 * - \->NUM \-> Q0
+              \<<
+                IF PMAXW 0 == THEN
+                  0
+                ELSE
+                  IF PMAXW P0 < THEN
+                    A B PMAXW * - C D PMAXW * + -
+                  ELSE
+                    0
+                  END
+                END \->NUM \-> ESCASEZ
+                \<<
+                  IF PMINW 0 == THEN
+                    0
+                  ELSE
+                    IF PMINW P0 > THEN
+                      C D PMINW * + A B PMINW * - -
+                    ELSE
+                      0
+                    END
+                  END \->NUM \-> EXCEDENTE
+                  \<<
+                    T QE * \->NUM \-> RECAUD
+                    \<<
+                      @ PIE (DWL) = 0.5 * T * (Q0 - QE): el triangulo clasico
+                      @ entre la cantidad sin impuesto y con impuesto.
+                      0.5 T * Q0 QE - * \->NUM \-> PIE
+                      \<<
+                        @ Incidencia segun las pendientes relativas.
+                        D B D + / 100. * \->NUM \-> INCC
+                        \<<
+                          100. INCC - \->NUM \-> INCP
+                          \<<
+                            @ Elasticidad puntual (Pindyck), cada una evaluada
+                            @ en el precio que ese lado efectivamente enfrenta:
+                            @ Ed en Pb, Es en Ps.
+                            0 B - PB * QE / \->NUM \-> ED
+                            \<<
+                              D PS * QE / \->NUM \-> ES
+                              \<<
+                                PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE
+                                INCC INCP ED ES
+                                13 \->LIST
+                              \>>
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DMKTFISC
+  \<<
+    @ DMKTFISC - mercado con impuesto/subsidio, controles de precio y grafico.
+    @ Interfaz: el calculo esta en DMKTFISCC, que toma a b c d T PMax PMin
+    @ de la pila y devuelve
+    @ { PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES }.
+    @ Aca quedan los dos formularios, el dibujo y las seis cajas.
+    @ Van dos INFORM porque el limite practico es ~4 campos por pantalla.
+    "Mercado + Impuestos: Qd=a-b*P, Qs=c+d*P"
+    {
+      { "a (Demanda Auto):" "0" 0 }
+      { "b (Sensib. Dem):" "0" 0 }
+      { "c (Oferta Auto):" "0" 0 }
+      { "d (Sensib. Of):" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> A B C D
+      \<<
+        "Impuesto y Controles de Precio"
+        {
+          { "Impuesto T (0=sin imp):" "0" 0 }
+          { "Precio Maximo (0=sin techo):" "0" 0 }
+          { "Precio Minimo (0=sin piso):" "0" 0 }
+        }
+        { } { } { }
+        INFORM
+        IF THEN
+          OBJ\-> DROP \-> T PMAXW PMINW
+          \<<
+            A B C D T PMAXW PMINW DMKTFISCC OBJ\-> DROP
+            \-> PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES
+            \<<
+              @ XRNG/YRNG con el rango REAL (0 a QMAX, 0 a PMAX), dibujando
+              @ con los valores reales directos: XRNG/YRNG reescalan de
+              @ verdad las coordenadas de LINE/BOX/R\->C, y asi el cursor
+              @ del modo interactivo muestra Cantidad y Precio reales.
+              PB 2. * \->NUM \-> PMAX0
+              \<<
+                IF PMAXW PMAX0 > THEN PMAXW ELSE PMAX0 END \->NUM \-> PMAX1
+                \<<
+                  IF PMINW PMAX1 > THEN PMINW ELSE PMAX1 END \->NUM \-> PMAX
+                  \<<
+                    C D PMAX * + \->NUM \-> SMAX
+                    \<<
+                      IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
+                      \<<
+                        ERASE
+                        0 QMAX XRNG 0 PMAX YRNG
+                        @ Ejes: horizontal (Q) en P=0; vertical (P) en Q=0
+                        0 0 R\->C QMAX 0 R\->C LINE
+                        0 0 R\->C 0 PMAX R\->C LINE
+                        @ Lineas de Precio Maximo/Minimo
+                        IF PMAXW 0 == NOT THEN
+                          0 PMAXW R\->C QMAX PMAXW R\->C LINE
+                        END
+                        IF PMINW 0 == NOT THEN
+                          0 PMINW R\->C QMAX PMINW R\->C LINE
+                        END
+                        @ Demanda: (Q=A,P=0) a (Q=A-B*PMAX,P=PMAX)
+                        A 0 R\->C A B PMAX * - PMAX R\->C LINE
+                        @ Oferta: (Q=C,P=0) a (Q=SMAX,P=PMAX)
+                        C 0 R\->C SMAX PMAX R\->C LINE
+                        @ Cruz de equilibrio en (QE,PB), con offset
+                        @ proporcional a la escala de cada eje
+                        QMAX 40. / \-> QOFFS
+                        \<<
+                          PMAX 40. / \-> POFFS
+                          \<<
+                            QE QOFFS - PB R\->C QE QOFFS + PB R\->C LINE
+                            QE PB POFFS - R\->C QE PB POFFS + R\->C LINE
+                            IF T 0 == NOT THEN
+                              @ Brecha de impuesto: vertical en Q=QE, de PS a PB
+                              QE PS R\->C QE PB R\->C LINE
+                              @ Relleno de Recaudacion: 16 lineas horizontales
+                              IF PS PB < THEN PS ELSE PB END \-> PLO
+                              \<<
+                                IF PS PB < THEN PB ELSE PS END \-> PHI
+                                \<<
+                                  0 15 FOR i
+                                    PHI PLO - 15. / i * PLO + \-> PATI
+                                    \<<
+                                      0. PATI R\->C QE PATI R\->C LINE
+                                    \>>
+                                  NEXT
+                                  @ Relleno del PIE: 16 lineas verticales
+                                  @ entre QE y Q0
+                                  IF QE Q0 < THEN QE ELSE Q0 END \-> QLO
+                                  \<<
+                                    IF QE Q0 < THEN Q0 ELSE QE END \-> QHI
+                                    \<<
+                                      0 15 FOR i
+                                        QHI QLO - 15. / i * QLO + \-> QATI
+                                        \<<
+                                          A QATI - B / \->NUM \-> PDATI
+                                          \<<
+                                            QATI C - D / \->NUM \-> PSATI
+                                            \<<
+                                              QATI PSATI R\->C QATI PDATI R\->C LINE
+                                            \>>
+                                          \>>
+                                        \>>
+                                      NEXT
+                                    \>>
+                                  \>>
+                                \>>
+                              \>>
+                            END
+                            PICT PICTURE
+                            "Pb (comprador): " PB \->STR + 10 CHR +
+                            "Ps (vendedor): " + PS \->STR +
+                            MSGBOX
+                            "Q*: " QE \->STR + 10 CHR +
+                            "Recaudacion: " + RECAUD \->STR +
+                            MSGBOX
+                            "PIE (DWL): " PIE \->STR + 10 CHR +
+                            "Q sin imp: " + Q0 \->STR +
+                            MSGBOX
+                            "Inc.Comprador: " INCC \->STR + "%" + 10 CHR +
+                            "Inc.Vendedor: " + INCP \->STR + "%" +
+                            MSGBOX
+                            "Escasez (techo): " ESCASEZ \->STR + 10 CHR +
+                            "Excedente (piso): " + EXCEDENTE \->STR +
+                            MSGBOX
+                            "Ed (demanda): " ED \->STR + 10 CHR +
+                            "Es (oferta): " + ES \->STR +
+                            MSGBOX
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        END
+      \>>
+    END
+  \>>
+  DCOMPFIRMC
+  \<<
+    @ DCOMPFIRMC - nucleo de DCOMPFIRM. Empresa competitiva.
+    @ Uso:  CF b c P DCOMPFIRMC        (CT = CF + b*q + c*q^2)
+    @ Deja: n1 = { Q PROFIT CIERRA }
+    @         CIERRA = 1 si conviene cerrar en el corto plazo, 0 si no.
+    @
+    @ Con CT = CF + b*q + c*q^2, el costo marginal es CMg = b + 2*c*q y el
+    @ costo variable medio (CVMe = b + c*q) tiene su minimo tambien en q=0
+    @ con valor b: por eso la condicion de cierre es simplemente P < b.
+    @ Sin INFORM ni graficos a proposito: eso lo pone DCOMPFIRM.
+    \-> CF B C P
+    \<<
+      IF P B < THEN 0 ELSE P B - 2. C * / END \->NUM \-> Q
+      \<<
+        IF P B < THEN
+          0 CF -
+        ELSE
+          P Q * CF B Q * + C Q Q * * + -
+        END \->NUM \-> PROFIT
+        \<<
+          Q PROFIT
+          IF P B < THEN 1 ELSE 0 END
+          3 \->LIST
+        \>>
+      \>>
+    \>>
+  \>>
+  DCOMPFIRM
+  \<<
+    @ DCOMPFIRM - empresa competitiva, con grafico CMg/CVMe/P.
+    @ Interfaz: el calculo esta en DCOMPFIRMC, que toma CF b c P de la
+    @ pila y devuelve { Q PROFIT CIERRA }. Aca quedan el formulario,
+    @ el dibujo y el veredicto.
+    "Empresa Competitiva: CT=CF+b*q+c*q^2"
+    {
+      { "CF (Costo Fijo):" "0" 0 }
+      { "b (Costo Marg. Base):" "0" 0 }
+      { "c (Coef. Cuadratico):" "0" 0 }
+      { "P (Precio de Mercado):" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> CF B C P
+      \<<
+        CF B C P DCOMPFIRMC OBJ\-> DROP \-> Q PROFIT CIERRA
+        \<<
+          IF Q 0 == THEN 10. ELSE Q 2. * END \->NUM \-> QMAX
+          \<<
+            B 2. C * QMAX * + \->NUM \-> CMGMAX
+            \<<
+              IF P CMGMAX > THEN P ELSE CMGMAX END 1.1 * \->NUM \-> PMAX
+              \<<
+                ERASE
+                @ XRNG/YRNG con el rango real (0 a QMAX, 0 a PMAX),
+                @ dibujando con los valores directos: asi el cursor del
+                @ modo interactivo muestra Cantidad y Costo/Precio reales.
+                0 QMAX XRNG 0 PMAX YRNG
+                @ Ejes
+                0 0 R\->C QMAX 0 R\->C LINE
+                0 0 R\->C 0 PMAX R\->C LINE
+                @ CMg: (Q=0,B) a (Q=QMAX,CMGMAX)
+                0 B R\->C QMAX CMGMAX R\->C LINE
+                @ CVMe: (Q=0,B) a (Q=QMAX,AVCMAX)
+                B C QMAX * + \->NUM \-> AVCMAX
+                \<<
+                  0 B R\->C QMAX AVCMAX R\->C LINE
+                  @ Linea horizontal de Precio
+                  0 P R\->C QMAX P R\->C LINE
+                  @ Punto de equilibrio (solo si no cerro), con offset
+                  @ proporcional a la escala de cada eje.
+                  IF Q 0 > THEN
+                    QMAX 40. / \-> QOFFS
+                    \<<
+                      PMAX 40. / \-> POFFS
+                      \<<
+                        Q QOFFS - P R\->C Q QOFFS + P R\->C LINE
+                        Q P POFFS - R\->C Q P POFFS + R\->C LINE
+                      \>>
+                    \>>
+                  END
+                  PICT PICTURE
+                  "Q*: " Q \->STR + 10 CHR +
+                  "Beneficio: " + PROFIT \->STR +
+                  MSGBOX
+                  IF CIERRA 1 == THEN
+                    @ La semilla NO lleva + adelante: el MSGBOX de arriba ya
+                    @ consumio el string anterior y la pila quedo vacia, asi
+                    @ que el + no tenia con que concatenar (CLAUDE.md 2.4).
+                    @ Estaba asi desde antes de partir el programa.
+                    "La empresa CIERRA en el corto" 10 CHR +
+                    "plazo (P menor al CMg minimo)." +
+                    MSGBOX
+                  ELSE
+                    "La empresa sigue produciendo" 10 CHR +
+                    "en el corto plazo." +
+                    MSGBOX
+                  END
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DPIBPPAC
+  \<<
+    @ DPIBPPAC - nucleo de DPIBPPA. PIB per capita PPA.
+    @ Uso:  PIB FACTOR POBLACION DPIBPPAC
+    @ Deja: n1 = { PIBPPA PIBPC }
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPIBPPA.
+    \-> PIB FAC POB
+    \<<
+      PIB FAC / \->NUM \-> PIBPPA
+      \<<
+        PIBPPA POB / \->NUM \-> PIBPC
+        \<<
+          PIBPPA PIBPC 2 \->LIST
+        \>>
+      \>>
+    \>>
+  \>>
+  DPIBPPA
+  \<<
+    @ DPIBPPA - PIB per capita PPA.
+    @ Interfaz: el calculo esta en DPIBPPAC, que devuelve { PIBPPA PIBPC }.
+    "PIB per Capita PPA"
+    {
+      { "PIB Nominal (moneda local):" "" 0 }
+      { "Factor Conversion PPA:" "" 0 }
+      { "Poblacion:" "" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DPIBPPAC OBJ\-> DROP \-> PIBPPA PIBPC
+      \<<
+        "PIB PPA (total): " PIBPPA \->STR + 10 CHR +
+        "PIB pc PPA: " + PIBPC \->STR +
+        MSGBOX
+      \>>
+    END
+  \>>
+  DTCAMBIOC
+  \<<
+    @ DTCAMBIOC - nucleo de DTCAMBIO. Tasa anual compuesta (CAGR).
+    @ Uso:  VarTotalPct T1 T2 DTCAMBIOC
+    @ Deja: n1 = { RC }        RC en por ciento anual.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DTCAMBIO.
+    \-> VT T1 T2
+    \<<
+      1 VT 100. / + 1 T2 T1 - / ^ 1 - 100. * \->NUM 1 \->LIST
+    \>>
+  \>>
+  DTCAMBIO
+  \<<
+    @ DTCAMBIO - tasa de crecimiento anual compuesta (CAGR).
+    @ Interfaz: el calculo esta en DTCAMBIOC, que devuelve { RC }.
+    "Tasa Anual Compuesta"
+    {
+      { "Var Total Acum (%):" "" 0 }
+      { "Anio Inicial (T1):" "" 0 }
+      { "Anio Final (T2):" "" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DTCAMBIOC 1 GET \-> RC
+      \<<
+        "Tasa Anual Compuesta:" 10 CHR +
+        RC \->STR + " % anual" +
+        MSGBOX
+      \>>
+    END
+  \>>
+  DCOMPZC
+  \<<
+    @ DCOMPZC - nucleo de DCOMPZ. Valor Z estandarizado.
+    @ Uso:  x media desvio DCOMPZC
+    @ Deja: n1 = { ZV ATIP }
+    @         ATIP = 1 si |Z| > 3 (atipico), 0 si no.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DCOMPZ.
+    \-> X U S
+    \<<
+      X U - S / \->NUM \-> ZV
+      \<<
+        ZV
+        IF ZV ABS 3. > THEN 1 ELSE 0 END
+        2 \->LIST
+      \>>
+    \>>
+  \>>
+  DCOMPZ
+  \<<
+    @ DCOMPZ - valor Z estandarizado, Z = (x - u) / s.
+    @ Interfaz: el calculo esta en DCOMPZC, que devuelve { ZV ATIP }.
+    @ El criterio de atipico es |Z| > 3, estricto: un |Z| de exactamente 3
+    @ NO es atipico.
+    "Estandarizacion Z = (x-u)/s"
+    {
+      { "Valor Obs (x):" "" 0 }
+      { "Media (u):" "" 0 }
+      { "Desvio Est. (s):" "" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DCOMPZC OBJ\-> DROP \-> ZV ATIP
+      \<<
+        "Valor Z = " ZV \->STR + 10 CHR +
+        IF ATIP 1 == THEN
+          "Clasif: Atipico (|Z| > 3)"
+        ELSE
+          "Clasif: Rango Normal"
+        END +
+        MSGBOX
+      \>>
+    END
+  \>>
+  DTROZOS
+  \<<
+    "Ventana de Grafico"
+    {
+      { "Xmin ventana:" "-10" 0 }
+      { "Xmax ventana:" "10" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> WXMIN WXMAX
+      \<<
+        "Funcion a Trozos"
+        { { "Cuantos tramos?:" "1" 0 } }
+        { } { } { }
+        INFORM
+        IF THEN
+          1 GET \-> N
+          \<<
+            { } 'EXPRS' STO
+            { } 'TIZQ' STO
+            { } 'VIZQ' STO
+            { } 'TDER' STO
+            { } 'VDER' STO
+            1 N FOR i
+              "Tramo " i \->STR + " - Expresion e Izquierda"
+              {
+                { "Expresion, ej 'X^2':" "'X'" }
+                { "Izq con comillas dobles (menor o menor-igual):" "" }
+                { "Valor izq (ignorado si Extremo izq vacio):" "0" 0 }
+              }
+              { } { } { }
+              INFORM
+              IF THEN
+                OBJ\-> DROP \-> EXPR0 TI VI
+                \<<
+                  @ Por si el campo devuelve un string en vez de un
+                  @ objeto algebraico ya interpretado.
+                  EXPR0 IF DUP TYPE 2 == THEN STR\-> END \-> EXPR
+                  \<<
+                    "Tramo " i \->STR + " - Derecha"
+                    {
+                      { "Der con comillas dobles (mayor o mayor-igual):" "" }
+                      { "Valor der (ignorado si Extremo der vacio):" "0" 0 }
+                    }
+                    { } { } { }
+                    INFORM
+                    IF THEN
+                      OBJ\-> DROP \-> TD VD
+                      \<<
+                        EXPRS EXPR + 'EXPRS' STO
+                        TIZQ TI + 'TIZQ' STO
+                        VIZQ VI + 'VIZQ' STO
+                        TDER TD + 'TDER' STO
+                        VDER VD + 'VDER' STO
+                      \>>
+                    END
+                  \>>
+                \>>
+              END
+            NEXT
+            @ Semilla inicial de Y (para escalar el eje; usa el
+            @ primer punto real de dibujo del primer tramo)
+            IF TIZQ 1 GET 0 == THEN WXMIN ELSE VIZQ 1 GET END \->NUM \-> YSEEDX
+            \<<
+              YSEEDX 'X' STO
+              EXPRS 1 GET EVAL \->NUM \-> YMIN
+              \<<
+                YMIN \-> YMAX
+                \<<
+                  1 N FOR i
+                    IF TIZQ i GET "" == THEN WXMIN ELSE VIZQ i GET END \->NUM \-> ALEFT
+                    \<<
+                      IF TDER i GET "" == THEN WXMAX ELSE VDER i GET END \->NUM \-> ARIGHT
+                      \<<
+                        0 9 FOR j
+                          ARIGHT ALEFT - 9. / j * ALEFT + \-> XJ
+                          \<<
+                            XJ 'X' STO
+                            EXPRS i GET EVAL \->NUM \-> YJ
+                            \<<
+                              IF YJ YMIN < THEN YJ 'YMIN' STO END
+                              IF YJ YMAX > THEN YJ 'YMAX' STO END
+                            \>>
+                          \>>
+                        NEXT
+                      \>>
+                    \>>
+                  NEXT
+                  @ Salvaguarda de rango degenerado (aprendida con
+                  @ el error anterior de XRNG bad argument value)
+                  IF YMAX YMIN == THEN YMAX 1. + 'YMAX' STO END
+                  ERASE
+                  WXMIN WXMAX XRNG YMIN YMAX YRNG
+                  WXMAX WXMIN - 60. / \-> QOFFS
+                  \<<
+                    YMAX YMIN - 40. / \-> YOFFS
+                    \<<
+                      1 N FOR i
+                        IF TIZQ i GET "" == THEN WXMIN ELSE VIZQ i GET END \->NUM \-> ALEFT
+                        \<<
+                          IF TDER i GET "" == THEN WXMAX ELSE VDER i GET END \->NUM \-> ARIGHT
+                          \<<
+                            ALEFT 'X' STO
+                            EXPRS i GET EVAL \->NUM \-> PREVY
+                            \<<
+                              ALEFT \-> PREVX
+                              \<<
+                                1 9 FOR j
+                                  ARIGHT ALEFT - 9. / j * ALEFT + \-> XJ
+                                  \<<
+                                    XJ 'X' STO
+                                    EXPRS i GET EVAL \->NUM \-> YJ
+                                    \<<
+                                      PREVX PREVY R\->C XJ YJ R\->C LINE
+                                      XJ 'PREVX' STO
+                                      YJ 'PREVY' STO
+                                    \>>
+                                  \>>
+                                NEXT
+                                @ Marcador izquierdo, SOLO si hay un
+                                @ limite real (no se dibuja nada en
+                                @ el borde de la ventana, porque ahi
+                                @ no es un extremo real del tramo)
+                                IF TIZQ i GET "" == NOT THEN
+                                  ALEFT 'X' STO
+                                  EXPRS i GET EVAL \->NUM \-> LY
+                                  \<<
+                                    ALEFT QOFFS - LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS - R\->C LINE
+                                    ALEFT QOFFS + LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS + R\->C LINE
+                                    ALEFT QOFFS + LY YOFFS + R\->C ALEFT QOFFS - LY YOFFS + R\->C LINE
+                                    ALEFT QOFFS - LY YOFFS + R\->C ALEFT QOFFS - LY YOFFS - R\->C LINE
+                                    IF TIZQ i GET "<=" == THEN
+                                      ALEFT QOFFS - LY YOFFS - R\->C ALEFT QOFFS + LY YOFFS + R\->C LINE
+                                      ALEFT QOFFS + LY YOFFS - R\->C ALEFT QOFFS - LY YOFFS + R\->C LINE
+                                    END
+                                  \>>
+                                END
+                                @ Marcador derecho, SOLO si hay limite real
+                                IF TDER i GET "" == NOT THEN
+                                  ARIGHT 'X' STO
+                                  EXPRS i GET EVAL \->NUM \-> RY
+                                  \<<
+                                    ARIGHT QOFFS - RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS - R\->C LINE
+                                    ARIGHT QOFFS + RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS + R\->C LINE
+                                    ARIGHT QOFFS + RY YOFFS + R\->C ARIGHT QOFFS - RY YOFFS + R\->C LINE
+                                    ARIGHT QOFFS - RY YOFFS + R\->C ARIGHT QOFFS - RY YOFFS - R\->C LINE
+                                    IF TDER i GET "<=" == THEN
+                                      ARIGHT QOFFS - RY YOFFS - R\->C ARIGHT QOFFS + RY YOFFS + R\->C LINE
+                                      ARIGHT QOFFS + RY YOFFS - R\->C ARIGHT QOFFS - RY YOFFS + R\->C LINE
+                                    END
+                                  \>>
+                                END
+                              \>>
+                            \>>
+                          \>>
+                        \>>
+                      NEXT
+                      PICT PICTURE
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+            { EXPRS TIZQ VIZQ TDER VDER } PURGE
+          \>>
+        END
+      \>>
+    END
+  \>>
+  DINF
+  \<<
+    @ DINF - captura el infinito REAL del CAS y lo deja en el global
+    @ INF, para que DASHO, DESTFUN y DCONT lo usen.
+    @
+    @ Por que hace falta: el archivo de transferencia tiene que ser
+    @ ASCII puro de 7 bits (CLAUDE.md 1), asi que el caracter infinito
+    @ no puede viajar dentro del fuente. El escape \.oo parecia la
+    @ solucion pero produce un NOMBRE GLOBAL (TYPE 6) que solo se
+    @ dibuja como infinito; el de verdad es un ALGEBRAICO (TYPE 9).
+    @ Por eso LIMIT sustituia en vez de calcular.
+    @
+    @ USO: poner el simbolo infinito DEL TECLADO en el nivel 1 de la
+    @ pila, y recien ahi correr DINF. Guardar DINF en HOME para que
+    @ INF se vea desde cualquier subcarpeta (CLAUDE.md 5).
+    @
+    @ NO toma el infinito por INFORM a proposito: pasarlo por un campo
+    @ de texto obligaria a un STR\-> que lo devolveria como nombre,
+    @ que es justo el objeto equivocado. Por la pila llega intacto.
+    @
+    @ Cajas: TYPE y codigo de caracter del objeto capturado, y una
+    @ prueba real de LIMIT. Si esa prueba dice 0, el arreglo funciona.
+    @
+    @ El codigo se lee del caracter 2, no del 1: \->STR sobre un
+    @ algebraico devuelve "'oo'" CON las comillas, asi que el
+    @ caracter 1 es el apostrofo (39) y no sirve.
+    IF DEPTH 0 ==
+    THEN
+      "Falta el infinito" 10 CHR +
+      "en el nivel 1" +
+      MSGBOX
+    ELSE
+      DUP TYPE \-> TP
+      \<<
+        DUP 'INF' STO
+        \->STR 2 2 SUB NUM \-> COD
+        \<<
+          "TYPE (debe ser 9): " TP \->STR + 10 CHR +
+          "Codigo caracter: " + COD \->STR +
+          MSGBOX
+          "LIMIT 1/X en INF:" 10 CHR +
+          IFERR
+            '1/X' 'X' INF = LIMIT EVAL \->STR
+          THEN
+            "FALLO IGUAL"
+          END
+          +
+          MSGBOX
+        \>>
+      \>>
+    END
+  \>>
+END

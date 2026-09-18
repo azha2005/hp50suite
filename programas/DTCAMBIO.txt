@@ -1,26 +1,21 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DTCAMBIO
-  \<<
-    "Tasa Anual Compuesta"
-    {
-      { "Var Total Acum (%):" "" 0 }
-      { "Anio Inicial (T1):" "" 0 }
-      { "Anio Final (T2):" "" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> VT T1 T2
-      \<<
-        1 VT 100. / + 1 T2 T1 - / ^ 1 - 100. * \->NUM \-> RC
-        \<<
-          @ CORREGIDO: faltaba el + final antes de MSGBOX.
-          "Tasa Anual Compuesta:" 10 CHR +
-          RC \->STR + " % anual" +
-          MSGBOX
-        \>>
-      \>>
-    END
-  \>>
-END
+\<<
+  @ DTCAMBIO - tasa de crecimiento anual compuesta (CAGR).
+  @ Interfaz: el calculo esta en DTCAMBIOC, que devuelve { RC }.
+  "Tasa Anual Compuesta"
+  {
+    { "Var Total Acum (%):" "" 0 }
+    { "Anio Inicial (T1):" "" 0 }
+    { "Anio Final (T2):" "" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DTCAMBIOC 1 GET \-> RC
+    \<<
+      "Tasa Anual Compuesta:" 10 CHR +
+      RC \->STR + " % anual" +
+      MSGBOX
+    \>>
+  END
+\>>

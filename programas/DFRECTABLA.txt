@@ -1,106 +1,31 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DFRECTABLA
-  \<<
-    "Tabla de Frecuencias"
-    {
-      { "Datos:" "Vector [x] o Lista {x}" }
-      { "K deseado (0=Sturges):" "0" 0 }
-      { "Ancho deseado (0=auto):" "0" 0 }
-      { "Inicio deseado (0=Min real):" "0" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      @ Mismo esquema de campos que DHISTO (K/H/Inicio opcionales).
-      OBJ\-> DROP \-> DATA0 KWANT HWANT SWANT
-      \<<
-        DATA0
-        IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
-        SORT
-        \-> L
-        \<<
-          L SIZE \-> N
-          \<<
-            L 1 GET \-> XMIN
-            \<<
-              L N GET \-> XMAX
-              \<<
-                IF KWANT 0 == THEN
-                  1 3.322 N LOG * + 0 RND
-                ELSE
-                  KWANT
-                END
-                \->NUM \-> K
-                \<<
-                  IF HWANT 0 == THEN
-                    IF XMAX XMIN == THEN 1 ELSE XMAX XMIN - K / END
-                  ELSE
-                    HWANT
-                  END
-                  \->NUM \-> H
-                  \<<
-                    IF SWANT 0 == THEN XMIN ELSE SWANT END \-> START
-                    \<<
-                      @ Conteo de frecuencias por clase (identico a DHISTO)
-                      {K} 0. CON \-> FREQ
-                      \<<
-                        1 N FOR i
-                          L i GET \-> V
-                          \<<
-                            V START - H / FLOOR 1 + \-> IDX
-                            \<<
-                              IF IDX K > THEN K 'IDX' STO END
-                              IF IDX 1 < THEN 1 'IDX' STO END
-                              FREQ IDX FREQ IDX GET 1 + PUT 'FREQ' STO
-                            \>>
-                          \>>
-                        NEXT
-                        
-                        @ AGREGADO: en vez de armar un string de
-                        @ tabla, se construye una MATRIZ real con
-                        @ \->ARRY (6 columnas: Inicio, Fin, Absoluta,
-                        @ Acum.Absoluta, Porcentual, Acum.%). En modo
-                        @ algebraico, EDIT sobre esta matriz abre un
-                        @ editor de celdas tipo planilla.
-                        @ ACUM y CUMFREQ son globales (bare STO).
-                        0. 'ACUM' STO
-                        0. 'CUMFREQ' STO
-                        1 K FOR i
-                          START i 1 - H * + \->NUM \-> CLASEINF
-                          \<<
-                            CLASEINF H + \->NUM \-> CLASESUP
-                            \<<
-                              FREQ i GET \-> FI
-                              \<<
-                                CUMFREQ FI + \->NUM 'CUMFREQ' STO
-                                FI N / 100. * \->NUM \-> PCT
-                                \<<
-                                  ACUM PCT + \->NUM 'ACUM' STO
-                                  @ Se dejan los 6 valores de esta fila
-                                  @ en la pila, sin consumirlos -- se
-                                  @ acumulan ahi las K*6 celdas hasta
-                                  @ el \->ARRY final.
-                                  CLASEINF CLASESUP FI CUMFREQ PCT ACUM
-                                \>>
-                              \>>
-                            \>>
-                          \>>
-                        NEXT
-                        { K 6 } \->ARRY
-                        
-                        @ CORREGIDO: PURGE ya no incluye FREQ (es
-                        @ local, no hace falta purgarla).
-                        { ACUM CUMFREQ } PURGE
-                      \>>
-                    \>>
-                  \>>
-                \>>
-              \>>
-            \>>
-          \>>
-        \>>
-      \>>
-    END
-  \>>
-END
+\<<
+  @ DFRECTABLA - tabla de frecuencias como MATRIZ.
+  @ Interfaz: el calculo esta en DFRECTABLAC, que devuelve
+  @ { K H START FREQ MAT }. La matriz queda en la pila.
+  @ K/Ancho/Inicio en 0 = automatico (Sturges para K). Se pueden fijar a
+  @ mano para reproducir ejercicios que eligen K arbitrariamente.
+  @ En modo algebraico, EDIT sobre la matriz abre un editor de celdas
+  @ tipo planilla; en RPN solo edita la matriz plana.
+  "Tabla de Frecuencias"
+  {
+    { "Datos:" "Vector [x] o Lista {x}" }
+    { "K deseado (0=Sturges):" "0" 0 }
+    { "Ancho deseado (0=auto):" "0" 0 }
+    { "Inicio deseado (0=Min real):" "0" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DFRECTABLAC OBJ\-> DROP \-> K H START FREQ MAT
+    \<<
+      "K: " K \->STR + 10 CHR +
+      "Ancho: " + H \->STR +
+      MSGBOX
+      "Inicio: " START \->STR + 10 CHR +
+      "Tabla en la pila" +
+      MSGBOX
+      MAT
+    \>>
+  END
+\>>

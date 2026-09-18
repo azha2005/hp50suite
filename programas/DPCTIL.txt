@@ -1,53 +1,27 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DPCTIL
-  \<<
-    "Percentil Interpolado (Catedra)"
-    {
-      { "Datos:" "Vector [x] o Lista {x}" }
-      { "Percentil p (0-100):" "50" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> DATA0 P
+\<<
+  @ DPCTIL - percentil interpolado, formula de catedra Lp=(p/100)(n+1).
+  @ La mediana es el percentil 50.
+  @ Interfaz: el calculo esta en DPCTILC, que devuelve { N LP VAL }.
+  "Percentil Interpolado (Catedra)"
+  {
+    { "Datos:" "Vector [x] o Lista {x}" }
+    { "Percentil p (0-100):" "50" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> DATA0 P
+    \<<
+      DATA0 P DPCTILC OBJ\-> DROP \-> N LP VAL
       \<<
-        DATA0
-        IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
-        SORT \-> S
-        \<<
-          S SIZE \-> N
-          \<<
-            P 100. / N 1 + * \-> LP
-            \<<
-              LP IP \-> I
-              \<<
-                LP FP \-> F
-                \<<
-                  CASE
-                    I 1 < THEN S 1 GET END
-                    I N < NOT THEN S N GET END
-                    S I 1 + GET S I GET - F * S I GET +
-                  END
-                  \->NUM \-> VAL
-                  \<<
-                    @ CORREGIDO 2: faltaba el + final antes de MSGBOX
-                    @ (dejaba "Valor: " y el numero sin fusionar en
-                    @ un solo string). De paso se parte en 2 cajas
-                    @ de 2 lineas, sin encabezado decorativo.
-                    "P: " P \->STR + 10 CHR +
-                    "N: " + N \->STR +
-                    MSGBOX
-                    "Lp: " LP \->STR + 10 CHR +
-                    "Valor: " + VAL \->STR +
-                    MSGBOX
-                  \>>
-                \>>
-              \>>
-            \>>
-          \>>
-        \>>
+        "P: " P \->STR + 10 CHR +
+        "N: " + N \->STR +
+        MSGBOX
+        "Lp: " LP \->STR + 10 CHR +
+        "Valor: " + VAL \->STR +
+        MSGBOX
       \>>
-    END
-  \>>
-END
+    \>>
+  END
+\>>

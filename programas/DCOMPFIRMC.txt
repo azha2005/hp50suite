@@ -1,0 +1,28 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCOMPFIRMC - nucleo de DCOMPFIRM. Empresa competitiva.
+  @ Uso:  CF b c P DCOMPFIRMC        (CT = CF + b*q + c*q^2)
+  @ Deja: n1 = { Q PROFIT CIERRA }
+  @         CIERRA = 1 si conviene cerrar en el corto plazo, 0 si no.
+  @
+  @ Con CT = CF + b*q + c*q^2, el costo marginal es CMg = b + 2*c*q y el
+  @ costo variable medio (CVMe = b + c*q) tiene su minimo tambien en q=0
+  @ con valor b: por eso la condicion de cierre es simplemente P < b.
+  @ Sin INFORM ni graficos a proposito: eso lo pone DCOMPFIRM.
+  \-> CF B C P
+  \<<
+    IF P B < THEN 0 ELSE P B - 2. C * / END \->NUM \-> Q
+    \<<
+      IF P B < THEN
+        0 CF -
+      ELSE
+        P Q * CF B Q * + C Q Q * * + -
+      END \->NUM \-> PROFIT
+      \<<
+        Q PROFIT
+        IF P B < THEN 1 ELSE 0 END
+        3 \->LIST
+      \>>
+    \>>
+  \>>
+\>>

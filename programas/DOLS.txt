@@ -1,95 +1,30 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DOLS
-  \<<
-    "Regresion OLS [X Y]"
-    @ CORREGIDO: se reemplaza el campo unico "Matriz Nx2" (que
-    @ dependia de M SIZE / M { i j } GET, indexado de matrices
-    @ mas fragil) por el mismo patron de dos listas separadas
-    @ que ya funciona en DCOVCORR. Ademas se corrige "SQRT" (no
-    @ es un comando valido de HP RPL) por \v/.
-    {
-      { "Datos X:" "Vector [x] o Lista {x}" }
-      { "Datos Y:" "Vector [y] o Lista {y}" }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> DX0 DY0
-      \<<
-        DX0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LX
-        \<<
-          DY0 IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END \-> LY
-          \<<
-            LX SIZE \-> N
-            \<<
-              0. 'SX' STO 0. 'SY' STO
-              1 N FOR i
-                SX LX i GET + 'SX' STO
-                SY LY i GET + 'SY' STO
-              NEXT
-              SX N / \->NUM \-> XB
-              \<<
-                SY N / \->NUM \-> YB
-                \<<
-                  0. 'SXY' STO 0. 'SXX' STO 0. 'SYY' STO
-                  1 N FOR i
-                    LX i GET XB - \-> DXI
-                    \<<
-                      LY i GET YB - \-> DYI
-                      \<<
-                        SXY DXI DYI * + 'SXY' STO
-                        SXX DXI SQ + 'SXX' STO
-                        SYY DYI SQ + 'SYY' STO
-                      \>>
-                    \>>
-                  NEXT
-                  SXY SXX / \->NUM \-> B1
-                  \<<
-                    YB B1 XB * - \->NUM \-> B0
-                    \<<
-                      @ CORREGIDO: se porta la MISMA secuencia exacta
-                      @ de calculo de r que usa DCOVCORR (via COVXY/
-                      @ SDX/SDY con division por N-1 en cada paso),
-                      @ en vez de la formula "atajo" SXY/RAIZ(SXX*SYY).
-                      @ Son iguales en algebra real, pero en punto
-                      @ flotante el orden de las operaciones puede
-                      @ dar redondeos distintos -- portar la secuencia
-                      @ garantiza que ambos programas den exactamente
-                      @ el mismo numero, no solo un numero equivalente.
-                      SXY N 1 - / \->NUM \-> COVXY
-                      \<<
-                        SXX N 1 - / \v/ \->NUM \-> SDX
-                        \<<
-                          SYY N 1 - / \v/ \->NUM \-> SDY
-                          \<<
-                            COVXY SDX SDY * / \->NUM \-> R
-                            \<<
-                              R R * \->NUM \-> R2
-                              \<<
-                                @ AGREGADO: redondeo a 4 cifras significativas
-                                @ con SIGFIG (programa global aparte) antes de
-                                @ mostrar, para evitar numeros largos en
-                                @ notacion cientifica como "5.8013220973E-5".
-                                "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
-                                MSGBOX
-                                "r: " R \->STR + 10 CHR +
-                                "R2: " + R2 \->STR +
-                                MSGBOX
-                              \>>
-                            \>>
-                          \>>
-                        \>>
-                      \>>
-                    \>>
-                  \>>
-                  { SX SY SXY SXX SYY } PURGE
-                \>>
-              \>>
-            \>>
-          \>>
-        \>>
-      \>>
-    END
-  \>>
-END
+\<<
+  @ DOLS - regresion lineal por sumatorias.
+  @ Interfaz: el calculo esta en DOLSC, que devuelve { N B0 B1 R R2 }.
+  @ Pide dos listas separadas (X e Y), no una matriz: el indexado de
+  @ matrices con M { i j } GET resulto mas fragil.
+  @ B0 y B1 se redondean con SIGFIG a 4 cifras significativas para
+  @ mostrar, si no salen cosas como "5.8013220973E-5".
+  @ SIGFIG tiene que ser visible: dentro del paquete LAB.txt lo es,
+  @ porque todos los objetos viven en el mismo DIR. Si falta, el
+  @ nombre 'SIGFIG' queda SIN EVALUAR en la pila y el resultado sale
+  @ mal sin avisar.
+  "Regresion OLS [X Y]"
+  {
+    { "Datos X:" "Vector [x] o Lista {x}" }
+    { "Datos Y:" "Vector [y] o Lista {y}" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DOLSC OBJ\-> DROP \-> N B0 B1 R R2
+    \<<
+      "Y = " B0 4 SIGFIG \->STR + " + " + B1 4 SIGFIG \->STR + "*X" +
+      MSGBOX
+      "r: " R \->STR + 10 CHR +
+      "R2: " + R2 \->STR +
+      MSGBOX
+    \>>
+  END
+\>>

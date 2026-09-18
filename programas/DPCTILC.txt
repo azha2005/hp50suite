@@ -1,0 +1,37 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPCTILC - nucleo de DPCTIL. Percentil interpolado de la catedra.
+  @ Uso:  Datos P DPCTILC        (P de 0 a 100; la mediana es P=50)
+  @ Deja: n1 = { N LP VAL }
+  @         LP = (P/100)*(N+1), la posicion; VAL = el valor interpolado.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPCTIL.
+  \-> DATA0 P
+  \<<
+    DATA0
+    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    SORT \-> S
+    \<<
+      S SIZE \-> N
+      \<<
+        P 100. / N 1 + * \-> LP
+        \<<
+          LP IP \-> I
+          \<<
+            LP FP \-> F
+            \<<
+              CASE
+                I 1 < THEN S 1 GET END
+                I N < NOT THEN S N GET END
+                S I 1 + GET S I GET - F * S I GET +
+              END
+              \->NUM \-> VAL
+              \<<
+                N LP VAL 3 \->LIST
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

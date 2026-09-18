@@ -1,55 +1,52 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DINF
-  \<<
-    @ DINF - captura el infinito REAL del CAS y lo deja en el global
-    @ INF, para que DASHO, DESTFUN y DCONT lo usen.
-    @
-    @ Por que hace falta: el archivo de transferencia tiene que ser
-    @ ASCII puro de 7 bits (CLAUDE.md 1), asi que el caracter infinito
-    @ no puede viajar dentro del fuente. El escape \.oo parecia la
-    @ solucion pero produce un NOMBRE GLOBAL (TYPE 6) que solo se
-    @ dibuja como infinito; el de verdad es un ALGEBRAICO (TYPE 9).
-    @ Por eso LIMIT sustituia en vez de calcular.
-    @
-    @ USO: poner el simbolo infinito DEL TECLADO en el nivel 1 de la
-    @ pila, y recien ahi correr DINF. Guardar DINF en HOME para que
-    @ INF se vea desde cualquier subcarpeta (CLAUDE.md 5).
-    @
-    @ NO toma el infinito por INFORM a proposito: pasarlo por un campo
-    @ de texto obligaria a un STR\-> que lo devolveria como nombre,
-    @ que es justo el objeto equivocado. Por la pila llega intacto.
-    @
-    @ Cajas: TYPE y codigo de caracter del objeto capturado, y una
-    @ prueba real de LIMIT. Si esa prueba dice 0, el arreglo funciona.
-    @
-    @ El codigo se lee del caracter 2, no del 1: \->STR sobre un
-    @ algebraico devuelve "'oo'" CON las comillas, asi que el
-    @ caracter 1 es el apostrofo (39) y no sirve.
-    IF DEPTH 0 ==
-    THEN
-      "Falta el infinito" 10 CHR +
-      "en el nivel 1" +
-      MSGBOX
-    ELSE
-      DUP TYPE \-> TP
+\<<
+  @ DINF - captura el infinito REAL del CAS y lo deja en el global
+  @ INF, para que DASHO, DESTFUN y DCONT lo usen.
+  @
+  @ Por que hace falta: el archivo de transferencia tiene que ser
+  @ ASCII puro de 7 bits (CLAUDE.md 1), asi que el caracter infinito
+  @ no puede viajar dentro del fuente. El escape \.oo parecia la
+  @ solucion pero produce un NOMBRE GLOBAL (TYPE 6) que solo se
+  @ dibuja como infinito; el de verdad es un ALGEBRAICO (TYPE 9).
+  @ Por eso LIMIT sustituia en vez de calcular.
+  @
+  @ USO: poner el simbolo infinito DEL TECLADO en el nivel 1 de la
+  @ pila, y recien ahi correr DINF. Guardar DINF en HOME para que
+  @ INF se vea desde cualquier subcarpeta (CLAUDE.md 5).
+  @
+  @ NO toma el infinito por INFORM a proposito: pasarlo por un campo
+  @ de texto obligaria a un STR\-> que lo devolveria como nombre,
+  @ que es justo el objeto equivocado. Por la pila llega intacto.
+  @
+  @ Cajas: TYPE y codigo de caracter del objeto capturado, y una
+  @ prueba real de LIMIT. Si esa prueba dice 0, el arreglo funciona.
+  @
+  @ El codigo se lee del caracter 2, no del 1: \->STR sobre un
+  @ algebraico devuelve "'oo'" CON las comillas, asi que el
+  @ caracter 1 es el apostrofo (39) y no sirve.
+  IF DEPTH 0 ==
+  THEN
+    "Falta el infinito" 10 CHR +
+    "en el nivel 1" +
+    MSGBOX
+  ELSE
+    DUP TYPE \-> TP
+    \<<
+      DUP 'INF' STO
+      \->STR 2 2 SUB NUM \-> COD
       \<<
-        DUP 'INF' STO
-        \->STR 2 2 SUB NUM \-> COD
-        \<<
-          "TYPE (debe ser 9): " TP \->STR + 10 CHR +
-          "Codigo caracter: " + COD \->STR +
-          MSGBOX
-          "LIMIT 1/X en INF:" 10 CHR +
-          IFERR
-            '1/X' 'X' INF = LIMIT EVAL \->STR
-          THEN
-            "FALLO IGUAL"
-          END
-          +
-          MSGBOX
-        \>>
+        "TYPE (debe ser 9): " TP \->STR + 10 CHR +
+        "Codigo caracter: " + COD \->STR +
+        MSGBOX
+        "LIMIT 1/X en INF:" 10 CHR +
+        IFERR
+          '1/X' 'X' INF = LIMIT EVAL \->STR
+        THEN
+          "FALLO IGUAL"
+        END
+        +
+        MSGBOX
       \>>
-    END
-  \>>
-END
+    \>>
+  END
+\>>

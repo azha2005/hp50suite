@@ -1,0 +1,73 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DBOXPLOTC - nucleo de DBOXPLOT. Los cinco numeros y los outliers.
+  @ Uso:  Datos DBOXPLOTC
+  @ Deja: n1 = { N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS }
+  @         LINF/LSUP = vallas de Tukey (Q1-1.5*RIC y Q3+1.5*RIC),
+  @         WMIN/WMAX = extremos de los bigotes (el dato adyacente),
+  @         OUTS = lista de valores atipicos.
+  @
+  @ Cuartiles por INDICE (metodo simplificado), no por la interpolacion
+  @ Lp=(p/100)*(n+1) de la catedra: los dos metodos pueden dar valores
+  @ distintos. Para el metodo exacto de catedra esta DPCTIL.
+  @
+  @ WMIN arranca en MAXV y no en MINV: si el minimo de los datos es un
+  @ outlier, la comparacion "V < WMIN" tiene que poder disparar igual.
+  @ WMAX se apoya en que la lista esta ORDENADA (el ultimo V que no
+  @ supera LSUP es el mayor no atipico), por eso no compara.
+  @
+  @ Sin INFORM ni graficos a proposito: eso lo pone DBOXPLOT.
+  IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+  SORT
+  \-> L
+  \<<
+    L SIZE \-> N
+    \<<
+      L 1 GET \-> MINV
+      \<<
+        L N GET \-> MAXV
+        \<<
+          IF N 2 MOD 0 == THEN
+            L N 2 / GET L N 2 / 1 + GET + 2 /
+          ELSE
+            L N 2 / CEIL GET
+          END
+          \-> Q2
+          \<<
+            L N 4 / CEIL GET \-> Q1
+            \<<
+              L N 3 * 4 / CEIL GET \-> Q3
+              \<<
+                Q3 Q1 - \-> IQR
+                \<<
+                  Q1 1.5 IQR * - \-> LINF
+                  \<<
+                    Q3 1.5 IQR * + \-> LSUP
+                    \<<
+                      { } 'OUTS' STO
+                      MAXV 'WMIN' STO
+                      MAXV 'WMAX' STO
+                      1 N FOR i
+                        L i GET \-> V
+                        \<<
+                          IF V LINF < V LSUP > OR THEN
+                            OUTS V + 'OUTS' STO
+                          END
+                          IF V LINF < NOT V WMIN < AND THEN V 'WMIN' STO END
+                          IF V LSUP > NOT THEN V 'WMAX' STO END
+                        \>>
+                      NEXT
+                      N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS
+                      12 \->LIST
+                      { OUTS WMIN WMAX } PURGE
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

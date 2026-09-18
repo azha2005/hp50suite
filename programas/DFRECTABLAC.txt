@@ -1,0 +1,91 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DFRECTABLAC - nucleo de DFRECTABLA. Tabla de frecuencias.
+  @ Uso:  Datos K H Inicio DFRECTABLAC     (K/H/Inicio en 0 = automatico)
+  @ Deja: n1 = { K H START FREQ MAT }
+  @         FREQ = vector de frecuencias absolutas por clase,
+  @         MAT  = matriz K x 6: Inicio, Fin, Abs, Acum.Abs, %, Acum.%
+  @ Con K=0 usa Sturges: K = 1 + 3.322*log(N), redondeado.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DFRECTABLA.
+  @
+  @ El bucle de filas deja los 6 valores de cada fila en la pila sin
+  @ consumirlos: ahi se acumulan las K*6 celdas hasta el \->ARRY final.
+  @ Por eso este nucleo NO lleva guardian de profundidad (CLAUDE.md
+  @ 2.11): la acumulacion en la pila es intencional, no basura.
+  \-> DATA0 KWANT HWANT SWANT
+  \<<
+    DATA0
+    IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+    SORT
+    \-> L
+    \<<
+      L SIZE \-> N
+      \<<
+        L 1 GET \-> XMIN
+        \<<
+          L N GET \-> XMAX
+          \<<
+            IF KWANT 0 == THEN
+              1 3.322 N LOG * + 0 RND
+            ELSE
+              KWANT
+            END
+            \->NUM \-> K
+            \<<
+              IF HWANT 0 == THEN
+                IF XMAX XMIN == THEN 1 ELSE XMAX XMIN - K / END
+              ELSE
+                HWANT
+              END
+              \->NUM \-> H
+              \<<
+                IF SWANT 0 == THEN XMIN ELSE SWANT END \-> START
+                \<<
+                  {K} 0. CON \-> FREQ
+                  \<<
+                    1 N FOR i
+                      L i GET \-> V
+                      \<<
+                        V START - H / FLOOR 1 + \-> IDX
+                        \<<
+                          IF IDX K > THEN K 'IDX' STO END
+                          IF IDX 1 < THEN 1 'IDX' STO END
+                          FREQ IDX FREQ IDX GET 1 + PUT 'FREQ' STO
+                        \>>
+                      \>>
+                    NEXT
+                    0. 'ACUM' STO
+                    0. 'CUMFREQ' STO
+                    1 K FOR i
+                      START i 1 - H * + \->NUM \-> CLASEINF
+                      \<<
+                        CLASEINF H + \->NUM \-> CLASESUP
+                        \<<
+                          FREQ i GET \-> FI
+                          \<<
+                            CUMFREQ FI + \->NUM 'CUMFREQ' STO
+                            FI N / 100. * \->NUM \-> PCT
+                            \<<
+                              ACUM PCT + \->NUM 'ACUM' STO
+                              CLASEINF CLASESUP FI CUMFREQ PCT ACUM
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    NEXT
+                    { K 6 } \->ARRY
+                    \-> MAT
+                    \<<
+                      K H START FREQ MAT 5 \->LIST
+                    \>>
+                    { ACUM CUMFREQ } PURGE
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

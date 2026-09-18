@@ -1,0 +1,37 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DSTATSC - nucleo de DSTATS. Media, varianza, desvio y CV.
+  @ Uso:  Datos DSTATSC        (vector [x] o lista {x})
+  @ Deja: n1 = { N XBAR VARZ DESV CV }
+  @ Varianza MUESTRAL (divide por N-1), que es la de la catedra.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSTATS.
+  IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
+  \-> L
+  \<<
+    L SIZE \-> N
+    \<<
+      0. 'S' STO
+      1 N FOR i
+        S L i GET + 'S' STO
+      NEXT
+      S N / \->NUM \-> XBAR
+      \<<
+        0. 'SS' STO
+        1 N FOR i
+          SS L i GET XBAR - SQ + 'SS' STO
+        NEXT
+        SS N 1 - / \->NUM \-> VARZ
+        \<<
+          VARZ \v/ \->NUM \-> DESV
+          \<<
+            DESV XBAR / 100. * \->NUM \-> CV
+            \<<
+              N XBAR VARZ DESV CV 5 \->LIST
+            \>>
+          \>>
+        \>>
+      \>>
+      { S SS } PURGE
+    \>>
+  \>>
+\>>

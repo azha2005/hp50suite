@@ -1,0 +1,86 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DMKTFISCC - nucleo de DMKTFISC. Mercado con impuesto y controles.
+  @ Uso:  a b c d T PrecioMax PrecioMin DMKTFISCC
+  @ Deja: n1 = { PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES }
+  @
+  @ PB = precio que paga el comprador, PS = el que recibe el vendedor.
+  @ El modelo supone que el impuesto se descuenta del lado del vendedor:
+  @ Qs = c + d*(Pb - T), de ahi la formula de PB.
+  @ P0/Q0 son el equilibrio SIN impuesto, para comparar.
+  @ Un T negativo es un subsidio y funciona igual (recaudacion negativa).
+  @
+  @ Los controles de precio se evaluan sobre la oferta/demanda SIN
+  @ impuesto: son una politica ALTERNATIVA, no combinada con T. Si el
+  @ control no restringe de verdad (techo por encima de P0, o piso por
+  @ debajo), da 0.
+  @
+  @ Sin INFORM ni graficos a proposito: eso lo pone DMKTFISC.
+  \-> A B C D T PMAXW PMINW
+  \<<
+    A C - D T * + B D + / \->NUM \-> PB
+    \<<
+      A B PB * - \->NUM \-> QE
+      \<<
+        PB T - \->NUM \-> PS
+        \<<
+          A C - B D + / \->NUM \-> P0
+          \<<
+            A B P0 * - \->NUM \-> Q0
+            \<<
+              IF PMAXW 0 == THEN
+                0
+              ELSE
+                IF PMAXW P0 < THEN
+                  A B PMAXW * - C D PMAXW * + -
+                ELSE
+                  0
+                END
+              END \->NUM \-> ESCASEZ
+              \<<
+                IF PMINW 0 == THEN
+                  0
+                ELSE
+                  IF PMINW P0 > THEN
+                    C D PMINW * + A B PMINW * - -
+                  ELSE
+                    0
+                  END
+                END \->NUM \-> EXCEDENTE
+                \<<
+                  T QE * \->NUM \-> RECAUD
+                  \<<
+                    @ PIE (DWL) = 0.5 * T * (Q0 - QE): el triangulo clasico
+                    @ entre la cantidad sin impuesto y con impuesto.
+                    0.5 T * Q0 QE - * \->NUM \-> PIE
+                    \<<
+                      @ Incidencia segun las pendientes relativas.
+                      D B D + / 100. * \->NUM \-> INCC
+                      \<<
+                        100. INCC - \->NUM \-> INCP
+                        \<<
+                          @ Elasticidad puntual (Pindyck), cada una evaluada
+                          @ en el precio que ese lado efectivamente enfrenta:
+                          @ Ed en Pb, Es en Ps.
+                          0 B - PB * QE / \->NUM \-> ED
+                          \<<
+                            D PS * QE / \->NUM \-> ES
+                            \<<
+                              PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE
+                              INCC INCP ED ES
+                              13 \->LIST
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

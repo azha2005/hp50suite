@@ -1,116 +1,73 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DHISTO
-  \<<
-    "Histograma Sturges"
-    {
-      { "Datos:" "Vector [x] o Lista {x}" }
-      { "K deseado (0=Sturges):" "0" 0 }
-      { "Ancho deseado (0=auto):" "0" 0 }
-      { "Inicio deseado (0=Min real):" "0" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      @ AGREGADO: campos opcionales K, H e Inicio manuales.
-      @ Algunos ejemplos de catedra (ej. horas trabajadas por
-      @ semana) NO usan Sturges ni el minimo real como punto de
-      @ partida -- el profesor elige K a mano y arranca los
-      @ intervalos en un numero entero conveniente MENOR al
-      @ minimo real (ej. 10 en vez de 12), para que el eje se
-      @ lea mas facil. Con 0 en cualquier campo se sigue
-      @ calculando automatico; con otro valor se usa ese valor.
-      OBJ\-> DROP \-> DATA0 KWANT HWANT SWANT
+\<<
+  @ DHISTO - histograma de barras.
+  @ Interfaz: el binning NO se calcula aca. Lo hace DFRECTABLAC, que es
+  @ el mismo que usa la tabla de frecuencias y devuelve
+  @ { K H START FREQ MAT }. Antes estaba escrito dos veces, identico,
+  @ en DHISTO y en DFRECTABLA: dos copias de un conteo de clases que
+  @ tienen que coincidir siempre, porque la tabla y el grafico del
+  @ mismo ejercicio no pueden dar clases distintas.
+  @
+  @ Campos K/Ancho/Inicio opcionales: algunos ejemplos de catedra (ej.
+  @ horas trabajadas por semana) NO usan Sturges ni el minimo real como
+  @ punto de partida -- el profesor elige K a mano y arranca los
+  @ intervalos en un entero comodo MENOR al minimo real (ej. 10 en vez
+  @ de 12) para que el eje se lea mejor. Con 0 se calcula automatico.
+  "Histograma Sturges"
+  {
+    { "Datos:" "Vector [x] o Lista {x}" }
+    { "K deseado (0=Sturges):" "0" 0 }
+    { "Ancho deseado (0=auto):" "0" 0 }
+    { "Inicio deseado (0=Min real):" "0" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> DATA0 KWANT HWANT SWANT
+    \<<
+      DATA0 KWANT HWANT SWANT DFRECTABLAC OBJ\-> DROP
+      DROP \-> K H START FREQ
       \<<
         DATA0
         IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END
-        SORT
-        \-> L
+        SIZE \-> N
         \<<
-          L SIZE \-> N
-          \<<
-            L 1 GET \-> XMIN
+          1. 'MAXF' STO
+          1 K FOR i
+            IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
+          NEXT
+          @ XRNG con el rango real de clases (START a START+K*H) y YRNG
+          @ con el rango real de frecuencia (0 a MAXF). Cada barra se
+          @ dibuja con los valores reales directos, sin formula de
+          @ escalado a pixel: XRNG/YRNG reescalan de verdad las
+          @ coordenadas de LINE/BOX/R\->C. Asi el cursor del modo
+          @ interactivo muestra clase y frecuencia reales.
+          ERASE
+          START START K H * + XRNG 0 MAXF YRNG
+          1 K FOR i
+            START i 1 - H * + \-> XLO
             \<<
-              L N GET \-> XMAX
+              XLO H + \-> XHI
               \<<
-                IF KWANT 0 == THEN
-                  1 3.322 N LOG * + 0 RND
-                ELSE
-                  KWANT
-                END
-                \->NUM \-> K
-                \<<
-                  IF HWANT 0 == THEN
-                    IF XMAX XMIN == THEN 1 ELSE XMAX XMIN - K / END
-                  ELSE
-                    HWANT
-                  END
-                  \->NUM \-> H
-                  \<<
-                    IF SWANT 0 == THEN XMIN ELSE SWANT END \-> START
-                    \<<
-                      @ Conteo de frecuencias por clase (a partir de START,
-                      @ no necesariamente el minimo real de los datos)
-                      {K} 0. CON \-> FREQ
-                      \<<
-                        1 N FOR i
-                          L i GET \-> V
-                          \<<
-                            V START - H / FLOOR 1 + \-> IDX
-                            \<<
-                              IF IDX K > THEN K 'IDX' STO END
-                              IF IDX 1 < THEN 1 'IDX' STO END
-                              FREQ IDX FREQ IDX GET 1 + PUT 'FREQ' STO
-                            \>>
-                          \>>
-                        NEXT
-                        
-                        1. 'MAXF' STO
-                        1 K FOR i
-                          IF FREQ i GET MAXF > THEN FREQ i GET 'MAXF' STO END
-                        NEXT
-                        
-                        @ AGREGADO (version 2): XRNG con el rango real
-                        @ de clases (START a START+K*H) y YRNG con el
-                        @ rango real de frecuencia (0 a MAXF). Se dibuja
-                        @ cada barra con los valores reales directos,
-                        @ sin formula de escalado a pixel -- confirmado
-                        @ que XRNG/YRNG reescalan de verdad las
-                        @ coordenadas de LINE/BOX/R\->C. El cursor del
-                        @ modo interactivo ahora muestra el valor real
-                        @ de clase y de frecuencia.
-                        ERASE
-                        START START K H * + XRNG 0 MAXF YRNG
-                        1 K FOR i
-                          START i 1 - H * + \-> XLO
-                          \<<
-                            XLO H + \-> XHI
-                            \<<
-                              XLO 0 R\->C XHI FREQ i GET R\->C BOX
-                            \>>
-                          \>>
-                        NEXT
-                        
-                        PICT PICTURE
-                        
-                        "Inicio: " START \->STR + 10 CHR +
-                        "Ancho (H): " + H \->STR +
-                        MSGBOX
-                        "Clases (K): " K \->STR + 10 CHR +
-                        "N datos: " + N \->STR +
-                        MSGBOX
-                        "Frecuencias:" 10 CHR +
-                        FREQ \->STR +
-                        MSGBOX
-                      \>>
-                    \>>
-                  \>>
-                \>>
+                XLO 0 R\->C XHI FREQ i GET R\->C BOX
               \>>
             \>>
-          \>>
+          NEXT
+          
+          PICT PICTURE
+          
+          "Inicio: " START \->STR + 10 CHR +
+          "Ancho (H): " + H \->STR +
+          MSGBOX
+          "Clases (K): " K \->STR + 10 CHR +
+          "N datos: " + N \->STR +
+          MSGBOX
+          "Frecuencias:" 10 CHR +
+          FREQ \->STR +
+          MSGBOX
+          'MAXF' PURGE
         \>>
       \>>
-    END
-  \>>
-END
+    \>>
+  END
+\>>

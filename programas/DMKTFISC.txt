@@ -1,226 +1,151 @@
 %%HP: T(3)A(R)F(.);
-DIR
-  DMKTFISC
-  \<<
-    "Mercado + Impuestos: Qd=a-b*P, Qs=c+d*P"
-    {
-      { "a (Demanda Auto):" "0" 0 }
-      { "b (Sensib. Dem):" "0" 0 }
-      { "c (Oferta Auto):" "0" 0 }
-      { "d (Sensib. Of):" "0" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> A B C D
-      \<<
-        "Impuesto y Controles de Precio"
-        {
-          { "Impuesto T (0=sin imp):" "0" 0 }
-          { "Precio Maximo (0=sin techo):" "0" 0 }
-          { "Precio Minimo (0=sin piso):" "0" 0 }
-        }
-        { } { } { }
-        INFORM
-        IF THEN
-          OBJ\-> DROP \-> T PMAXW PMINW
+\<<
+  @ DMKTFISC - mercado con impuesto/subsidio, controles de precio y grafico.
+  @ Interfaz: el calculo esta en DMKTFISCC, que toma a b c d T PMax PMin
+  @ de la pila y devuelve
+  @ { PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES }.
+  @ Aca quedan los dos formularios, el dibujo y las seis cajas.
+  @ Van dos INFORM porque el limite practico es ~4 campos por pantalla.
+  "Mercado + Impuestos: Qd=a-b*P, Qs=c+d*P"
+  {
+    { "a (Demanda Auto):" "0" 0 }
+    { "b (Sensib. Dem):" "0" 0 }
+    { "c (Oferta Auto):" "0" 0 }
+    { "d (Sensib. Of):" "0" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> A B C D
+    \<<
+      "Impuesto y Controles de Precio"
+      {
+        { "Impuesto T (0=sin imp):" "0" 0 }
+        { "Precio Maximo (0=sin techo):" "0" 0 }
+        { "Precio Minimo (0=sin piso):" "0" 0 }
+      }
+      { } { } { }
+      INFORM
+      IF THEN
+        OBJ\-> DROP \-> T PMAXW PMINW
+        \<<
+          A B C D T PMAXW PMINW DMKTFISCC OBJ\-> DROP
+          \-> PB QE PS P0 Q0 ESCASEZ EXCEDENTE RECAUD PIE INCC INCP ED ES
           \<<
-            @ Pb = precio que paga el comprador (el "PE" de siempre).
-            @ El modelo supone que el impuesto se descuenta del lado
-            @ del vendedor: Qs = c + d*(Pb - T), de ahi la formula.
-            A C - D T * + B D + / \->NUM \-> PB
+            @ XRNG/YRNG con el rango REAL (0 a QMAX, 0 a PMAX), dibujando
+            @ con los valores reales directos: XRNG/YRNG reescalan de
+            @ verdad las coordenadas de LINE/BOX/R\->C, y asi el cursor
+            @ del modo interactivo muestra Cantidad y Precio reales.
+            PB 2. * \->NUM \-> PMAX0
             \<<
-              A B PB * - \->NUM \-> QE
+              IF PMAXW PMAX0 > THEN PMAXW ELSE PMAX0 END \->NUM \-> PMAX1
               \<<
-                @ AGREGADO: analisis fiscal completo.
-                PB T - \->NUM \-> PS
+                IF PMINW PMAX1 > THEN PMINW ELSE PMAX1 END \->NUM \-> PMAX
                 \<<
-                  @ Equilibrio SIN impuesto (T=0), para comparar
-                  A C - B D + / \->NUM \-> P0
+                  C D PMAX * + \->NUM \-> SMAX
                   \<<
-                    A B P0 * - \->NUM \-> Q0
+                    IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
                     \<<
-                      @ AGREGADO: controles de precio, evaluados sobre
-                      @ la oferta/demanda SIN impuesto (politica
-                      @ alternativa, no combinada con T). Techo por
-                      @ debajo de P0 genera escasez; piso por encima
-                      @ de P0 genera excedente. Si no es "binding"
-                      @ (no restringe realmente el mercado), da 0.
-                      IF PMAXW 0 == THEN
-                        0
-                      ELSE
-                        IF PMAXW P0 < THEN
-                          A B PMAXW * - C D PMAXW * + -
-                        ELSE
-                          0
-                        END
-                      END \->NUM \-> ESCASEZ
+                      ERASE
+                      0 QMAX XRNG 0 PMAX YRNG
+                      
+                      @ Ejes: horizontal (Q) en P=0; vertical (P) en Q=0
+                      0 0 R\->C QMAX 0 R\->C LINE
+                      0 0 R\->C 0 PMAX R\->C LINE
+                      
+                      @ Lineas de Precio Maximo/Minimo
+                      IF PMAXW 0 == NOT THEN
+                        0 PMAXW R\->C QMAX PMAXW R\->C LINE
+                      END
+                      IF PMINW 0 == NOT THEN
+                        0 PMINW R\->C QMAX PMINW R\->C LINE
+                      END
+                      
+                      @ Demanda: (Q=A,P=0) a (Q=A-B*PMAX,P=PMAX)
+                      A 0 R\->C A B PMAX * - PMAX R\->C LINE
+                      
+                      @ Oferta: (Q=C,P=0) a (Q=SMAX,P=PMAX)
+                      C 0 R\->C SMAX PMAX R\->C LINE
+                      
+                      @ Cruz de equilibrio en (QE,PB), con offset
+                      @ proporcional a la escala de cada eje
+                      QMAX 40. / \-> QOFFS
                       \<<
-                        IF PMINW 0 == THEN
-                          0
-                        ELSE
-                          IF PMINW P0 > THEN
-                            C D PMINW * + A B PMINW * - -
-                          ELSE
-                            0
-                          END
-                        END \->NUM \-> EXCEDENTE
+                        PMAX 40. / \-> POFFS
                         \<<
-                      T QE * \->NUM \-> RECAUD
-                      \<<
-                        @ PIE (DWL) = 0.5 * T * (Q0 - QE), el triangulo
-                        @ clasico entre la cantidad sin y con impuesto
-                        0.5 T * Q0 QE - * \->NUM \-> PIE
-                        \<<
-                          @ Incidencia: quien absorbe el impuesto segun
-                          @ las pendientes relativas de oferta/demanda
-                          D B D + / 100. * \->NUM \-> INCC
-                          \<<
-                            100. INCC - \->NUM \-> INCP
+                          QE QOFFS - PB R\->C QE QOFFS + PB R\->C LINE
+                          QE PB POFFS - R\->C QE PB POFFS + R\->C LINE
+                          
+                          IF T 0 == NOT THEN
+                            @ Brecha de impuesto: vertical en Q=QE, de PS a PB
+                            QE PS R\->C QE PB R\->C LINE
+                            
+                            @ Relleno de Recaudacion: 16 lineas horizontales
+                            IF PS PB < THEN PS ELSE PB END \-> PLO
                             \<<
-                              @ AGREGADO: elasticidad puntual de demanda y
-                              @ oferta (Pindyck), evaluadas en el precio que
-                              @ efectivamente paga/recibe cada lado con el
-                              @ impuesto -- Ed en Pb, Es en Ps.
-                              0 B - PB * QE / \->NUM \-> ED
+                              IF PS PB < THEN PB ELSE PS END \-> PHI
                               \<<
-                                D PS * QE / \->NUM \-> ES
-                                \<<
-                                  @ AGREGADO (version 2): se reemplaza la
-                                  @ formula manual de escalado por XRNG/YRNG
-                                  @ con el rango REAL (0 a QMAX, 0 a PMAX),
-                                  @ dibujando con los valores reales
-                                  @ directamente -- confirmado con un test
-                                  @ aislado que XRNG/YRNG reescalan de verdad
-                                  @ las coordenadas de LINE/BOX/R\->C. Esto
-                                  @ ademas deja el cursor del modo interactivo
-                                  @ mostrando Cantidad y Precio reales.
-                                  PB 2. * \->NUM \-> PMAX0
+                                0 15 FOR i
+                                  PHI PLO - 15. / i * PLO + \-> PATI
                                   \<<
-                                    IF PMAXW PMAX0 > THEN PMAXW ELSE PMAX0 END \->NUM \-> PMAX1
-                                    \<<
-                                      IF PMINW PMAX1 > THEN PMINW ELSE PMAX1 END \->NUM \-> PMAX
+                                    0. PATI R\->C QE PATI R\->C LINE
+                                  \>>
+                                NEXT
+                                
+                                @ Relleno del PIE: 16 lineas verticales
+                                @ entre QE y Q0
+                                IF QE Q0 < THEN QE ELSE Q0 END \-> QLO
+                                \<<
+                                  IF QE Q0 < THEN Q0 ELSE QE END \-> QHI
+                                  \<<
+                                    0 15 FOR i
+                                      QHI QLO - 15. / i * QLO + \-> QATI
                                       \<<
-                                        C D PMAX * + \->NUM \-> SMAX
+                                        A QATI - B / \->NUM \-> PDATI
                                         \<<
-                                          IF A SMAX > THEN A ELSE SMAX END \->NUM \-> QMAX
+                                          QATI C - D / \->NUM \-> PSATI
                                           \<<
-                                            ERASE
-                                            0 QMAX XRNG 0 PMAX YRNG
-                                            
-                                            @ Ejes: horizontal (Q) en P=0;
-                                            @ vertical (P) en Q=0
-                                            0 0 R\->C QMAX 0 R\->C LINE
-                                            0 0 R\->C 0 PMAX R\->C LINE
-                                            
-                                            @ Lineas de Precio Maximo/Minimo
-                                            IF PMAXW 0 == NOT THEN
-                                              0 PMAXW R\->C QMAX PMAXW R\->C LINE
-                                            END
-                                            IF PMINW 0 == NOT THEN
-                                              0 PMINW R\->C QMAX PMINW R\->C LINE
-                                            END
-                                            
-                                            @ Demanda: (Q=A,P=0) a (Q=A-B*PMAX,P=PMAX)
-                                            A 0 R\->C A B PMAX * - PMAX R\->C LINE
-                                            
-                                            @ Oferta: (Q=C,P=0) a (Q=SMAX,P=PMAX)
-                                            C 0 R\->C SMAX PMAX R\->C LINE
-                                            
-                                            @ Cruz de equilibrio en (QE,PB); offset
-                                            @ proporcional a la escala de cada eje
-                                            QMAX 40. / \-> QOFFS
-                                            \<<
-                                              PMAX 40. / \-> POFFS
-                                              \<<
-                                                QE QOFFS - PB R\->C QE QOFFS + PB R\->C LINE
-                                                QE PB POFFS - R\->C QE PB POFFS + R\->C LINE
-                                                
-                                                IF T 0 == NOT THEN
-                                                  @ Brecha de impuesto: vertical en Q=QE,
-                                                  @ entre P=PS y P=PB
-                                                  QE PS R\->C QE PB R\->C LINE
-                                                  
-                                                  @ Relleno de Recaudacion (rectangulo):
-                                                  @ 16 lineas horizontales entre PS y PB
-                                                  IF PS PB < THEN PS ELSE PB END \-> PLO
-                                                  \<<
-                                                    IF PS PB < THEN PB ELSE PS END \-> PHI
-                                                    \<<
-                                                      0 15 FOR i
-                                                        PHI PLO - 15. / i * PLO + \-> PATI
-                                                        \<<
-                                                          0. PATI R\->C QE PATI R\->C LINE
-                                                        \>>
-                                                      NEXT
-                                                      
-                                                      @ Relleno de PIE (triangulo): 16
-                                                      @ lineas verticales entre QE y Q0
-                                                      IF QE Q0 < THEN QE ELSE Q0 END \-> QLO
-                                                      \<<
-                                                        IF QE Q0 < THEN Q0 ELSE QE END \-> QHI
-                                                        \<<
-                                                          0 15 FOR i
-                                                            QHI QLO - 15. / i * QLO + \-> QATI
-                                                            \<<
-                                                              A QATI - B / \->NUM \-> PDATI
-                                                              \<<
-                                                                QATI C - D / \->NUM \-> PSATI
-                                                                \<<
-                                                                  QATI PSATI R\->C QATI PDATI R\->C LINE
-                                                                \>>
-                                                              \>>
-                                                            \>>
-                                                          NEXT
-                                                        \>>
-                                                      \>>
-                                                    \>>
-                                                  \>>
-                                                END
-                                                
-                                                PICT PICTURE
-                                                
-                                                "Pb (comprador): " PB \->STR + 10 CHR +
-                                                "Ps (vendedor): " + PS \->STR +
-                                                MSGBOX
-                                                "Q*: " QE \->STR + 10 CHR +
-                                                "Recaudacion: " + RECAUD \->STR +
-                                                MSGBOX
-                                                "PIE (DWL): " PIE \->STR + 10 CHR +
-                                                "Q sin imp: " + Q0 \->STR +
-                                                MSGBOX
-                                                "Inc.Comprador: " INCC \->STR + "%" + 10 CHR +
-                                                "Inc.Vendedor: " + INCP \->STR + "%" +
-                                                MSGBOX
-                                                "Escasez (techo): " ESCASEZ \->STR + 10 CHR +
-                                                "Excedente (piso): " + EXCEDENTE \->STR +
-                                                MSGBOX
-                                                "Ed (demanda): " ED \->STR + 10 CHR +
-                                                "Es (oferta): " + ES \->STR +
-                                                MSGBOX
-                                              \>>
-                                            \>>
+                                            QATI PSATI R\->C QATI PDATI R\->C LINE
                                           \>>
                                         \>>
                                       \>>
-                                    \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
-                                  \>>
+                                    NEXT
                                   \>>
                                 \>>
+                              \>>
+                            \>>
+                          END
+                          
+                          PICT PICTURE
+                          
+                          "Pb (comprador): " PB \->STR + 10 CHR +
+                          "Ps (vendedor): " + PS \->STR +
+                          MSGBOX
+                          "Q*: " QE \->STR + 10 CHR +
+                          "Recaudacion: " + RECAUD \->STR +
+                          MSGBOX
+                          "PIE (DWL): " PIE \->STR + 10 CHR +
+                          "Q sin imp: " + Q0 \->STR +
+                          MSGBOX
+                          "Inc.Comprador: " INCC \->STR + "%" + 10 CHR +
+                          "Inc.Vendedor: " + INCP \->STR + "%" +
+                          MSGBOX
+                          "Escasez (techo): " ESCASEZ \->STR + 10 CHR +
+                          "Excedente (piso): " + EXCEDENTE \->STR +
+                          MSGBOX
+                          "Ed (demanda): " ED \->STR + 10 CHR +
+                          "Es (oferta): " + ES \->STR +
+                          MSGBOX
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
         \>>
       END
-      \>>
-    END
-  \>>
-END
+    \>>
+  END
+\>>

@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPIBPPAC - nucleo de DPIBPPA. PIB per capita PPA.
+  @ Uso:  PIB FACTOR POBLACION DPIBPPAC
+  @ Deja: n1 = { PIBPPA PIBPC }
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPIBPPA.
+  \-> PIB FAC POB
+  \<<
+    PIB FAC / \->NUM \-> PIBPPA
+    \<<
+      PIBPPA POB / \->NUM \-> PIBPC
+      \<<
+        PIBPPA PIBPC 2 \->LIST
+      \>>
+    \>>
+  \>>
+\>>
