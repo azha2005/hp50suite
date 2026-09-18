@@ -1,0 +1,108 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DWEIERC - nucleo de DWEIER. Teorema de Weierstrass: extremos
+  @ absolutos de una funcion continua en un intervalo cerrado [a,b].
+  @ Uso:  'f(X)' a b DWEIERC
+  @ Deja: n1 = { CAND VALORES XMAX FMAX XMIN FMIN AVISO }
+  @   CAND    = los candidatos: a, los criticos interiores, b
+  @   VALORES = f en cada candidato, en el mismo orden
+  @   XMAX/FMAX y XMIN/FMIN = donde y cuanto
+  @   AVISO   = "OK" o el motivo por el que la hipotesis no se verifica
+  @
+  @ El teorema dice que una funcion CONTINUA en un cerrado y acotado
+  @ alcanza maximo y minimo absolutos. La hipotesis no se puede demostrar
+  @ desde un programa; lo que si se puede es SONDEARLA y avisar cuando no
+  @ se cumple, que es justo donde el ejercicio tiene gracia. Se muestrea
+  @ el intervalo en 21 puntos y se marca si alguno se va al infinito o se
+  @ sale del dominio real.
+  @
+  @ Medido antes de escribir esto (harness/casos-nuevos2.txt):
+  @   '1/X' 'X' 0 = SUBST EVAL \->NUM NO da error: devuelve
+  @   9.99999999999E499. Por eso la discontinuidad se detecta por
+  @   MAGNITUD y no con IFERR, que nunca saltaria.
+  @   'X^2+1' 'X' ZEROS devuelve las raices COMPLEJAS, no lista vacia,
+  @   asi que los criticos se filtran por TYPE (regla 2.14).
+  @   ZEROS con UNA sola raiz no devuelve lista, devuelve el numero.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DWEIER.
+  \-> F0 A0 B0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END
+      A0 \->NUM B0 \->NUM
+      \-> F AA BB
+      \<<
+        IF AA BB >
+        THEN BB AA
+        ELSE AA BB
+        END
+        \-> A B
+        \<<
+          IFERR F DERVX 'X' ZEROS THEN { } END
+          IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+          \-> Z
+          \<<
+            { } { } 0 0 0 0 "OK" \-> CN VL XMX FMX XMN FMN AV
+            \<<
+              @ ---- sondeo de la hipotesis: 21 puntos del intervalo ----
+              0 20 FOR k
+                A B A - k * 20 / +
+                \-> XK
+                \<<
+                  IFERR F 'X' XK = SUBST EVAL \->NUM THEN 1000000000000 END
+                  IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
+                  ABS 1000000000 >
+                  IF THEN "HIPOTESIS NO VERIFICADA: f no parece continua en todo [a,b]" 'AV' STO END
+                \>>
+              NEXT
+              @ ---- candidatos: a, los criticos interiores, b ----
+              CN A 1 \->LIST + 'CN' STO
+              IF Z SIZE 0 >
+              THEN
+                1 Z SIZE FOR i
+                  IFERR Z i GET \->NUM THEN 1000000000000 END
+                  IF DUP TYPE 0 ==
+                  THEN
+                    \-> V
+                    \<<
+                      IF V A > V B < AND
+                      THEN CN V 1 \->LIST + 'CN' STO
+                      END
+                    \>>
+                  ELSE DROP
+                  END
+                NEXT
+              END
+              CN B 1 \->LIST + 'CN' STO
+              @ ---- f en cada candidato ----
+              1 CN SIZE FOR i
+                IFERR F 'X' CN i GET = SUBST EVAL \->NUM THEN 1000000000000 END
+                IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
+                1 \->LIST VL SWAP + 'VL' STO
+              NEXT
+              @ ---- el mayor y el menor ----
+              CN 1 GET 'XMX' STO
+              VL 1 GET 'FMX' STO
+              CN 1 GET 'XMN' STO
+              VL 1 GET 'FMN' STO
+              1 VL SIZE FOR i
+                IF VL i GET FMX >
+                THEN
+                  VL i GET 'FMX' STO
+                  CN i GET 'XMX' STO
+                END
+                IF VL i GET FMN <
+                THEN
+                  VL i GET 'FMN' STO
+                  CN i GET 'XMN' STO
+                END
+              NEXT
+              CN VL XMX FMX XMN FMN AV 7 \->LIST
+            \>>
+          \>>
+        \>>
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

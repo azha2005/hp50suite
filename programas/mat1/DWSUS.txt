@@ -1,0 +1,29 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DWSUS - sustitucion de Weierstrass, t = tan(x/2).
+  @ Interfaz: el calculo esta en DWSUSC, que toma 'f(X)' de la pila y
+  @ devuelve { FT PRIM RES }.
+  @ El resultado en x queda tambien en la pila.
+  @ Para integrales de funciones RACIONALES de seno y coseno.
+  "Weierstrass: t = tan(x/2)"
+  {
+    { "f(X), ej '1/(1+SIN(X))':" "'1/(1+SIN(X))'" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DWSUSC OBJ\-> DROP \-> FT PR RS
+    \<<
+      "Integrando en t (con dx):" 10 CHR +
+      FT \->STR +
+      MSGBOX
+      "Primitiva en t:" 10 CHR +
+      PR \->STR +
+      MSGBOX
+      "Vuelta a x:" 10 CHR +
+      RS \->STR +
+      MSGBOX
+      RS
+    \>>
+  END
+\>>

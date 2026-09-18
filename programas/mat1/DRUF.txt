@@ -1,0 +1,37 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DRUF - regla de Ruffini: factoreo completo con la tabla a la vista.
+  @ Interfaz: el calculo esta en DRUFC, que toma 'P(X)' de la pila y
+  @ devuelve { COEF RAICES TABLAS COC FACT }.
+  @ La lista entera queda en la pila para poder leerla completa.
+  "Ruffini: factoreo de un polinomio"
+  {
+    { "P(X), ej 'X^3-1':" "'X^3-1'" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DRUFC
+    DUP OBJ\-> DROP \-> RES CF RA TB PC FA
+    \<<
+      "Coeficientes:" 10 CHR +
+      CF \->STR +
+      MSGBOX
+      IF RA SIZE 0 >
+      THEN
+        1 TB SIZE FOR i
+          TB i GET OBJ\-> DROP \-> RZ FI
+          \<<
+            "Dividir por X-" RZ \->STR + ":" + 10 CHR +
+            FI \->STR +
+            MSGBOX
+          \>>
+        NEXT
+      END
+      "Factorizacion:" 10 CHR +
+      FA +
+      MSGBOX
+      RES
+    \>>
+  END
+\>>

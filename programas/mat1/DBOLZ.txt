@@ -1,0 +1,32 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DBOLZ - teorema de Bolzano (valor intermedio) en [a,b].
+  @ Interfaz: el calculo esta en DBOLZC, que toma 'f(X)' a b de la pila y
+  @ devuelve { FA FB HAY RAIZ MSG }.
+  @ La lista entera queda en la pila.
+  "Bolzano: hay raiz en [a,b]?"
+  {
+    { "f(X), ej 'X^3-2':" "'X^3-2'" }
+    { "a:" "1" 0 }
+    { "b:" "2" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DBOLZC
+    DUP OBJ\-> DROP \-> RES FA FB HAY RZ MS
+    \<<
+      "f(a)=" FA \->STR + 10 CHR +
+      "f(b)=" + FB \->STR +
+      MSGBOX
+      MS MSGBOX
+      IF HAY 1 ==
+      THEN
+        "Raiz por biseccion:" 10 CHR +
+        RZ \->STR +
+        MSGBOX
+      END
+      RES
+    \>>
+  END
+\>>

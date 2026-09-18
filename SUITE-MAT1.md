@@ -475,11 +475,17 @@ es información.
 `DESOLVE` / `LDEC` ·
 `EXLR` / `SUBST` / `SIMPLIFY` / `TSIMP` / `ZEROS` / `SOLVE`
 
-No existe: L'Hopital como comando (de ahí `LHOP`), tabla de Ruffini con pasos
-intermedios, asíntotas verticales (de ahí `DASV`), elasticidad, criterios de
-convergencia de series, clasificación de puntos críticos en dos variables, y
-multiplicadores de Lagrange (de ahí `LAGR`: el comando `LAGRANGE` es
-interpolación polinómica, otra cosa).
+No existe: L'Hopital como comando (de ahí `LHOP`), **tabla de Ruffini con pasos
+intermedios** (de ahí `DRUF`: `DIV2` y `HORNER` dividen, pero ninguno muestra el
+renglón de abajo, que es lo que hay que escribir), asíntotas verticales (de ahí
+`DASV`), **extremos absolutos en un cerrado** (de ahí `DWEIER`), **Bolzano con
+bisección** (de ahí `DBOLZ`), elasticidad, criterios de convergencia de series,
+clasificación de puntos críticos en dos variables, y multiplicadores de Lagrange
+(de ahí `LAGR`: el comando `LAGRANGE` es interpolación polinómica, otra cosa).
+
+`HORNER` sí es la división sintética de fábrica, y `DRUFC` lo usa —pero solo
+para sacar los coeficientes del polinomio. La tabla la calcula él, porque lo que
+el ejercicio pide escrito es el renglón intermedio.
 
 ---
 

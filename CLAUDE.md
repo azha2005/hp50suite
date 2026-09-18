@@ -230,9 +230,33 @@ MSGBOX
 
 ### 2.7 `FOR` y modo exacto/aproximado
 
-- Un `FOR` con **inicio > fin no ejecuta ni una vez**; con **inicio = fin ejecuta
-  una vez** (no cero — esto causó una "raya fantasma" en un gráfico cuando el
-  rango era degenerado).
+- ⚠️ **Un `FOR` ejecuta el cuerpo SIEMPRE al menos una vez, incluso con
+  inicio > fin.** El test está en el `NEXT`, no en el `FOR`: es un do-while.
+  `2 1 FOR i 5 NEXT` deja **un** objeto en la pila, no cero. Medido en
+  `harness/casos-ruf4.txt`.
+
+  **Acá decía lo contrario** ("inicio > fin no ejecuta ni una vez"), y era
+  falso. La "raya fantasma" que motivó la nota original es precisamente el
+  síntoma de esta regla, mal atribuido al caso inicio = fin.
+
+  Es peligroso porque el cuerpo corre con el índice **en el inicio**, fuera del
+  rango previsto: `2 CF SIZE FOR i ... CF i GET` con `CF` de un solo elemento
+  pide el elemento 2 y tira `ERROR`. Así fallaba `DRUFC` recién con la segunda
+  raíz, y así fallaba `DMODAC` con un solo dato.
+
+  **El rodeo es envolver el `FOR` en un `IF` que garantice inicio ≤ fin:**
+
+  ```
+  IF CF SIZE 1 >
+  THEN
+    2 CF SIZE FOR i ... NEXT
+  END
+  ```
+
+  Ya aplicado en `DRUFC` y `DMODAC`; `DBOXPLOTG` ya lo tenía para los outliers,
+  que es el caso donde más se nota (un boxplot sin atípicos es lo normal).
+  Los `1 N FOR` sobre listas de datos rompen con lista vacía, lo que da un
+  `ERROR` visible y no una respuesta equivocada: se dejaron así a propósito.
 - Si el orden relativo de dos límites puede variar según el caso (ej. impuesto
   vs. subsidio), calcular explícitamente cuál es menor con IF/THEN/ELSE antes del
   `FOR`.
@@ -465,6 +489,41 @@ END
 Decidir por `TYPE` vale con el modo Complex prendido o apagado. Depender de que
 el usuario tenga la máquina configurada como esperamos es una suposición que en
 un parcial no se cumple. Ya aplicado en `DDOMPC` y `DOPFUNC`.
+
+### 2.19 Comandos del CAS medidos para Ruffini, Weierstrass y Bolzano
+
+Todo esto se midió **antes** de escribir los programas (`harness/casos-nuevos.txt`,
+`casos-nuevos2.txt`, `casos-nuevos3.txt`), que es la regla de §3.1 y volvió a
+pagar: tres de las cuatro sorpresas habrían sido bugs silenciosos.
+
+| Comando | Qué hace de verdad |
+|---|---|
+| `HORNER` | **Es la división sintética de fábrica.** `'X^3-1' 1 HORNER` deja cociente / raíz / resto en los niveles 3 / 2 / 1. Solo acepta el algebraico, **no** una lista de coeficientes |
+| `DEGREE` | grado del polinomio; con `'SIN(X)'` da error, que sirve de validación |
+| `DIVIS` | divisores: `6 DIVIS` → `{ 1 2 3 6 }`. **`-1 DIVIS` da `{ 1 }`, pero `-6 DIVIS` da los dos signos.** No confiar en el signo del argumento: poner los ± a mano |
+| `LCOEF` | **no existe.** Queda sin evaluar en la pila (síntoma de §2.1). El coeficiente principal sale de pelar con `HORNER` por 0 |
+| `TABVAL` | sí existe: `'X^2' { 0 1 2 } TABVAL` → `{ { 0 1 2 } { 0 1 4 } }` |
+| `TEXPAND` | **es el que abre `SIN(2*ATAN(T))`**; `SIMPLIFY` lo deja como está |
+
+Y tres trampas, las tres del mismo tipo que el resto de este archivo — resultado
+verosímil, callado y equivocado:
+
+- **`ZEROS` con una sola raíz NO devuelve lista.** `'X^2-2*X+1' 'X' ZEROS` da
+  `1` suelto (un ZINT), no `{ 1 }`. Un `SIZE` o un `GET` encima se rompe. Hay
+  que normalizar: `IF DUP TYPE 5 == NOT THEN 1 \->LIST END`.
+- **`ZEROS` de `X^2+1` devuelve las raíces complejas**, no lista vacía. Es §2.14
+  otra vez: filtrar por `TYPE` después de `\->NUM`, no suponer que "sin
+  soluciones reales" se vea como lista vacía.
+- **`'1/X' 'X' 0 = SUBST EVAL \->NUM` no da error**: devuelve
+  `9.99999999999E499`. O sea que **una discontinuidad no se detecta con
+  `IFERR`** — hay que mirar la magnitud, como ya hacía la red numérica de
+  `DCONTC`. `DWEIERC` sondea el intervalo en 21 puntos con ese criterio.
+
+Un cuarto detalle, de presentación: **comparar un algebraico contra un número
+con `\=/` no devuelve un booleano**, devuelve una ecuación simbólica, y el `IF`
+revienta. Costó una corrida entera de `DRUFC`, donde los casos sin raíz pasaban
+y los que encontraban raíz daban `ERROR`. Cuando hay que decidir, decidir sobre
+los **coeficientes**, que son números.
 
 ### 2.16 ⚠️ La bandera −105 decide cómo compila `STR\->`
 
@@ -726,7 +785,7 @@ cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
 
 ### Matemática I (suite aparte)
 
-31 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+39 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
 
 Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 
@@ -742,6 +801,31 @@ Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 | `DVFG` | Verifica una simplificación evaluando en seis puntos | 0/1 |
 | `DDOMP` | Sondea qué puntos pertenecen al dominio | 1 |
 
+Cuatro programas nuevos, pedidos para **verificar a mano** lo que la máquina
+ya hace sola — que es exactamente el punto: `FACTOR` y `PROOT` dan el resultado,
+la cátedra pide el procedimiento escrito.
+
+| Programa | Qué hace | Por qué no alcanza un comando de fábrica |
+|---|---|---|
+| `DRUF` | Ruffini: factorea solo y muestra **la tabla de cada división** | `DIV2`/`HORNER` dividen, ninguno muestra el renglón intermedio |
+| `DWEIER` | Weierstrass: extremos absolutos en `[a,b]`, con la tabla de candidatos | No existe; y además **sondea la hipótesis** de continuidad |
+| `DBOLZ` | Bolzano: signos en los extremos y la raíz por **bisección** | `ZEROS` da la raíz por otro camino, no por el del teorema |
+| `DWSUS` | Sustitución de Weierstrass `t = tan(x/2)` | `RISCH` sin la sustitución no puede con estas |
+
+`DBOLZ` insiste en algo que el comando no diría: `HAY = 0` **no** significa que
+no haya raíz. Bolzano es condición suficiente, no necesaria, y `X^2-1` en
+`[-2,2]` tiene dos raíces con `f(a)` y `f(b)` del mismo signo. El mensaje lo
+dice con todas las letras porque ése es el error típico del ejercicio.
+
+`DWSUS` sustituye la **variable** por `2*ATAN(T)` (o sea `x = 2 arctan t`) en vez
+de reemplazar `SIN(X)` y `COS(X)` por partes, que necesitaría `MATCH` con
+comodines. Una sola sustitución, y el `TEXPAND` posterior hace el resto. Con
+`SIMPLIFY` solo **no sustituye nada y el resultado se ve bien igual**.
+
+**47 de 47 casos** en el emulador (`harness/casos-ruf.txt` 19,
+`casos-wei.txt` 28), más 3 tandas de sondeo del CAS previas a escribirlos
+(`casos-nuevos*.txt`).
+
 Parcial 2 y final, **ya con `INFORM` como el resto**: `LHOP`, `DSEP`, `DSEPI`,
 `LAGR`. Estaban con entrada por pila y acá se había escrito que era "a
 propósito"; era una racionalización mía, no una decisión: `SUITE-MAT1.md` decía
@@ -749,7 +833,7 @@ propósito"; era una racionalización mía, no una decisión: `SUITE-MAT1.md` de
 de Matemática I van con `INFORM`. Convertidos, con núcleo `XXXC` aparte.
 Pruebas: `TCHK`, `TDSEP`, `TD`, `TEFUN`, `TF`.
 
-Son **31 objetos**: 13 interfaces + 13 núcleos + 5 de prueba.
+Son **39 objetos**: 17 interfaces + 17 núcleos + 5 de prueba.
 
 La columna TP refiere al recopilado `MEGA_TODOS_LOS_TPS (1).txt` (raíz del
 repo): el temario y las resoluciones de cátedra contra las que se diseñaron.
@@ -964,7 +1048,7 @@ cumple por construcción porque hay una sola implementación.
 - **Una sola compuerta.** Hoy hay cinco scripts sueltos (`verificar.ps1`,
   `armar-mat1.ps1`, `armar-bateria.ps1`, `armar-mat1.py`, `correr-emu.ps1`) y
   ninguno es *el* comando que dice sí o no. Debería haber un `probar-todo.ps1`
-  que encadene: `verificar.ps1` sobre los 31 fuentes + compilar los 31 con
+  que encadene: `verificar.ps1` sobre los 39 fuentes + compilar los 39 con
   `compilar.py` (que "¿compila?" ahora es una pregunta que se le puede hacer a
   la máquina, y es mucho más fuerte que las heurísticas de conteo) +
   `oraculo.py` + las dos baterías, y salga 0 o 1. Es la regla que el otro

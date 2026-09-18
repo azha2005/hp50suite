@@ -121,6 +121,13 @@ DIR
         L 1 GET \-> CURVAL
         \<<
           1 'CURFREQ' STO
+          @ El IF protege al FOR de quedar con inicio > fin: con un solo
+          @ dato, 2 N FOR EJECUTA UNA VEZ igual (medido en
+          @ harness/casos-ruf4.txt; CLAUDE.md 2.7 afirmaba lo contrario) y
+          @ el cuerpo pedia L 2 GET, fuera de rango. La racha unica la
+          @ cierra igual el bloque de abajo, que corre siempre.
+          IF N 1 >
+          THEN
           2 N FOR i
             L i GET \-> V
             \<<
@@ -141,6 +148,7 @@ DIR
               END
             \>>
           NEXT
+          END
           @ el FOR no cierra la ULTIMA racha -- se repite aca
           IF CURFREQ MAXFREQ > THEN
             CURVAL 1 \->LIST 'MODES' STO

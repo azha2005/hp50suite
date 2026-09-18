@@ -1,0 +1,54 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DWSUSC - nucleo de DWSUS. Sustitucion de Weierstrass: t = tan(x/2),
+  @ para integrar una funcion racional de seno y coseno.
+  @ Uso:  'f(X)' DWSUSC
+  @ Deja: n1 = { FT PRIM RES }
+  @   FT   = el integrando ya pasado a t, incluido el dx = 2dt/(1+t^2)
+  @   PRIM = la primitiva en t
+  @   RES  = la primitiva devuelta a x, con t = TAN(X/2)
+  @
+  @ El rodeo que hace que esto sea corto: en vez de reemplazar SIN(X) y
+  @ COS(X) por partes -- que necesita MATCH y comodines -- se sustituye la
+  @ VARIABLE por 2*ATAN(T), que es x = 2 arctan t. Una sola sustitucion.
+  @
+  @ Medido antes de escribir esto (harness/casos-nuevos*.txt):
+  @   'SIN(2*ATAN(T))' SIMPLIFY deja la expresion COMO ESTA.
+  @   'SIN(2*ATAN(T))' TEXPAND SIMPLIFY da 2*T/(T^2+1). TEXPAND es el que
+  @   hace el trabajo; con SIMPLIFY solo no se sustituye nada y el
+  @   resultado se ve bien igual, que es la forma peor de fallar.
+  @   La cadena entera esta medida: 1/(1+SIN(X)) -> 2/(T+1)^2 -> -2/(T+1)
+  @   -> -2/(TAN(X/2)+1).
+  @
+  @ RISCH NO falla cuando no hay primitiva elemental: devuelve un
+  @ 'INT(...)' sin evaluar (CLAUDE.md 2.17), asi que el IFERR no alcanza
+  @ y hay que buscar "INT(" en el texto.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DWSUS.
+  \-> F0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END
+      \-> F
+      \<<
+        IFERR
+          F 'X' '2*ATAN(T)' = SUBST TEXPAND SIMPLIFY '2/(1+T^2)' * SIMPLIFY
+        THEN "NO SE PUDO SUSTITUIR" END
+        \-> FT
+        \<<
+          IFERR FT 'T' RISCH SIMPLIFY THEN "NO INTEGRA EN T" END
+          IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA EN T" END
+          \-> PR
+          \<<
+            IFERR PR 'T' 'TAN(X/2)' = SUBST THEN "NO SE PUDO VOLVER A X" END
+            \-> RS
+            \<<
+              FT PR RS 3 \->LIST
+              \-> R \<< DEPTH D0 - DROPN R \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

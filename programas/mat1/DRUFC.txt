@@ -1,0 +1,171 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DRUFC - nucleo de DRUF. Regla de Ruffini con la tabla completa.
+  @ Uso:  'P(X)' DRUFC          (polinomio en X)
+  @ Deja: n1 = { COEF RAICES TABLAS COC FACT }
+  @   COEF   = coeficientes de P en orden DESCENDENTE
+  @   RAICES = las raices racionales halladas, con multiplicidad
+  @   TABLAS = { { raiz fila } ... }, una por division. La FILA es el
+  @            renglon de abajo de la tabla de Ruffini: los coeficientes
+  @            del cociente y, al final, el resto.
+  @   COC    = el factor que quedo sin poder factorizar
+  @   FACT   = la factorizacion escrita, como string
+  @
+  @ Por que existe si la maquina trae FACTOR, PROOT, DIV2 y HORNER: porque
+  @ todos esos dan el RESULTADO, y lo que la catedra pide escrito es la
+  @ TABLA. Ninguno muestra el renglon intermedio (SUITE-MAT1.md 8).
+  @
+  @ Candidatos por el teorema de la raiz racional: p/q con p divisor del
+  @ ultimo coeficiente no nulo y q divisor del principal, con los dos
+  @ signos, mas el 0 (que cubre las raices nulas de X^k como factor).
+  @
+  @ Medido antes de escribir esto (harness/casos-nuevos*.txt):
+  @   'X^3-1' 1 HORNER  deja  cociente / raiz / resto  en niveles 3/2/1.
+  @   HORNER NO acepta lista de coeficientes, solo el algebraico.
+  @   LCOEF no existe: el coeficiente principal sale de pelar con HORNER.
+  @   6 DIVIS da { 1 2 3 6 }; -1 DIVIS da { 1 }, asi que los signos se
+  @   ponen a mano en vez de confiar en el signo del argumento.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DRUF.
+  \-> P0
+  \<<
+    DEPTH \-> D0
+    \<<
+      P0 IF DUP TYPE 2 == THEN STR\-> END
+      \-> P
+      \<<
+        IFERR P DEGREE THEN -1 END
+        \-> NG
+        \<<
+          IF NG 1 <
+          THEN
+            { } { } { } P "NO ES UN POLINOMIO EN X DE GRADO 1 O MAS" 5 \->LIST
+          ELSE
+            P { } { } { } { } { } { } 0 { } 0 0 0 0 0 0
+            \-> Q CA CF C0 RA TB CD B FI C A0 AN K NC PC
+            \<<
+              @ ---- coeficientes: pelar el termino independiente con HORNER ----
+              0 NG FOR i
+                Q 0 HORNER 3 \->LIST
+                DUP 3 GET 1 \->LIST CA SWAP + 'CA' STO
+                1 GET 'Q' STO
+              NEXT
+              @ CA quedo ASCENDENTE; darlo vuelta.
+              CA SIZE 1 FOR i
+                CF CA i GET 1 \->LIST + 'CF' STO
+              -1 STEP
+              CF 'C0' STO
+              @ ---- candidatos: 0 y los +-p/q ----
+              CF 1 GET 'AN' STO
+              CF SIZE 'K' STO
+              WHILE CF K GET 0 == K 1 > AND
+              REPEAT K 1 - 'K' STO
+              END
+              CF K GET 'A0' STO
+              { 0 } 'CD' STO
+              IF A0 0 \=/
+              THEN
+                A0 ABS DIVIS AN ABS DIVIS
+                \-> DP DQ
+                \<<
+                  1 DP SIZE FOR i
+                    1 DQ SIZE FOR j
+                      CD DP i GET DQ j GET / DUP NEG 2 \->LIST + 'CD' STO
+                    NEXT
+                  NEXT
+                \>>
+              END
+              @ ---- division sintetica candidato por candidato ----
+              1 CD SIZE FOR k
+                CD k GET 'C' STO
+                @ El IF NO es decorativo: protege al FOR de quedar con
+                @ inicio > fin. Un FOR asi EJECUTA UNA VEZ igual (medido en
+                @ harness/casos-ruf4.txt; CLAUDE.md 2.7 decia lo contrario y
+                @ estaba mal), y con CF de un solo elemento el cuerpo hacia
+                @ CF 2 GET, fuera de rango. Ese era el ERROR que aparecia
+                @ recien con la SEGUNDA raiz, cuando CF se reducia a { 1 }.
+                WHILE
+                  IF CF SIZE 1 >
+                  THEN
+                    CF 1 1 SUB 'FI' STO
+                    CF 1 GET 'B' STO
+                    2 CF SIZE FOR i
+                      CF i GET C B * + 'B' STO
+                      FI B 1 \->LIST + 'FI' STO
+                    NEXT
+                    FI FI SIZE GET 0 ==
+                  ELSE 0
+                  END
+                REPEAT
+                  RA C 1 \->LIST + 'RA' STO
+                  TB C FI 2 \->LIST 1 \->LIST + 'TB' STO
+                  FI 1 FI SIZE 1 - SUB 'CF' STO
+                END
+              NEXT
+              @ ---- el cociente que sobro, como expresion ----
+              CF SIZE 'NC' STO
+              0 'PC' STO
+              1 NC FOR i
+                PC CF i GET 'X' NC i - ^ * + 'PC' STO
+              NEXT
+              PC EXPAND 'PC' STO
+              @ ---- la factorizacion escrita ----
+              @ ---- la factorizacion escrita ----
+              @ \->STR de un algebraico viene CON las comillas simples
+              @ (CLAUDE.md 2.1, lo mismo que pasaba con '+oo'), asi que hay
+              @ que sacarlas o la caja muestra (X-'1/2').
+              IF RA SIZE 0 ==
+              THEN
+                "NO TIENE RAICES RACIONALES"
+              ELSE
+                "" \-> FS
+                \<<
+                  1 RA SIZE FOR i
+                    RA i GET ABS \->STR
+                    IF DUP 1 1 SUB "'" ==
+                    THEN DUP SIZE 1 - 2 SWAP SUB
+                    END
+                    \-> VS
+                    \<<
+                      CASE RA i GET 0 ==
+                        THEN "X" END
+                      RA i GET 0 <
+                        THEN "(X+" VS + ")" + END
+                      "(X-" VS + ")" +
+                      END
+                      \-> PZ
+                      \<<
+                        IF FS SIZE 0 ==
+                        THEN PZ
+                        ELSE FS "*" + PZ +
+                        END
+                        'FS' STO
+                      \>>
+                    \>>
+                  NEXT
+                  IF CF SIZE 1 >
+                  THEN
+                    PC \->STR
+                    IF DUP 1 1 SUB "'" ==
+                    THEN DUP SIZE 1 - 2 SWAP SUB
+                    END
+                    \-> QS \<< FS "*(" + QS + ")" + \>>
+                  ELSE
+                    IF CF 1 GET 1 == NOT
+                    THEN CF 1 GET \->STR "*" + FS +
+                    ELSE FS
+                    END
+                  END
+                \>>
+              END
+              \-> FACT
+              \<<
+                C0 RA TB PC FACT 5 \->LIST
+              \>>
+            \>>
+          END
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

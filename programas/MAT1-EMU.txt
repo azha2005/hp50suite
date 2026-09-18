@@ -1215,4 +1215,555 @@
     END
   \>>
   'LAGR' STO
+  \<<
+    @ DRUFC - nucleo de DRUF. Regla de Ruffini con la tabla completa.
+    @ Uso:  'P(X)' DRUFC          (polinomio en X)
+    @ Deja: n1 = { COEF RAICES TABLAS COC FACT }
+    @   COEF   = coeficientes de P en orden DESCENDENTE
+    @   RAICES = las raices racionales halladas, con multiplicidad
+    @   TABLAS = { { raiz fila } ... }, una por division. La FILA es el
+    @            renglon de abajo de la tabla de Ruffini: los coeficientes
+    @            del cociente y, al final, el resto.
+    @   COC    = el factor que quedo sin poder factorizar
+    @   FACT   = la factorizacion escrita, como string
+    @
+    @ Por que existe si la maquina trae FACTOR, PROOT, DIV2 y HORNER: porque
+    @ todos esos dan el RESULTADO, y lo que la catedra pide escrito es la
+    @ TABLA. Ninguno muestra el renglon intermedio (SUITE-MAT1.md 8).
+    @
+    @ Candidatos por el teorema de la raiz racional: p/q con p divisor del
+    @ ultimo coeficiente no nulo y q divisor del principal, con los dos
+    @ signos, mas el 0 (que cubre las raices nulas de X^k como factor).
+    @
+    @ Medido antes de escribir esto (harness/casos-nuevos*.txt):
+    @   'X^3-1' 1 HORNER  deja  cociente / raiz / resto  en niveles 3/2/1.
+    @   HORNER NO acepta lista de coeficientes, solo el algebraico.
+    @   LCOEF no existe: el coeficiente principal sale de pelar con HORNER.
+    @   6 DIVIS da { 1 2 3 6 }; -1 DIVIS da { 1 }, asi que los signos se
+    @   ponen a mano en vez de confiar en el signo del argumento.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DRUF.
+    \-> P0
+    \<<
+      DEPTH \-> D0
+      \<<
+        P0 IF DUP TYPE 2 == THEN STR\-> END
+        \-> P
+        \<<
+          IFERR P DEGREE THEN -1 END
+          \-> NG
+          \<<
+            IF NG 1 <
+            THEN
+              { } { } { } P "NO ES UN POLINOMIO EN X DE GRADO 1 O MAS" 5 \->LIST
+            ELSE
+              P { } { } { } { } { } { } 0 { } 0 0 0 0 0 0
+              \-> Q CA CF C0 RA TB CD B FI C A0 AN K NC PC
+              \<<
+                @ ---- coeficientes: pelar el termino independiente con HORNER ----
+                0 NG FOR i
+                  Q 0 HORNER 3 \->LIST
+                  DUP 3 GET 1 \->LIST CA SWAP + 'CA' STO
+                  1 GET 'Q' STO
+                NEXT
+                @ CA quedo ASCENDENTE; darlo vuelta.
+                CA SIZE 1 FOR i
+                  CF CA i GET 1 \->LIST + 'CF' STO
+                -1 STEP
+                CF 'C0' STO
+                @ ---- candidatos: 0 y los +-p/q ----
+                CF 1 GET 'AN' STO
+                CF SIZE 'K' STO
+                WHILE CF K GET 0 == K 1 > AND
+                REPEAT K 1 - 'K' STO
+                END
+                CF K GET 'A0' STO
+                { 0 } 'CD' STO
+                IF A0 0 \=/
+                THEN
+                  A0 ABS DIVIS AN ABS DIVIS
+                  \-> DP DQ
+                  \<<
+                    1 DP SIZE FOR i
+                      1 DQ SIZE FOR j
+                        CD DP i GET DQ j GET / DUP NEG 2 \->LIST + 'CD' STO
+                      NEXT
+                    NEXT
+                  \>>
+                END
+                @ ---- division sintetica candidato por candidato ----
+                1 CD SIZE FOR k
+                  CD k GET 'C' STO
+                  @ El IF NO es decorativo: protege al FOR de quedar con
+                  @ inicio > fin. Un FOR asi EJECUTA UNA VEZ igual (medido en
+                  @ harness/casos-ruf4.txt; CLAUDE.md 2.7 decia lo contrario y
+                  @ estaba mal), y con CF de un solo elemento el cuerpo hacia
+                  @ CF 2 GET, fuera de rango. Ese era el ERROR que aparecia
+                  @ recien con la SEGUNDA raiz, cuando CF se reducia a { 1 }.
+                  WHILE
+                    IF CF SIZE 1 >
+                    THEN
+                      CF 1 1 SUB 'FI' STO
+                      CF 1 GET 'B' STO
+                      2 CF SIZE FOR i
+                        CF i GET C B * + 'B' STO
+                        FI B 1 \->LIST + 'FI' STO
+                      NEXT
+                      FI FI SIZE GET 0 ==
+                    ELSE 0
+                    END
+                  REPEAT
+                    RA C 1 \->LIST + 'RA' STO
+                    TB C FI 2 \->LIST 1 \->LIST + 'TB' STO
+                    FI 1 FI SIZE 1 - SUB 'CF' STO
+                  END
+                NEXT
+                @ ---- el cociente que sobro, como expresion ----
+                CF SIZE 'NC' STO
+                0 'PC' STO
+                1 NC FOR i
+                  PC CF i GET 'X' NC i - ^ * + 'PC' STO
+                NEXT
+                PC EXPAND 'PC' STO
+                @ ---- la factorizacion escrita ----
+                @ ---- la factorizacion escrita ----
+                @ \->STR de un algebraico viene CON las comillas simples
+                @ (CLAUDE.md 2.1, lo mismo que pasaba con '+oo'), asi que hay
+                @ que sacarlas o la caja muestra (X-'1/2').
+                IF RA SIZE 0 ==
+                THEN
+                  "NO TIENE RAICES RACIONALES"
+                ELSE
+                  "" \-> FS
+                  \<<
+                    1 RA SIZE FOR i
+                      RA i GET ABS \->STR
+                      IF DUP 1 1 SUB "'" ==
+                      THEN DUP SIZE 1 - 2 SWAP SUB
+                      END
+                      \-> VS
+                      \<<
+                        CASE RA i GET 0 ==
+                          THEN "X" END
+                        RA i GET 0 <
+                          THEN "(X+" VS + ")" + END
+                        "(X-" VS + ")" +
+                        END
+                        \-> PZ
+                        \<<
+                          IF FS SIZE 0 ==
+                          THEN PZ
+                          ELSE FS "*" + PZ +
+                          END
+                          'FS' STO
+                        \>>
+                      \>>
+                    NEXT
+                    IF CF SIZE 1 >
+                    THEN
+                      PC \->STR
+                      IF DUP 1 1 SUB "'" ==
+                      THEN DUP SIZE 1 - 2 SWAP SUB
+                      END
+                      \-> QS \<< FS "*(" + QS + ")" + \>>
+                    ELSE
+                      IF CF 1 GET 1 == NOT
+                      THEN CF 1 GET \->STR "*" + FS +
+                      ELSE FS
+                      END
+                    END
+                  \>>
+                END
+                \-> FACT
+                \<<
+                  C0 RA TB PC FACT 5 \->LIST
+                \>>
+              \>>
+            END
+            \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DRUFC' STO
+  \<<
+    @ DRUF - regla de Ruffini: factoreo completo con la tabla a la vista.
+    @ Interfaz: el calculo esta en DRUFC, que toma 'P(X)' de la pila y
+    @ devuelve { COEF RAICES TABLAS COC FACT }.
+    @ La lista entera queda en la pila para poder leerla completa.
+    "Ruffini: factoreo de un polinomio"
+    {
+      { "P(X), ej 'X^3-1':" "'X^3-1'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DRUFC
+      DUP OBJ\-> DROP \-> RES CF RA TB PC FA
+      \<<
+        "Coeficientes:" 10 CHR +
+        CF \->STR +
+        MSGBOX
+        IF RA SIZE 0 >
+        THEN
+          1 TB SIZE FOR i
+            TB i GET OBJ\-> DROP \-> RZ FI
+            \<<
+              "Dividir por X-" RZ \->STR + ":" + 10 CHR +
+              FI \->STR +
+              MSGBOX
+            \>>
+          NEXT
+        END
+        "Factorizacion:" 10 CHR +
+        FA +
+        MSGBOX
+        RES
+      \>>
+    END
+  \>>
+  'DRUF' STO
+  \<<
+    @ DWEIERC - nucleo de DWEIER. Teorema de Weierstrass: extremos
+    @ absolutos de una funcion continua en un intervalo cerrado [a,b].
+    @ Uso:  'f(X)' a b DWEIERC
+    @ Deja: n1 = { CAND VALORES XMAX FMAX XMIN FMIN AVISO }
+    @   CAND    = los candidatos: a, los criticos interiores, b
+    @   VALORES = f en cada candidato, en el mismo orden
+    @   XMAX/FMAX y XMIN/FMIN = donde y cuanto
+    @   AVISO   = "OK" o el motivo por el que la hipotesis no se verifica
+    @
+    @ El teorema dice que una funcion CONTINUA en un cerrado y acotado
+    @ alcanza maximo y minimo absolutos. La hipotesis no se puede demostrar
+    @ desde un programa; lo que si se puede es SONDEARLA y avisar cuando no
+    @ se cumple, que es justo donde el ejercicio tiene gracia. Se muestrea
+    @ el intervalo en 21 puntos y se marca si alguno se va al infinito o se
+    @ sale del dominio real.
+    @
+    @ Medido antes de escribir esto (harness/casos-nuevos2.txt):
+    @   '1/X' 'X' 0 = SUBST EVAL \->NUM NO da error: devuelve
+    @   9.99999999999E499. Por eso la discontinuidad se detecta por
+    @   MAGNITUD y no con IFERR, que nunca saltaria.
+    @   'X^2+1' 'X' ZEROS devuelve las raices COMPLEJAS, no lista vacia,
+    @   asi que los criticos se filtran por TYPE (regla 2.14).
+    @   ZEROS con UNA sola raiz no devuelve lista, devuelve el numero.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DWEIER.
+    \-> F0 A0 B0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END
+        A0 \->NUM B0 \->NUM
+        \-> F AA BB
+        \<<
+          IF AA BB >
+          THEN BB AA
+          ELSE AA BB
+          END
+          \-> A B
+          \<<
+            IFERR F DERVX 'X' ZEROS THEN { } END
+            IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+            \-> Z
+            \<<
+              { } { } 0 0 0 0 "OK" \-> CN VL XMX FMX XMN FMN AV
+              \<<
+                @ ---- sondeo de la hipotesis: 21 puntos del intervalo ----
+                0 20 FOR k
+                  A B A - k * 20 / +
+                  \-> XK
+                  \<<
+                    IFERR F 'X' XK = SUBST EVAL \->NUM THEN 1000000000000 END
+                    IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
+                    ABS 1000000000 >
+                    IF THEN "HIPOTESIS NO VERIFICADA: f no parece continua en todo [a,b]" 'AV' STO END
+                  \>>
+                NEXT
+                @ ---- candidatos: a, los criticos interiores, b ----
+                CN A 1 \->LIST + 'CN' STO
+                IF Z SIZE 0 >
+                THEN
+                  1 Z SIZE FOR i
+                    IFERR Z i GET \->NUM THEN 1000000000000 END
+                    IF DUP TYPE 0 ==
+                    THEN
+                      \-> V
+                      \<<
+                        IF V A > V B < AND
+                        THEN CN V 1 \->LIST + 'CN' STO
+                        END
+                      \>>
+                    ELSE DROP
+                    END
+                  NEXT
+                END
+                CN B 1 \->LIST + 'CN' STO
+                @ ---- f en cada candidato ----
+                1 CN SIZE FOR i
+                  IFERR F 'X' CN i GET = SUBST EVAL \->NUM THEN 1000000000000 END
+                  IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
+                  1 \->LIST VL SWAP + 'VL' STO
+                NEXT
+                @ ---- el mayor y el menor ----
+                CN 1 GET 'XMX' STO
+                VL 1 GET 'FMX' STO
+                CN 1 GET 'XMN' STO
+                VL 1 GET 'FMN' STO
+                1 VL SIZE FOR i
+                  IF VL i GET FMX >
+                  THEN
+                    VL i GET 'FMX' STO
+                    CN i GET 'XMX' STO
+                  END
+                  IF VL i GET FMN <
+                  THEN
+                    VL i GET 'FMN' STO
+                    CN i GET 'XMN' STO
+                  END
+                NEXT
+                CN VL XMX FMX XMN FMN AV 7 \->LIST
+              \>>
+            \>>
+          \>>
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  'DWEIERC' STO
+  \<<
+    @ DWEIER - teorema de Weierstrass: extremos absolutos en [a,b].
+    @ Interfaz: el calculo esta en DWEIERC, que toma 'f(X)' a b de la pila
+    @ y devuelve { CAND VALORES XMAX FMAX XMIN FMIN AVISO }.
+    @ La lista entera queda en la pila.
+    @ El aviso sale SOLO si la hipotesis de continuidad no se verifica, que
+    @ es cuando el teorema no se puede aplicar y el ejercicio tiene gracia.
+    "Weierstrass: extremos absolutos"
+    {
+      { "f(X), ej 'X^3-3*X':" "'X^3-3*X'" }
+      { "a:" "-2" 0 }
+      { "b:" "3" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DWEIERC
+      DUP OBJ\-> DROP \-> RES CN VL XMX FMX XMN FMN AV
+      \<<
+        IF AV "OK" == NOT
+        THEN AV MSGBOX
+        END
+        "Candidatos (a, criticos, b):" 10 CHR +
+        CN \->STR +
+        MSGBOX
+        "f en cada candidato:" 10 CHR +
+        VL \->STR +
+        MSGBOX
+        "MAXIMO absoluto" 10 CHR +
+        "f=" + FMX \->STR + " en X=" + XMX \->STR +
+        MSGBOX
+        "MINIMO absoluto" 10 CHR +
+        "f=" + FMN \->STR + " en X=" + XMN \->STR +
+        MSGBOX
+        RES
+      \>>
+    END
+  \>>
+  'DWEIER' STO
+  \<<
+    @ DBOLZC - nucleo de DBOLZ. Teorema de Bolzano (valor intermedio):
+    @ si f es continua en [a,b] y f(a) y f(b) tienen signo distinto,
+    @ existe al menos un c en (a,b) con f(c) = 0.
+    @ Uso:  'f(X)' a b DBOLZC
+    @ Deja: n1 = { FA FB HAY RAIZ MSG }
+    @   FA, FB = f(a) y f(b)
+    @   HAY    = 1 si el teorema garantiza una raiz, 0 si no la garantiza
+    @   RAIZ   = la raiz localizada por biseccion, o el extremo si ya es raiz
+    @   MSG    = que se puede afirmar y que no
+    @
+    @ HAY = 0 NO significa que no haya raiz: Bolzano es condicion
+    @ suficiente, no necesaria. X^2-1 en [-2,2] tiene DOS raices y f(a) y
+    @ f(b) son las dos positivas. El mensaje lo dice con todas las letras,
+    @ porque confundir eso es el error tipico del ejercicio.
+    @
+    @ La raiz sale por BISECCION, 40 pasos, que es el metodo que el propio
+    @ teorema sugiere, y no por ZEROS: asi el numero que sale es el del
+    @ razonamiento y no el de un comando que hace otra cosa por adentro.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DBOLZ.
+    \-> F0 A0 B0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END
+        A0 \->NUM B0 \->NUM
+        \-> F AA BB
+        \<<
+          IF AA BB >
+          THEN BB AA
+          ELSE AA BB
+          END
+          \-> A B
+          \<<
+            IFERR F 'X' A = SUBST EVAL \->NUM THEN 1000000000000 END
+            IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
+            IFERR F 'X' B = SUBST EVAL \->NUM THEN 1000000000000 END
+            IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
+            \-> FA FB
+            \<<
+              CASE FA 0 ==
+                THEN FA FB 1 A "f(a)=0: el extremo a YA es raiz" 5 \->LIST END
+              FB 0 ==
+                THEN FA FB 1 B "f(b)=0: el extremo b YA es raiz" 5 \->LIST END
+              FA FB * 0 <
+                THEN
+                  A B FA \-> P Q FP
+                  \<<
+                    1 40 FOR k
+                      P Q + 2 /
+                      \-> M
+                      \<<
+                        IFERR F 'X' M = SUBST EVAL \->NUM THEN 0 END
+                        IF DUP TYPE 0 == NOT THEN DROP 0 END
+                        \-> FM
+                        \<<
+                          IF FM FP * 0 <
+                          THEN M 'Q' STO
+                          ELSE M 'P' STO FM 'FP' STO
+                          END
+                        \>>
+                      \>>
+                    NEXT
+                    FA FB 1 P Q + 2 / "HAY AL MENOS UNA RAIZ EN (a,b)" 5 \->LIST
+                  \>>
+                END
+              @ Ojo con el conteo: esta rama apilaba 4 valores y hacia
+              @ 5 \->LIST, asi que se llevaba puesto lo que hubiera debajo
+              @ en la pila. Faltaba el lugar de RAIZ. Lo encontro el caso
+              @ bolz-nohay, que pedia el elemento 3 y daba ERROR mientras
+              @ el 5 contestaba bien: la lista salia corrida una posicion.
+              FA FB 0 "SIN LOCALIZAR" "NO SE PUEDE AFIRMAR: f(a) y f(b) tienen igual signo. OJO: eso NO prueba que no haya raiz" 5 \->LIST
+              END
+              \-> R \<< DEPTH D0 - DROPN R \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DBOLZC' STO
+  \<<
+    @ DBOLZ - teorema de Bolzano (valor intermedio) en [a,b].
+    @ Interfaz: el calculo esta en DBOLZC, que toma 'f(X)' a b de la pila y
+    @ devuelve { FA FB HAY RAIZ MSG }.
+    @ La lista entera queda en la pila.
+    "Bolzano: hay raiz en [a,b]?"
+    {
+      { "f(X), ej 'X^3-2':" "'X^3-2'" }
+      { "a:" "1" 0 }
+      { "b:" "2" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DBOLZC
+      DUP OBJ\-> DROP \-> RES FA FB HAY RZ MS
+      \<<
+        "f(a)=" FA \->STR + 10 CHR +
+        "f(b)=" + FB \->STR +
+        MSGBOX
+        MS MSGBOX
+        IF HAY 1 ==
+        THEN
+          "Raiz por biseccion:" 10 CHR +
+          RZ \->STR +
+          MSGBOX
+        END
+        RES
+      \>>
+    END
+  \>>
+  'DBOLZ' STO
+  \<<
+    @ DWSUSC - nucleo de DWSUS. Sustitucion de Weierstrass: t = tan(x/2),
+    @ para integrar una funcion racional de seno y coseno.
+    @ Uso:  'f(X)' DWSUSC
+    @ Deja: n1 = { FT PRIM RES }
+    @   FT   = el integrando ya pasado a t, incluido el dx = 2dt/(1+t^2)
+    @   PRIM = la primitiva en t
+    @   RES  = la primitiva devuelta a x, con t = TAN(X/2)
+    @
+    @ El rodeo que hace que esto sea corto: en vez de reemplazar SIN(X) y
+    @ COS(X) por partes -- que necesita MATCH y comodines -- se sustituye la
+    @ VARIABLE por 2*ATAN(T), que es x = 2 arctan t. Una sola sustitucion.
+    @
+    @ Medido antes de escribir esto (harness/casos-nuevos*.txt):
+    @   'SIN(2*ATAN(T))' SIMPLIFY deja la expresion COMO ESTA.
+    @   'SIN(2*ATAN(T))' TEXPAND SIMPLIFY da 2*T/(T^2+1). TEXPAND es el que
+    @   hace el trabajo; con SIMPLIFY solo no se sustituye nada y el
+    @   resultado se ve bien igual, que es la forma peor de fallar.
+    @   La cadena entera esta medida: 1/(1+SIN(X)) -> 2/(T+1)^2 -> -2/(T+1)
+    @   -> -2/(TAN(X/2)+1).
+    @
+    @ RISCH NO falla cuando no hay primitiva elemental: devuelve un
+    @ 'INT(...)' sin evaluar (CLAUDE.md 2.17), asi que el IFERR no alcanza
+    @ y hay que buscar "INT(" en el texto.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DWSUS.
+    \-> F0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END
+        \-> F
+        \<<
+          IFERR
+            F 'X' '2*ATAN(T)' = SUBST TEXPAND SIMPLIFY '2/(1+T^2)' * SIMPLIFY
+          THEN "NO SE PUDO SUSTITUIR" END
+          \-> FT
+          \<<
+            IFERR FT 'T' RISCH SIMPLIFY THEN "NO INTEGRA EN T" END
+            IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA EN T" END
+            \-> PR
+            \<<
+              IFERR PR 'T' 'TAN(X/2)' = SUBST THEN "NO SE PUDO VOLVER A X" END
+              \-> RS
+              \<<
+                FT PR RS 3 \->LIST
+                \-> R \<< DEPTH D0 - DROPN R \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DWSUSC' STO
+  \<<
+    @ DWSUS - sustitucion de Weierstrass, t = tan(x/2).
+    @ Interfaz: el calculo esta en DWSUSC, que toma 'f(X)' de la pila y
+    @ devuelve { FT PRIM RES }.
+    @ El resultado en x queda tambien en la pila.
+    @ Para integrales de funciones RACIONALES de seno y coseno.
+    "Weierstrass: t = tan(x/2)"
+    {
+      { "f(X), ej '1/(1+SIN(X))':" "'1/(1+SIN(X))'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DWSUSC OBJ\-> DROP \-> FT PR RS
+      \<<
+        "Integrando en t (con dx):" 10 CHR +
+        FT \->STR +
+        MSGBOX
+        "Primitiva en t:" 10 CHR +
+        PR \->STR +
+        MSGBOX
+        "Vuelta a x:" 10 CHR +
+        RS \->STR +
+        MSGBOX
+        RS
+      \>>
+    END
+  \>>
+  'DWSUS' STO
 \>>
