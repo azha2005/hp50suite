@@ -7,8 +7,17 @@
   @ Deja 4 resultados. Si alguno es un string "ERR ...", ese comando
   @ no se comporta como asumen los programas y hay que arreglar eso
   @ antes de seguir.
+  @
+  @ El chequeo del infinito va por el global INF y NO por el escape
+  @ \.oo. Medido en el emulador con ROM de 50g: '1/X' 'X=\.oo' LIMIT
+  @ EVAL devuelve '1/\.oo' SIN EVALUAR, porque \.oo produce un nombre
+  @ global (TYPE 6) que solo se dibuja como infinito. Como no da error,
+  @ el IFERR no salta y este mismo autotest daba el chequeo por bueno
+  @ mientras devolvia basura: el test que existe para detectar cimientos
+  @ podridos tenia uno adentro.
+  @ Si falta INF (correr DINF una vez), el tercer resultado lo dice.
   IFERR 'X' 2 = THEN "ERR: = no construye ecuacion" END
   IFERR 'X^2' 'X' RISCH THEN "ERR: RISCH" END
-  IFERR '1/X' 'X=\.oo' LIMIT EVAL THEN "ERR: LIMIT con \.oo" END
+  IFERR '1/X' 'X' INF = LIMIT EVAL THEN "ERR: LIMIT con infinito, falta INF?" END
   IFERR 'X^2' 'X' DERIV THEN "ERR: DERIV" END
 \>>

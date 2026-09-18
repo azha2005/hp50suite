@@ -1,9 +1,11 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DDOMP - sondea el dominio de F(X) en una lista de puntos.
+  @ Este objeto es SOLO la interfaz: el calculo esta en DDOMPC, que toma
+  @ 'F(X)' { puntos } de la pila y devuelve { RES DENTRO }.
   @ Confirma que puntos pertenecen; NO deduce el dominio.
-  @ Requiere modo Complex APAGADO: si no, la raiz de un negativo
-  @ devuelve un complejo en vez de error y el punto pasa por bueno.
+  @ Un resultado complejo cuenta como FUERA, asi que ya NO hace falta
+  @ tener apagado el modo Complex: lo decide DDOMPC por el tipo.
   @ La lista de resultados (valor o "FUERA") queda en la pila.
   "Sondear dominio"
   {
@@ -13,34 +15,15 @@
   { } { } { }
   INFORM
   IF THEN
-    OBJ\-> DROP \-> F0 P0
+    OBJ\-> DROP DDOMPC OBJ\-> DROP \-> RES DENTRO
     \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
-      \<<
-        P0 IF DUP TYPE 2 == THEN STR\-> END \-> PTS
-        \<<
-          { } 0 \-> RES DENTRO
-          \<<
-            1 PTS SIZE FOR I
-              PTS I GET 'X' STO
-              IFERR
-                F \->NUM DENTRO 1 + 'DENTRO' STO
-              THEN
-                "FUERA"
-              END
-              1 \->LIST RES SWAP + 'RES' STO
-            NEXT
-            IFERR { X } PURGE THEN 0 DROP END
-            "Puntos probados: " PTS SIZE \->STR + 10 CHR +
-            "En el dominio: " + DENTRO \->STR +
-            MSGBOX
-            "Detalle en la pila" 10 CHR +
-            "(valor o FUERA)" +
-            MSGBOX
-            RES
-          \>>
-        \>>
-      \>>
+      "Puntos probados: " RES SIZE \->STR + 10 CHR +
+      "En el dominio: " + DENTRO \->STR +
+      MSGBOX
+      "Detalle en la pila" 10 CHR +
+      "(valor o FUERA)" +
+      MSGBOX
+      RES
     \>>
   END
 \>>

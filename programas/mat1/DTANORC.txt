@@ -1,0 +1,37 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DTANORC - nucleo de DTANOR. Recta tangente y recta normal en x0.
+  @ Uso:  'f(X)' X0 DTANORC
+  @ Deja: n1 = { M Y0 TG NR }
+  @         M = f'(x0), Y0 = f(x0), TG = tangente, NR = normal.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DTANOR.
+  @
+  @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
+  @ catedra tiene mal el signo en el punto 3c de la teoria.
+  @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
+  \-> F0 X0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        0 0 0 0 \-> M Y0 TG NR
+        \<<
+          F DERVX EVAL 'X' X0 = SUBST EVAL \->NUM 'M' STO
+          F 'X' X0 = SUBST EVAL \->NUM 'Y0' STO
+          'Y' Y0 M 'X' X0 - * + EXPAND = 'TG' STO
+          IF M 0 ==
+          THEN
+            'X' X0 =
+          ELSE
+            'Y' Y0 1 NEG M / 'X' X0 - * + EXPAND =
+          END
+          'NR' STO
+          M Y0 TG NR 4 \->LIST
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

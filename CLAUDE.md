@@ -416,6 +416,63 @@ cuando el límite lateral verdadero es −∞.
 valores apilados. En **modo algebraico**, `EDIT` sobre esa matriz abre un editor
 de celdas tipo planilla (en modo RPN solo edita la matriz plana).
 
+### 2.14 Un resultado complejo NO es un error (y arruina los dominios)
+
+Con el modo **Complex encendido**, `\v/(-1)` **no da error**: devuelve `(0.,1.)`, o
+sea `i`. Un `IFERR` alrededor no salta, y un punto que está fuera del dominio
+real pasa por bueno.
+
+Medido en el emulador con ROM de 50g: `DDOMP` contaba **4** puntos en el dominio
+de `\v/X` sobre `{ -1 0 1 4 }` en vez de 3, y `DOPFUN` evaluaba una composición
+fuera de dominio en vez de decir NO EXISTE.
+
+**La solución es mirar el TIPO, no las banderas:**
+
+```
+IFERR F \->NUM THEN "FUERA" END
+IF DUP TYPE 0 ==            @ 0 = real. Un complejo es 1.
+THEN  ... cuenta como dentro ...
+ELSE DROP "FUERA"
+END
+```
+
+Decidir por `TYPE` vale con el modo Complex prendido o apagado. Depender de que
+el usuario tenga la máquina configurada como esperamos es una suposición que en
+un parcial no se cumple. Ya aplicado en `DDOMPC` y `DOPFUNC`.
+
+### 2.15 ⚠️ Bytes de control: el bug que el chequeo de ASCII no ve
+
+`CLAUDE.md` §1 exige ASCII de 7 bits. Un **byte de control** (0x00–0x1F) cumple
+esa condición y pasa el filtro, pero es igual de venenoso.
+
+Aparece cuando un script de Python escribe un archivo y un literal lleva barra
+invertida seguida de letra: escrito `"\v/"` en Python, eso **no es la raíz
+cuadrada**, es TABULADOR VERTICAL más `/`, porque `\v` sí es un escape de Python.
+La familia de escapes de la HP (`\->`, `\<<`, `\.S`, `\oo`) se salva de casualidad:
+ninguna de esas letras es un escape de Python. **`\v/` es la única que colisiona**, y
+es la raíz cuadrada.
+
+Pasó **tres veces** en este proyecto. La peor: `herramientas/compilar.py` tenía la
+tabla de escapes con ese literal, así que la raíz **nunca se traducía** y a la
+calculadora le llegaban los tres caracteres `\v/` literales. No daba error: el
+algebraico compilaba igual, con un nombre basura adentro, y recién fallaba al
+evaluar. **Invalidó en silencio una tanda entera de pruebas** — el veredicto de
+que `domain49` fallaba con las raíces era falso, y era culpa nuestra.
+
+Dos defensas, las dos ya puestas:
+
+1. **`verificar.ps1` rechaza bytes de control** (chequeo 3b). Probado con un
+   archivo corrompido a propósito.
+2. **En Python, nunca escribir un escape de la HP como literal con barra.**
+   Construirlo con `B = chr(92)`: `B + "v/"`. Así no puede volver a pasar.
+   `compilar.py` y `armar-mat1.py` ya lo hacen, y los dos abortan si detectan un
+   byte de control en su salida.
+
+**Cómo comprobar que un carácter especial llegó de verdad:** no alcanza con
+mirarlo en pantalla ni con `\->STR`, porque el nombre basura se dibuja igual. Hay
+que medir el código: `'\v/(X-1)' \->STR 2 2 SUB NUM` tiene que dar **131**, y
+`SIZE` **8**. Un control que no puede fallar no es un control.
+
 ---
 
 ## 3. Flujo de trabajo que funciona
@@ -457,7 +514,8 @@ Si PowerShell bloquea la ejecución:
 `powershell -ExecutionPolicy Bypass -File .\verificar.ps1 *.txt`
 
 `verificar.ps1` chequea, en este orden: profundidad de anidación acumulada
-(debe cerrar en 0), bloques `\<<` huérfanos, bytes no-ASCII, comandos inválidos
+(debe cerrar en 0), bloques `\<<` huérfanos, bytes no-ASCII, **bytes de control**
+(§2.15 — son ASCII y el chequeo de 7 bits no los ve), comandos inválidos
 (`SQRT`/`ROUND`/`>=`/`=/=`), comillas balanceadas, header `%%HP`,
 terminaciones CRLF, `FOR` contra `NEXT`/`STEP`, y el balance de `END`.
 
@@ -574,16 +632,29 @@ Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 | `DVFG` | Verifica una simplificación evaluando en seis puntos | 0/1 |
 | `DDOMP` | Sondea qué puntos pertenecen al dominio | 1 |
 
-Parcial 2 y final, **todavía con interfaz por pila** (falta convertirlos):
-`LHOP`, `DSEP`, `DSEPI`, `LAGR`.
+Parcial 2 y final, con interfaz por pila **a propósito** (son de una sola línea
+de entrada y no necesitan formulario): `LHOP`, `DSEP`, `DSEPI`, `LAGR`.
 Pruebas: `TCHK`, `TDSEP`, `TD`, `TEFUN`, `TF`.
 
 La columna TP refiere al recopilado `MEGA_TODOS_LOS_TPS (1).txt` (raíz del
 repo): el temario y las resoluciones de cátedra contra las que se diseñaron.
 
 Usan `IFERR` en todos lados para que un fallo del CAS no tire abajo el resto del
-cálculo. **Ninguno está probado en hardware.** Documentación propia en
-`SUITE-MAT1.md`, que se subordina a este archivo.
+cálculo.
+
+**Los 18 están partidos en núcleo + interfaz y probados en el emulador con ROM de
+50g: 44 de 44 casos.** Los 9 que tienen formulario se dividieron en `XXXC` (el
+cálculo, entra y sale por pila) y `XXX` (el `INFORM` y las cajas, que llama al
+núcleo). El motivo es que `INFORM` es interactivo por definición y una batería no
+puede tipear en un formulario: con el cálculo soldado al formulario, el harness
+no podía probar **ningún** programa, y había 18 programas escritos con 0
+ejecuciones. Son 27 objetos en total (18 + 9 núcleos).
+
+Emulador **no es hardware** (§9 de `SUITE-MAT1.md`): es la ROM de la 50g, pero no
+corre código ARM ni toca el teclado, la SD o la memoria real. Un verde acá es
+evidencia fuerte, no es la máquina.
+
+Documentación propia en `SUITE-MAT1.md`, que se subordina a este archivo.
 
 ### Utilidad
 
@@ -670,12 +741,22 @@ vez de tipear la lista entera. Confirmado que funciona.
   punto que la cátedra quiere ver excluido no se ve. Lo mismo vale para el
   `EXPAND SIMPLIFY` de `DESTFUN`. Al menos avisar en la caja de que el dominio se
   calcula **antes** de simplificar; idealmente mostrar las dos formas.
+  **Hecho el aviso**: `DOPFUN` muestra una caja extra después del cociente.
+  Queda pendiente lo de mostrar las dos formas.
 
-- **Arreglar los `IFERR` que dejan basura** (§2.11), empezando por `DSEP` y
-  `DSEPI`, que son los que pueden devolver una respuesta equivocada sin avisar.
-- **Correr el harness.** Está implementado en el fork (`harness/`): una tabla de
-  casos, un programa `BATERIA` generado, y el resultado que vuelve por `DDE48 r`
-  como objeto y se compara en la PC. Corre sobre el `Emu48` de **Debug4x**, que
+- **Arreglar los `IFERR` que dejan basura** (§2.11). **Hecho en los 9 núcleos
+  `XXXC`**, que cierran con el guardián de profundidad y devuelven exactamente
+  una lista. **Falta en `DSEP` y `DSEPI`**, que siguen con interfaz por pila y
+  son los que pueden devolver una respuesta equivocada sin avisar.
+- ~~**Correr el harness.**~~ **Hecho, y ahora prueba la suite y no solo el
+  lenguaje.** `harness/armar-mat1.py` genera una batería que **se lleva puestos
+  los programas**: emite `\<< ...cuerpo del .txt... \>> 'NOMBRE' STO` por cada
+  objeto y después corre los casos, así la corrida es reproducible desde cero y
+  no hereda una versión vieja residente (el bug de §3.5). Resultado: **44 de 44**
+  (`casos-mat1.txt` 31 + `casos-mat1b.txt` 13). Lo viejo, que probaba comandos
+  sueltos de la máquina, sigue en `casos.txt`. Descripción original:
+  una tabla de casos, un programa `BATERIA` generado, y el resultado que vuelve
+  por `DDE48 r` como objeto y se compara en la PC. Corre sobre el `Emu48` de **Debug4x**, que
   emula la 50g de verdad con la ROM `ROMG+.50G` autorizada por HP, no una 49G con
   carátula. Falta correrlo: el viaje de ida y vuelta por DDE no está probado.
   Prueba la capa de cálculo, no los formularios. Detalle en `analisis/REVISION.md`
@@ -688,6 +769,17 @@ vez de tipear la lista entera. Confirmado que funciona.
   Simpson y Romberg en fuente legible, más Newton-Raphson y bisección como red
   numérica para cuando `ZEROS` no puede. También regresión múltiple y ajustes
   linealizables, que le faltan a `DOLS`.
+- **Una sola compuerta.** Hoy hay cinco scripts sueltos (`verificar.ps1`,
+  `armar-mat1.ps1`, `armar-bateria.ps1`, `armar-mat1.py`, `correr-emu.ps1`) y
+  ninguno es *el* comando que dice sí o no. Debería haber un `probar-todo.ps1`
+  que encadene: `verificar.ps1` sobre los 27 fuentes + compilar los 27 con
+  `compilar.py` (que "¿compila?" ahora es una pregunta que se le puede hacer a
+  la máquina, y es mucho más fuerte que las heurísticas de conteo) +
+  `oraculo.py` + las dos baterías, y salga 0 o 1. Es la regla que el otro
+  proyecto del mismo autor ya tiene con `verify.sh`.
+- **Partir también los programas de Lab de Datos.** Los 16 de la suite original
+  tienen el mismo `INFORM` soldado al cálculo, así que ninguno es probable por
+  el harness. El patrón `XXXC` + `XXX` ya está validado en los 9 de Mat1.
 - Alinear columnas de salida con padding de espacios donde se use texto.
 - `DTROZOS` no tiene protección contra asíntotas/discontinuidades dentro de un
   tramo (ej. `1/X` con un tramo que cruce 0) — va a fallar o dar resultados sin

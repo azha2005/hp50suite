@@ -16,9 +16,15 @@ $origen  = Join-Path $PSScriptRoot 'mat1'
 $salida  = Join-Path $PSScriptRoot 'MAT1.txt'
 
 # Orden de carga: los datos de prueba antes que los programas que los leen.
+# Los objetos XXXC son los NUCLEOS de calculo; XXX es la interfaz que los
+# llama. Estan separados para que el harness pueda probar el calculo: INFORM
+# es interactivo por definicion y una bateria no puede tipear en un formulario.
+# Cada nucleo va antes de su interfaz, aunque dentro de un DIR el orden no
+# afecta la visibilidad de los nombres.
 $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
-           'DVFG','DDOMP','DCONT','DDEF','DTANOR','DASV','DASHO',
-           'DOPFUN','DESTFUN',
+           'DVFGC','DVFG','DDOMPC','DDOMP','DCONTC','DCONT',
+           'DDEFC','DDEF','DTANORC','DTANOR','DASVC','DASV',
+           'DASHOC','DASHO','DOPFUNC','DOPFUN','DESTFUNC','DESTFUN',
            'LHOP','DSEP','DSEPI','LAGR')
 
 $lineas = New-Object System.Collections.Generic.List[string]

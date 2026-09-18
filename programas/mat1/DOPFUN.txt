@@ -1,14 +1,15 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DOPFUN - operaciones con funciones y composicion (TP 4 entero).
-  @ Suma, resta, producto, cociente f/g, y las dos composiciones.
+  @ Este objeto es SOLO la interfaz: el calculo esta en DOPFUNC, que
+  @ toma 'f' 'g' X0 de la pila y devuelve
+  @ { SU RE PR CO FG GF FX GX }. Aca se elige que mostrar.
   @ Operacion: 0 = todas, 1 = f+g, 2 = f-g, 3 = f*g, 4 = f/g,
   @            5 = fog = f(g(X)), 6 = gof = g(f(X)).
   @ El punto x0 sirve para el ejercicio 3 del TP 4, que pide evaluar
   @ composiciones "si es posible": cuando el punto cae fuera del
   @ dominio la caja dice NO EXISTE, que es justo la respuesta buscada.
-  @ NO calcula dominios: eso es lo que hay que escribir a mano, y
-  @ deducirlo simbolicamente es un pozo sin fondo (ver SUITE-MAT1 4).
+  @ NO calcula dominios: eso es lo que hay que escribir a mano.
   @ Las dos composiciones quedan en la pila: n2 = fog, n1 = gof.
   "Operaciones con funciones"
   {
@@ -22,53 +23,37 @@
   IF THEN
     OBJ\-> DROP \-> F0 G0 OP X0
     \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      F0 G0 X0 DOPFUNC OBJ\-> DROP \-> SU RE PR CO FG GF FX GX
       \<<
-        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
-        \<<
-          0 0 \-> FG GF
-          \<<
-            IFERR F 'X' G = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'FG' STO
-            IFERR G 'X' F = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'GF' STO
-            IF OP 0 == OP 1 == OR THEN
-              "(f+g)(X) =" 10 CHR +
-              IFERR F G + EXPAND \->STR THEN "NO SE PUDO" END +
-              MSGBOX
-            END
-            IF OP 0 == OP 2 == OR THEN
-              "(f-g)(X) =" 10 CHR +
-              IFERR F G - EXPAND \->STR THEN "NO SE PUDO" END +
-              MSGBOX
-            END
-            IF OP 0 == OP 3 == OR THEN
-              "(f*g)(X) =" 10 CHR +
-              IFERR F G * EXPAND \->STR THEN "NO SE PUDO" END +
-              MSGBOX
-            END
-            IF OP 0 == OP 4 == OR THEN
-              "(f/g)(X) =" 10 CHR +
-              IFERR F G / SIMPLIFY \->STR THEN "NO SE PUDO" END +
-              MSGBOX
-            END
-            IF OP 0 == OP 5 == OR THEN
-              "(fog)(X) =" 10 CHR +
-              FG \->STR +
-              MSGBOX
-            END
-            IF OP 0 == OP 6 == OR THEN
-              "(gof)(X) =" 10 CHR +
-              GF \->STR +
-              MSGBOX
-            END
-            "(fog)(" X0 \->STR + ") =" + 10 CHR +
-            IFERR FG 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
-            MSGBOX
-            "(gof)(" X0 \->STR + ") =" + 10 CHR +
-            IFERR GF 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
-            MSGBOX
-            FG GF
-          \>>
-        \>>
+        IF OP 0 == OP 1 == OR THEN
+          "(f+g)(X) =" 10 CHR + SU \->STR + MSGBOX
+        END
+        IF OP 0 == OP 2 == OR THEN
+          "(f-g)(X) =" 10 CHR + RE \->STR + MSGBOX
+        END
+        IF OP 0 == OP 3 == OR THEN
+          "(f*g)(X) =" 10 CHR + PR \->STR + MSGBOX
+        END
+        IF OP 0 == OP 4 == OR THEN
+          "(f/g)(X) =" 10 CHR + CO \->STR + MSGBOX
+          @ SIMPLIFY cancela los factores comunes, asi que el cociente que
+          @ se muestra puede haber perdido un punto del dominio: con
+          @ f = X^2-9 y g = X-3 devuelve X+3, y el X=3 que hay que excluir
+          @ no se ve. Medido en la 50g. La catedra pide justamente ese
+          @ punto, asi que se avisa en vez de callarlo.
+          "OJO: el dominio se saca" 10 CHR +
+          "ANTES de simplificar" +
+          MSGBOX
+        END
+        IF OP 0 == OP 5 == OR THEN
+          "(fog)(X) =" 10 CHR + FG \->STR + MSGBOX
+        END
+        IF OP 0 == OP 6 == OR THEN
+          "(gof)(X) =" 10 CHR + GF \->STR + MSGBOX
+        END
+        "(fog)(" X0 \->STR + ") =" + 10 CHR + FX \->STR + MSGBOX
+        "(gof)(" X0 \->STR + ") =" + 10 CHR + GX \->STR + MSGBOX
+        FG GF
       \>>
     \>>
   END

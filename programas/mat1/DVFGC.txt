@@ -1,0 +1,56 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DVFGC - nucleo de DVFG. Verifica que H(X) sea la simplificacion de F/G.
+  @ Uso:  'F(X)' 'G(X)' 'H(X)' { puntos } DVFGC
+  @ Deja: n1 = { DIF MAL }
+  @         DIF = lista de diferencias F/G - H en cada punto,
+  @         MAL = cuantos puntos no dieron 0 (o no se pudieron evaluar).
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DVFG.
+  @
+  @ No demuestra nada, pero dos expresiones distintas casi nunca
+  @ coinciden en seis puntos.
+  @ Usa el global X y lo purga al terminar.
+  \-> F0 G0 H0 P0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+        \<<
+          H0 IF DUP TYPE 2 == THEN STR\-> END \-> H
+          \<<
+            P0 IF DUP TYPE 2 == THEN STR\-> END \-> PTS
+            \<<
+              { } 0 \-> DIF MAL
+              \<<
+                1 PTS SIZE FOR I
+                  PTS I GET 'X' STO
+                  IFERR
+                    F \->NUM G \->NUM / H \->NUM -
+                  THEN
+                    "INDEF"
+                  END
+                  @ Cuenta como "mal" tanto una diferencia no nula como un
+                  @ punto que no se pudo evaluar (ahi el valor es el string
+                  @ "INDEF", de TYPE 2 y no 0).
+                  DUP
+                  IF DUP TYPE 0 ==
+                  THEN ABS .0000001 >
+                  ELSE DROP 1
+                  END
+                  IF THEN MAL 1 + 'MAL' STO END
+                  1 \->LIST DIF SWAP + 'DIF' STO
+                NEXT
+                IFERR { X } PURGE THEN 0 DROP END
+                DIF MAL 2 \->LIST
+                \-> R \<< DEPTH D0 - DROPN R \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

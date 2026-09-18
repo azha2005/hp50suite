@@ -1,15 +1,11 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DASV - asintota vertical en un punto candidato.
-  @ No busca los candidatos solo: salen de anular denominadores o de
-  @ los bordes del dominio, y eso lo pone el usuario.
-  @ Sondea numericamente a los dos lados en vez de pedirle al CAS un
-  @ limite lateral, porque la sintaxis 'X=a-' no se puede armar desde
-  @ la pila. Valores enormes y de signo opuesto es el caso tipico.
-  @ Umbral 1e5 y no 1e6: con el paso de 1e-6, un polo simple da
-  @ exactamente 1e6, y 1e6 > 1e6 es falso. El caso 1/X en 0 daba
-  @ SIN ASINTOTA con el umbral anterior.
-  @ Los dos valores quedan tambien en la pila.
+  @ Este objeto es SOLO la interfaz: el calculo esta en DASVC, que toma
+  @ 'f(X)' A de la pila y devuelve { VI VD HAY }.
+  @ No busca los candidatos solo: salen de anular denominadores o de los
+  @ bordes del dominio, y eso lo pone el usuario.
+  @ Los dos valores sondeados quedan tambien en la pila.
   "Asintota vertical"
   {
     { "f(X), ej '1/X':" "'1/X'" }
@@ -20,31 +16,27 @@
   IF THEN
     OBJ\-> DROP \-> F0 A
     \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      F0 A DASVC OBJ\-> DROP \-> VI VD HAY
       \<<
-        0 0 \-> VI VD
-        \<<
-          IFERR F 'X' A .000001 - = SUBST EVAL \->NUM THEN "INDEF" END 'VI' STO
-          IFERR F 'X' A .000001 + = SUBST EVAL \->NUM THEN "INDEF" END 'VD' STO
-          "f(a-) = " VI \->STR + 10 CHR +
-          "f(a+) = " + VD \->STR +
-          MSGBOX
-          IFERR
-            IF VI ABS 100000 > VD ABS 100000 > OR
-            THEN
-              "HAY ASINTOTA" 10 CHR +
-              "vertical en X=" + A \->STR +
-            ELSE
-              "SIN ASINTOTA" 10 CHR +
-              "Queda acotada cerca" +
-            END
+        "f(a-) = " VI \->STR + 10 CHR +
+        "f(a+) = " + VD \->STR +
+        MSGBOX
+        IF HAY 1 ==
+        THEN
+          "HAY ASINTOTA" 10 CHR +
+          "vertical en X=" + A \->STR +
+        ELSE
+          IF HAY 0 ==
           THEN
+            "SIN ASINTOTA" 10 CHR +
+            "Queda acotada cerca" +
+          ELSE
             "NO SE PUDO EVALUAR" 10 CHR +
             "a los dos lados" +
           END
-          MSGBOX
-          VI VD
-        \>>
+        END
+        MSGBOX
+        VI VD
       \>>
     \>>
   END

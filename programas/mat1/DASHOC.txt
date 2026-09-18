@@ -1,0 +1,71 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DASHOC - nucleo de DASHO. Asintotas horizontales y oblicuas.
+  @ Uso:  'f(X)' DASHOC
+  @ Deja: n1 = { MP BP MN BN TP TN }
+  @         MP/BP = m y b en +oo,  MN/BN = m y b en -oo,
+  @         TP/TN = el veredicto ya redactado para cada lado.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DASHO.
+  @
+  @ m = LIMIT(f/X), b = LIMIT(f - m*X), a los dos infinitos.
+  @ Si m = 0 la asintota es horizontal (y = b); si no, oblicua.
+  @ NO hace verticales: para eso esta DASV.
+  @
+  @ REQUIERE el global INF (correr DINF una vez, ver SUITE-MAT1 2).
+  @ El infinito NO puede venir del escape \.oo: ese produce un nombre
+  @ global (TYPE 6) que solo se dibuja como infinito, y LIMIT termina
+  @ sustituyendo en vez de calcular. Confirmado en la maquina.
+  @
+  @ El veredicto mira PRIMERO si m es infinita, por el caracter 159, y
+  @ recien despues compara contra cero. Antes iba derecho al \->NUM y el
+  @ caso m infinita (ej. X^2) caia en el IFERR y salia como "el CAS no
+  @ pudo", que es enganoso: el CAS pudo, la funcion no tiene asintota.
+  @ Esta es la unica copia de esta logica en la suite: DESTFUNC llama
+  @ aca en vez de repetirla, que es como se colo antes el mismo bug en
+  @ dos lugares y hubo que arreglarlo dos veces.
+  \-> F0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        0 0 0 0 "" "" \-> MP BP MN BN TP TN
+        \<<
+          IFERR F 'X' / 'X' INF = LIMIT EVAL THEN "INDEF" END 'MP' STO
+          IFERR F MP 'X' * - 'X' INF = LIMIT EVAL THEN "INDEF" END 'BP' STO
+          IFERR F 'X' / 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'MN' STO
+          IFERR F MN 'X' * - 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'BN' STO
+          IFERR
+            IF MP \->STR 159 CHR POS 0 >
+            THEN "sin asintota (m infinita)"
+            ELSE
+              IF MP \->NUM ABS .0000001 <
+              THEN "HORIZONTAL y = " BP \->STR +
+              ELSE "OBLICUA y = " MP \->STR + "X + " + BP \->STR +
+              END
+            END
+          THEN
+            "sin asintota o el CAS no pudo"
+          END
+          'TP' STO
+          IFERR
+            IF MN \->STR 159 CHR POS 0 >
+            THEN "sin asintota (m infinita)"
+            ELSE
+              IF MN \->NUM ABS .0000001 <
+              THEN "HORIZONTAL y = " BN \->STR +
+              ELSE "OBLICUA y = " MN \->STR + "X + " + BN \->STR +
+              END
+            END
+          THEN
+            "sin asintota o el CAS no pudo"
+          END
+          'TN' STO
+          MP BP MN BN TP TN 6 \->LIST
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

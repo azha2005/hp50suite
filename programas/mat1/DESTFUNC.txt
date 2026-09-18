@@ -1,0 +1,60 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DESTFUNC - nucleo de DESTFUN. Estudio de funcion.
+  @ Uso:  'f(X)' AV PV DESTFUNC       (AV = candidato vertical, PV = 1 probar)
+  @ Deja: n1 = { D1 Z1 D2 Z2 TP TN TV }
+  @         D1/Z1 = f' y sus ceros, D2/Z2 = f'' y sus ceros,
+  @         TP/TN = asintotas en +oo y -oo, TV = veredicto de la vertical.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DESTFUN.
+  @
+  @ Cada bloque va en su propio IFERR: si el CAS no puede con uno, los
+  @ demas se calculan igual.
+  @ NO calcula dominio ni imagen: decision tomada, requiere matematica
+  @ simbolica fragil y el resultado no seria el dominio real. Ver ademas
+  @ analisis/domain49 en el fork: un programa dedicado a eso se equivoca
+  @ en las raices y en las discontinuidades evitables.
+  @
+  @ Las asintotas las calcula DASHOC, no este programa. Antes estaban
+  @ escritas dos veces y el bug del infinito hubo que arreglarlo dos
+  @ veces; la segunda copia se habia quedado sin arreglar.
+  @ REQUIERE el global INF, por DASHOC.
+  \-> F0 AV PV
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        0 0 0 0 "" "" "" \-> D1 Z1 D2 Z2 TP TN TV
+        \<<
+          IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
+          IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
+          IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
+          IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
+          IFERR
+            F DASHOC
+          THEN
+            { 0 0 0 0 "no se pudo" "no se pudo" }
+          END
+          DUP 5 GET 'TP' STO
+          6 GET 'TN' STO
+          IF PV 1 ==
+          THEN
+            IFERR
+              F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
+              F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
+              IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
+            THEN
+              "no se pudo evaluar"
+            END
+          ELSE
+            "no probada"
+          END
+          'TV' STO
+          D1 Z1 D2 Z2 TP TN TV 7 \->LIST
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

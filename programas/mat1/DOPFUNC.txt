@@ -1,0 +1,56 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DOPFUNC - nucleo de DOPFUN. Operaciones con funciones y composicion.
+  @ Uso:  'f(X)' 'g(X)' X0 DOPFUNC
+  @ Deja: n1 = { SU RE PR CO FG GF FX GX }
+  @         SU/RE/PR/CO = f+g, f-g, f*g, f/g,
+  @         FG/GF = las dos composiciones f(g(X)) y g(f(X)),
+  @         FX/GX = esas composiciones evaluadas en X0, o "NO EXISTE".
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DOPFUN, que es
+  @ la que decide cuales de estos ocho resultados mostrar segun la
+  @ operacion elegida. Aca se calculan todos: es mas barato que repetir
+  @ el IFERR por rama y hace el nucleo comparable en una sola corrida.
+  @
+  @ El punto X0 sirve para el ejercicio 3 del TP 4, que pide evaluar
+  @ composiciones "si es posible": cuando el punto cae fuera del dominio
+  @ el resultado es "NO EXISTE", que es justo la respuesta buscada.
+  @
+  @ NO calcula dominios: eso es lo que hay que escribir a mano.
+  @ OJO con CO: SIMPLIFY cancela los factores comunes, asi que f/g pierde
+  @ las discontinuidades evitables. Con f = X^2-9 y g = X-3 devuelve X+3,
+  @ y el X=3 que hay que excluir del dominio no se ve. Medido en la 50g
+  @ probando domain49 (ver analisis/domain49 en el fork). Por eso DOPFUN
+  @ avisa en la caja del cociente.
+  \-> F0 G0 X0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+        \<<
+          @ Evaluar la composicion en X0 decide por el TIPO del resultado:
+          @ con el modo Complex encendido \v/(-1) devuelve (0.,1.) en vez de
+          @ dar error, y un punto fuera del dominio real pasaba por bueno.
+          @ Medido en el emulador con f = \v/(X-1) en X0 = 0.
+          0 0 0 0 0 0 0 0 \-> SU RE PR CO FG GF FX GX
+          \<<
+            IFERR F G + EXPAND THEN "NO SE PUDO" END 'SU' STO
+            IFERR F G - EXPAND THEN "NO SE PUDO" END 'RE' STO
+            IFERR F G * EXPAND THEN "NO SE PUDO" END 'PR' STO
+            IFERR F G / SIMPLIFY THEN "NO SE PUDO" END 'CO' STO
+            IFERR F 'X' G = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'FG' STO
+            IFERR G 'X' F = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'GF' STO
+            IFERR FG 'X' X0 = SUBST EVAL \->NUM THEN "NO EXISTE" END
+            IF DUP TYPE 0 == NOT THEN DROP "NO EXISTE" END 'FX' STO
+            IFERR GF 'X' X0 = SUBST EVAL \->NUM THEN "NO EXISTE" END
+            IF DUP TYPE 0 == NOT THEN DROP "NO EXISTE" END 'GX' STO
+            SU RE PR CO FG GF FX GX 8 \->LIST
+            \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

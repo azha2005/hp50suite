@@ -68,6 +68,17 @@ function Test-ArchivoRPL {
     $noAscii = ($bytes | Where-Object { $_ -gt 127 }).Count
     if ($noAscii -gt 0) { $problemas += "Tiene $noAscii bytes no-ASCII" }
 
+    # 3b. Bytes de CONTROL. Son ASCII de 7 bits, asi que el chequeo de arriba
+    # NO los ve, y viajan invisibles hasta la calculadora. Aparecen cuando un
+    # script de Python escribe el archivo y un literal lleva barra invertida
+    # seguida de letra: "\v/" en un literal de Python no es la raiz
+    # cuadrada, es TABULADOR VERTICAL mas "/". Paso tres veces en este
+    # proyecto, y una de ellas invalido en silencio una tanda entera de
+    # pruebas con raices: la raiz nunca llego a la calculadora, llegaban los
+    # tres caracteres literales y compilaban como un nombre basura.
+    $ctrl = ($bytes | Where-Object { $_ -lt 32 -and $_ -ne 9 -and $_ -ne 10 -and $_ -ne 13 }).Count
+    if ($ctrl -gt 0) { $problemas += "Tiene $ctrl bytes de control (revisar literales con barra invertida)" }
+
     # 4. Comandos que no existen en UserRPL (ignorando comentarios @)
     $codigo = ($lineas | Where-Object { $_ -notmatch '^\s*@' }) -join "`n"
 

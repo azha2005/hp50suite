@@ -24,8 +24,9 @@ $salida = Join-Path $PSScriptRoot 'MAT1-EMU.txt'
 
 # Los datos de prueba primero, para que existan antes que TD y TF.
 $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
-           'DVFG','DDOMP','DCONT','DDEF','DTANOR','DASV','DASHO',
-           'DOPFUN','DESTFUN',
+           'DVFGC','DVFG','DDOMPC','DDOMP','DCONTC','DCONT',
+           'DDEFC','DDEF','DTANORC','DTANOR','DASVC','DASV',
+           'DASHOC','DASHO','DOPFUNC','DOPFUN','DESTFUNC','DESTFUN',
            'LHOP','DSEP','DSEPI','LAGR')
 
 $lineas = New-Object System.Collections.Generic.List[string]

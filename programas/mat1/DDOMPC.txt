@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DDOMPC - nucleo de DDOMP. Sondea el dominio en una lista de puntos.
+  @ Uso:  'F(X)' { puntos } DDOMPC
+  @ Deja: n1 = { RES DENTRO }
+  @         RES = lista con el valor de F en cada punto, o "FUERA",
+  @         DENTRO = cuantos puntos pertenecen al dominio.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DDOMP.
+  @
+  @ Confirma que puntos pertenecen; NO deduce el dominio.
+  @ Requiere modo Complex APAGADO: si no, la raiz de un negativo
+  @ devuelve un complejo en vez de error y el punto pasa por bueno.
+  @ Usa el global X y lo purga al terminar.
+  \-> F0 P0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        P0 IF DUP TYPE 2 == THEN STR\-> END \-> PTS
+        \<<
+          { } 0 \-> RES DENTRO
+          \<<
+            1 PTS SIZE FOR I
+              PTS I GET 'X' STO
+              IFERR F \->NUM THEN "FUERA" END
+              @ Un complejo NO pertenece al dominio REAL. Con el modo
+              @ Complex encendido, \v/(-1) no da error: devuelve (0.,1.),
+              @ y el punto pasaba por bueno. Medido en el emulador: este
+              @ mismo caso contaba 4 puntos en el dominio de \v/X sobre
+              @ { -1 0 1 4 } en vez de 3.
+              @ Se decide por el TIPO del resultado y no por las banderas:
+              @ asi vale con el modo Complex prendido o apagado, sin
+              @ depender de que el usuario tenga la maquina como esperamos.
+              IF DUP TYPE 0 ==
+              THEN DENTRO 1 + 'DENTRO' STO
+              ELSE DROP "FUERA"
+              END
+              1 \->LIST RES SWAP + 'RES' STO
+            NEXT
+            IFERR { X } PURGE THEN 0 DROP END
+            RES DENTRO 2 \->LIST
+            \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

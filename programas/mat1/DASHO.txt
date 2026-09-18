@@ -1,14 +1,11 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DASHO - asintotas horizontales y oblicuas (TP 8, ej 5 y 6).
-  @ m = LIMIT(f/X), b = LIMIT(f - m*X), a los dos infinitos.
-  @ Si m = 0 la asintota es horizontal (y = b); si no, oblicua.
+  @ Este objeto es SOLO la interfaz: el calculo esta en DASHOC, que toma
+  @ 'f(X)' de la pila y devuelve { MP BP MN BN TP TN }.
   @ NO hace verticales: para eso esta DASV.
   @
   @ REQUIERE el global INF (correr DINF una vez, ver SUITE-MAT1 2).
-  @ El infinito NO puede venir del escape \.oo: ese produce un nombre
-  @ global (TYPE 6) que solo se dibuja como infinito, y LIMIT termina
-  @ sustituyendo en vez de calcular. Confirmado en la maquina.
   @
   @ Deja en la pila n4 = m(+oo), n3 = b(+oo), n2 = m(-oo), n1 = b(-oo).
   IF INF TYPE 9 == NOT
@@ -22,53 +19,19 @@
     { } { } { }
     INFORM
     IF THEN
-      1 GET \-> F0
+      1 GET DASHOC OBJ\-> DROP \-> MP BP MN BN TP TN
       \<<
-        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
-        \<<
-          0 0 0 0 \-> MP BP MN BN
-          \<<
-            IFERR F 'X' / 'X' INF = LIMIT EVAL THEN "INDEF" END 'MP' STO
-            IFERR F MP 'X' * - 'X' INF = LIMIT EVAL THEN "INDEF" END 'BP' STO
-            IFERR F 'X' / 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'MN' STO
-            IFERR F MN 'X' * - 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'BN' STO
-            "+oo: m=" MP \->STR + 10 CHR +
-            "     b=" + BP \->STR +
-            MSGBOX
-            IFERR
-              IF MP \->NUM ABS .0000001 <
-              THEN
-                "+oo HORIZONTAL" 10 CHR +
-                "y = " + BP \->STR +
-              ELSE
-                "+oo OBLICUA" 10 CHR +
-                "y = " + MP \->STR + "X + " + BP \->STR +
-              END
-            THEN
-              "+oo SIN ASINTOTA" 10 CHR +
-              "o el CAS no pudo" +
-            END
-            MSGBOX
-            "-oo: m=" MN \->STR + 10 CHR +
-            "     b=" + BN \->STR +
-            MSGBOX
-            IFERR
-              IF MN \->NUM ABS .0000001 <
-              THEN
-                "-oo HORIZONTAL" 10 CHR +
-                "y = " + BN \->STR +
-              ELSE
-                "-oo OBLICUA" 10 CHR +
-                "y = " + MN \->STR + "X + " + BN \->STR +
-              END
-            THEN
-              "-oo SIN ASINTOTA" 10 CHR +
-              "o el CAS no pudo" +
-            END
-            MSGBOX
-            MP BP MN BN
-          \>>
-        \>>
+        "+oo: m=" MP \->STR + 10 CHR +
+        "     b=" + BP \->STR +
+        MSGBOX
+        "+oo: " TP +
+        MSGBOX
+        "-oo: m=" MN \->STR + 10 CHR +
+        "     b=" + BN \->STR +
+        MSGBOX
+        "-oo: " TN +
+        MSGBOX
+        MP BP MN BN
       \>>
     END
   END

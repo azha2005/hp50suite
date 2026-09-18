@@ -15,10 +15,21 @@ trabajo: CLAUDE.md §1, §2 y §3. No están duplicadas acá a propósito.
 
 ## 1. Estado real
 
-**Corridos en la máquina: `TCHK`, `DINF`, `DASHO`, `DCONT` y `DESTFUN`** (§2). Entre los dos destaparon y
-arreglaron un bug de fondo con el infinito. Los 18 archivos pasan
-`verificar.ps1`, que chequea estructura, no semántica: pasar la batería no es
-evidencia de que funcionen, y los 18 siguen sin probarse uno por uno.
+**Los 18 están probados en el emulador con ROM de 50g: 44 de 44 casos.**
+`TCHK`, `DINF`, `DASHO`, `DCONT` y `DESTFUN` además se corrieron en la máquina
+real (§2), y entre ellos destaparon el bug de fondo con el infinito.
+
+Para poder probarlos hubo que **partir cada programa con formulario en dos**:
+`XXXC` es el cálculo (entra y sale por pila) y `XXX` es el `INFORM` con las
+cajas, que llama al núcleo. Antes el cálculo estaba soldado al formulario, y
+como `INFORM` es interactivo por definición, el harness no podía probar
+**ninguno**: 18 programas escritos con 0 ejecuciones. Son 27 objetos ahora
+(18 + 9 núcleos).
+
+**Emulador no es hardware** (§9): es la ROM de la 50g, pero no corre código ARM
+ni toca teclado, SD o memoria real. Un verde acá es evidencia fuerte y no es la
+máquina. Los 27 archivos siguen pasando `verificar.ps1`, que chequea estructura,
+no semántica.
 
 **Antes de usar nada: correr `DINF` una vez** (§2). `DASHO` y `DESTFUN` no
 funcionan sin el global `INF`; los dos lo avisan con una caja si falta. `DCONT`
@@ -30,23 +41,24 @@ generada para transferir (ver §3).
 
 | Programa | Para | TP | Interfaz | Estado |
 |---|---|---|---|---|
-| `TCHK` | — | — | pila | **corrido**: 3 de 4 cimientos OK, falla `LIMIT` con ∞ (§2) |
-| `DOPFUN` | Parcial 1 | TP 4 | INFORM | escrito, sin probar |
-| `DCONT` | Parcial 1 | TP 7 | INFORM | **corrido**: límites bien, veredicto arreglado (§2). No requiere `INF` |
-| `DASHO` | Parcial 1 | TP 8 | INFORM | **corrido**: da la oblicua correcta. Requiere `INF` |
-| `DASV` | Parcial 1 | TP 8 | INFORM | escrito, sin probar |
-| `DDEF` | Parcial 1 | TP 9 | INFORM | escrito, sin probar |
-| `DTANOR` | Parcial 1 | TP 9 | INFORM | escrito, sin probar |
-| `DESTFUN` | Parcial 1 y 2 | TP 8+ | INFORM | **corrido**: f' y f'' correctas. Requiere `INF` |
-| `DVFG` | Parcial 1 | TP 0/1 | INFORM | escrito, sin probar |
-| `DDOMP` | Parcial 1 | TP 1 | INFORM | escrito, sin probar |
-| `LHOP` | Parcial 2 y final | — | pila | escrito, sin probar. **Falta convertir** |
-| `DSEP` / `DSEPI` | Final | — | pila | escritos, sin probar. **Falta convertir** |
-| `LAGR` | Final | — | pila | escrito, sin probar. **Falta convertir** |
-| `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | escritos, sin correr |
+| `TCHK` | — | — | pila | **4 de 4**. El chequeo del ∞ usaba `\.oo` y daba por bueno un `'1/\.oo'` sin evaluar; ahora va por `INF` |
+| `DOPFUN` | Parcial 1 | TP 4 | INFORM + `DOPFUNC` | **4 de 4**. Avisa que el cociente sale simplificado |
+| `DCONT` | Parcial 1 | TP 7 | INFORM + `DCONTC` | **4 de 4** (continua, salto, evitable, esencial). No requiere `INF` |
+| `DASHO` | Parcial 1 | TP 8 | INFORM + `DASHOC` | **4 de 4**. Ahora distingue *m* infinita de "el CAS no pudo". Requiere `INF` |
+| `DASV` | Parcial 1 | TP 8 | INFORM + `DASVC` | **4 de 4** (polo simple, polo doble, acotada) |
+| `DDEF` | Parcial 1 | TP 9 | INFORM + `DDEFC` | **3 de 3** (simbólica y en un punto) |
+| `DTANOR` | Parcial 1 | TP 9 | INFORM + `DTANORC` | **4 de 4**, incluida la normal vertical con f'(x0)=0 |
+| `DESTFUN` | Parcial 1 y 2 | TP 8+ | INFORM + `DESTFUNC` | **4 de 4**. Las asíntotas las calcula `DASHOC`, ya no una copia. Requiere `INF` |
+| `DVFG` | Parcial 1 | TP 0/1 | INFORM + `DVFGC` | **2 de 2** (simplificación buena y mala) |
+| `DDOMP` | Parcial 1 | TP 1 | INFORM + `DDOMPC` | **2 de 2**. Contaba √(-1) como dentro del dominio con modo Complex; arreglado por tipo |
+| `LHOP` | Parcial 2 y final | — | pila | **3 de 3** (0/0 y ∞/∞). La pila alcanza: una línea de entrada |
+| `DSEP` / `DSEPI` | Final | — | pila | **3 de 3**. Falta el guardián de profundidad (§2.11 de CLAUDE.md) |
+| `LAGR` | Final | — | pila | **1 de 1**: arma bien el lagrangiano |
+| `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | **5 de 5**: 7 y 8 casos, y los accesores devuelven lo que dicen |
 
-Parcial 1 está cubierto entero y ya en el estilo de la suite. Lo que queda por
-convertir a `INFORM`/`MSGBOX` es de Parcial 2 y final (§4).
+Parcial 1 está cubierto entero y ya en el estilo de la suite. `LHOP`, `DSEP`,
+`DSEPI` y `LAGR` **quedan con interfaz por pila a propósito**: son de una sola
+línea de entrada y un formulario no aportaría nada.
 
 Dos programas desaparecieron en el camino, y no por error:
 

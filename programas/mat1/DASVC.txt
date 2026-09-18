@@ -1,0 +1,41 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DASVC - nucleo de DASV. Asintota vertical en un punto candidato.
+  @ Uso:  'f(X)' A DASVC
+  @ Deja: n1 = { VI VD HAY }
+  @         VI = f(a-), VD = f(a+) sondeados numericamente,
+  @         HAY = 1 hay asintota, 0 queda acotada, -1 no se pudo evaluar.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DASV.
+  @
+  @ No busca los candidatos solo: salen de anular denominadores o de los
+  @ bordes del dominio, y eso lo pone el usuario.
+  @ Sondea numericamente a los dos lados en vez de pedirle al CAS un
+  @ limite lateral, porque la sintaxis 'X=a-' no se puede armar desde la
+  @ pila. Valores enormes y de signo opuesto es el caso tipico.
+  @ Umbral 1e5 y no 1e6: con el paso de 1e-6, un polo simple da
+  @ exactamente 1e6, y 1e6 > 1e6 es falso. El caso 1/X en 0 daba
+  @ SIN ASINTOTA con el umbral anterior.
+  \-> F0 A
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        0 0 0 \-> VI VD HAY
+        \<<
+          IFERR F 'X' A .000001 - = SUBST EVAL \->NUM THEN "INDEF" END 'VI' STO
+          IFERR F 'X' A .000001 + = SUBST EVAL \->NUM THEN "INDEF" END 'VD' STO
+          IFERR
+            IF VI ABS 100000 > VD ABS 100000 > OR THEN 1 ELSE 0 END
+          THEN
+            1 NEG
+          END
+          'HAY' STO
+          VI VD HAY 3 \->LIST
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

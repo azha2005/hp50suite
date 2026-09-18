@@ -1,6 +1,8 @@
 %%HP: T(3)A(R)F(.);
 \<<
   @ DTANOR - recta tangente y recta normal en x0.
+  @ Este objeto es SOLO la interfaz: el calculo esta en DTANORC, que
+  @ toma 'f(X)' X0 de la pila y devuelve { M Y0 TG NR }.
   @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
   @ catedra tiene mal el signo en el punto 3c de la teoria.
   @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
@@ -13,34 +15,18 @@
   { } { } { }
   INFORM
   IF THEN
-    OBJ\-> DROP \-> F0 X0
+    OBJ\-> DROP DTANORC OBJ\-> DROP \-> M Y0 TG NR
     \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
-      \<<
-        0 0 0 0 \-> M Y0 TG NR
-        \<<
-          F DERVX EVAL 'X' X0 = SUBST EVAL \->NUM 'M' STO
-          F 'X' X0 = SUBST EVAL \->NUM 'Y0' STO
-          'Y' Y0 M 'X' X0 - * + EXPAND = 'TG' STO
-          IF M 0 ==
-          THEN
-            'X' X0 =
-          ELSE
-            'Y' Y0 -1 M / 'X' X0 - * + EXPAND =
-          END
-          'NR' STO
-          "f'(x0) = " M \->STR + 10 CHR +
-          "f(x0) = " + Y0 \->STR +
-          MSGBOX
-          "Tangente:" 10 CHR +
-          TG \->STR +
-          MSGBOX
-          "Normal:" 10 CHR +
-          NR \->STR +
-          MSGBOX
-          TG NR
-        \>>
-      \>>
+      "f'(x0) = " M \->STR + 10 CHR +
+      "f(x0) = " + Y0 \->STR +
+      MSGBOX
+      "Tangente:" 10 CHR +
+      TG \->STR +
+      MSGBOX
+      "Normal:" 10 CHR +
+      NR \->STR +
+      MSGBOX
+      TG NR
     \>>
   END
 \>>

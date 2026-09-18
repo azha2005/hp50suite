@@ -29,9 +29,18 @@
     @ Deja 4 resultados. Si alguno es un string "ERR ...", ese comando
     @ no se comporta como asumen los programas y hay que arreglar eso
     @ antes de seguir.
+    @
+    @ El chequeo del infinito va por el global INF y NO por el escape
+    @ \.oo. Medido en el emulador con ROM de 50g: '1/X' 'X=\.oo' LIMIT
+    @ EVAL devuelve '1/\.oo' SIN EVALUAR, porque \.oo produce un nombre
+    @ global (TYPE 6) que solo se dibuja como infinito. Como no da error,
+    @ el IFERR no salta y este mismo autotest daba el chequeo por bueno
+    @ mientras devolvia basura: el test que existe para detectar cimientos
+    @ podridos tenia uno adentro.
+    @ Si falta INF (correr DINF una vez), el tercer resultado lo dice.
     IFERR 'X' 2 = THEN "ERR: = no construye ecuacion" END
     IFERR 'X^2' 'X' RISCH THEN "ERR: RISCH" END
-    IFERR '1/X' 'X=\.oo' LIMIT EVAL THEN "ERR: LIMIT con \.oo" END
+    IFERR '1/X' 'X' INF = LIMIT EVAL THEN "ERR: LIMIT con infinito, falta INF?" END
     IFERR 'X^2' 'X' DERIV THEN "ERR: DERIV" END
   \>>
   'TCHK' STO
@@ -56,24 +65,20 @@
   \>>
   'TF' STO
   \<<
-    @ DVFG - verifica que H(X) sea la simplificacion de F(X)/G(X).
-    @ Evalua en seis puntos y resta. Todas las diferencias en 0 significa
-    @ que el algebra esta bien. No demuestra nada, pero dos expresiones
-    @ distintas casi nunca coinciden en seis puntos.
-    @ Los puntos por defecto evitan 0, 1 y 4 (las exclusiones del
-    @ ejercicio de la guia). Para otro ejercicio se cambian en el campo.
-    @ La lista de diferencias queda en la pila.
-    "Verificar simplificacion"
-    {
-      { "F(X):" "'X^2-1'" }
-      { "G(X):" "'X-1'" }
-      { "H(X) propuesta:" "'X+1'" }
-      { "Puntos de prueba:" "{ -3 -1 .5 2 3 3.5 }" }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> F0 G0 H0 P0
+    @ DVFGC - nucleo de DVFG. Verifica que H(X) sea la simplificacion de F/G.
+    @ Uso:  'F(X)' 'G(X)' 'H(X)' { puntos } DVFGC
+    @ Deja: n1 = { DIF MAL }
+    @         DIF = lista de diferencias F/G - H en cada punto,
+    @         MAL = cuantos puntos no dieron 0 (o no se pudieron evaluar).
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DVFG.
+    @
+    @ No demuestra nada, pero dos expresiones distintas casi nunca
+    @ coinciden en seis puntos.
+    @ Usa el global X y lo purga al terminar.
+    \-> F0 G0 H0 P0
+    \<<
+      DEPTH \-> D0
       \<<
         F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
         \<<
@@ -92,9 +97,9 @@
                     THEN
                       "INDEF"
                     END
-                    @ Cuenta como "mal" tanto una diferencia no nula como
-                    @ un punto que no se pudo evaluar (ahi el valor es el
-                    @ string "INDEF", de TYPE 2 y no 0).
+                    @ Cuenta como "mal" tanto una diferencia no nula como un
+                    @ punto que no se pudo evaluar (ahi el valor es el string
+                    @ "INDEF", de TYPE 2 y no 0).
                     DUP
                     IF DUP TYPE 0 ==
                     THEN ABS .0000001 >
@@ -104,43 +109,72 @@
                     1 \->LIST DIF SWAP + 'DIF' STO
                   NEXT
                   IFERR { X } PURGE THEN 0 DROP END
-                  "Puntos probados: " PTS SIZE \->STR + 10 CHR +
-                  "Con diferencia: " + MAL \->STR +
-                  MSGBOX
-                  IF MAL 0 ==
-                  THEN
-                    "SIMPLIFICACION OK" 10 CHR +
-                    "Las 6 diferencias 0" +
-                  ELSE
-                    "NO COINCIDE" 10 CHR +
-                    "Ver lista en la pila" +
-                  END
-                  MSGBOX
-                  DIF
+                  DIF MAL 2 \->LIST
+                  \-> R \<< DEPTH D0 - DROPN R \>>
                 \>>
               \>>
             \>>
           \>>
         \>>
       \>>
-    END
+    \>>
   \>>
-  'DVFG' STO
+  'DVFGC' STO
   \<<
-    @ DDOMP - sondea el dominio de F(X) en una lista de puntos.
-    @ Confirma que puntos pertenecen; NO deduce el dominio.
-    @ Requiere modo Complex APAGADO: si no, la raiz de un negativo
-    @ devuelve un complejo en vez de error y el punto pasa por bueno.
-    @ La lista de resultados (valor o "FUERA") queda en la pila.
-    "Sondear dominio"
+    @ DVFG - verifica que H(X) sea la simplificacion de F(X)/G(X).
+    @ Este objeto es SOLO la interfaz: el calculo esta en DVFGC, que toma
+    @ 'F' 'G' 'H' { puntos } de la pila y devuelve { DIF MAL }.
+    @ Evalua en seis puntos y resta. Todas las diferencias en 0 significa
+    @ que el algebra esta bien. No demuestra nada, pero dos expresiones
+    @ distintas casi nunca coinciden en seis puntos.
+    @ Los puntos por defecto evitan 0, 1 y 4 (las exclusiones del
+    @ ejercicio de la guia). Para otro ejercicio se cambian en el campo.
+    @ La lista de diferencias queda en la pila.
+    "Verificar simplificacion"
     {
-      { "F(X), ej '\v/X':" "'\v/X'" }
-      { "Puntos a probar:" "{ -2 -1 0 1 2 4 }" }
+      { "F(X):" "'X^2-1'" }
+      { "G(X):" "'X-1'" }
+      { "H(X) propuesta:" "'X+1'" }
+      { "Puntos de prueba:" "{ -3 -1 .5 2 3 3.5 }" }
     }
     { } { } { }
     INFORM
     IF THEN
-      OBJ\-> DROP \-> F0 P0
+      OBJ\-> DROP DVFGC OBJ\-> DROP \-> DIF MAL
+      \<<
+        "Puntos probados: " DIF SIZE \->STR + 10 CHR +
+        "Con diferencia: " + MAL \->STR +
+        MSGBOX
+        IF MAL 0 ==
+        THEN
+          "SIMPLIFICACION OK" 10 CHR +
+          "Todas las dif. en 0" +
+        ELSE
+          "NO COINCIDE" 10 CHR +
+          "Ver lista en la pila" +
+        END
+        MSGBOX
+        DIF
+      \>>
+    END
+  \>>
+  'DVFG' STO
+  \<<
+    @ DDOMPC - nucleo de DDOMP. Sondea el dominio en una lista de puntos.
+    @ Uso:  'F(X)' { puntos } DDOMPC
+    @ Deja: n1 = { RES DENTRO }
+    @         RES = lista con el valor de F en cada punto, o "FUERA",
+    @         DENTRO = cuantos puntos pertenecen al dominio.
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DDOMP.
+    @
+    @ Confirma que puntos pertenecen; NO deduce el dominio.
+    @ Requiere modo Complex APAGADO: si no, la raiz de un negativo
+    @ devuelve un complejo en vez de error y el punto pasa por bueno.
+    @ Usa el global X y lo purga al terminar.
+    \-> F0 P0
+    \<<
+      DEPTH \-> D0
       \<<
         F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
         \<<
@@ -150,50 +184,84 @@
             \<<
               1 PTS SIZE FOR I
                 PTS I GET 'X' STO
-                IFERR
-                  F \->NUM DENTRO 1 + 'DENTRO' STO
-                THEN
-                  "FUERA"
+                IFERR F \->NUM THEN "FUERA" END
+                @ Un complejo NO pertenece al dominio REAL. Con el modo
+                @ Complex encendido, \v/(-1) no da error: devuelve (0.,1.),
+                @ y el punto pasaba por bueno. Medido en el emulador: este
+                @ mismo caso contaba 4 puntos en el dominio de \v/X sobre
+                @ { -1 0 1 4 } en vez de 3.
+                @ Se decide por el TIPO del resultado y no por las banderas:
+                @ asi vale con el modo Complex prendido o apagado, sin
+                @ depender de que el usuario tenga la maquina como esperamos.
+                IF DUP TYPE 0 ==
+                THEN DENTRO 1 + 'DENTRO' STO
+                ELSE DROP "FUERA"
                 END
                 1 \->LIST RES SWAP + 'RES' STO
               NEXT
               IFERR { X } PURGE THEN 0 DROP END
-              "Puntos probados: " PTS SIZE \->STR + 10 CHR +
-              "En el dominio: " + DENTRO \->STR +
-              MSGBOX
-              "Detalle en la pila" 10 CHR +
-              "(valor o FUERA)" +
-              MSGBOX
-              RES
+              RES DENTRO 2 \->LIST
+              \-> R \<< DEPTH D0 - DROPN R \>>
             \>>
           \>>
         \>>
+      \>>
+    \>>
+  \>>
+  'DDOMPC' STO
+  \<<
+    @ DDOMP - sondea el dominio de F(X) en una lista de puntos.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DDOMPC, que toma
+    @ 'F(X)' { puntos } de la pila y devuelve { RES DENTRO }.
+    @ Confirma que puntos pertenecen; NO deduce el dominio.
+    @ Un resultado complejo cuenta como FUERA, asi que ya NO hace falta
+    @ tener apagado el modo Complex: lo decide DDOMPC por el tipo.
+    @ La lista de resultados (valor o "FUERA") queda en la pila.
+    "Sondear dominio"
+    {
+      { "F(X), ej '\v/X':" "'\v/X'" }
+      { "Puntos a probar:" "{ -2 -1 0 1 2 4 }" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DDOMPC OBJ\-> DROP \-> RES DENTRO
+      \<<
+        "Puntos probados: " RES SIZE \->STR + 10 CHR +
+        "En el dominio: " + DENTRO \->STR +
+        MSGBOX
+        "Detalle en la pila" 10 CHR +
+        "(valor o FUERA)" +
+        MSGBOX
+        RES
       \>>
     END
   \>>
   'DDOMP' STO
   \<<
-    @ DCONT - continuidad de una funcion a trozos en el punto de corte.
-    @ Cubre entero el punto 2 de la guia (los cuatro incisos).
+    @ DCONTC - nucleo de DCONT. Continuidad en el punto de corte.
+    @ Uso:  'FI(X)' 'FD(X)' A DCONTC
+    @ Deja: n1 = { LI LD IG ES }
+    @         LI = limite por izquierda, LD = limite por derecha,
+    @         IG = 1 si los dos limites coinciden,
+    @         ES = mayor que 0 si alguno es infinito (discont. esencial).
+    @
+    @ Sin INFORM ni MSGBOX A PROPOSITO: eso lo pone DCONT. Separado asi,
+    @ el harness puede correr este objeto con argumentos de pila y
+    @ comparar el resultado, que con el formulario soldado no se podia.
+    @
     @ Cada rama por separado es una funcion comun, asi que alcanza con el
     @ limite ordinario en a; el lateral solo haria falta si la rama misma
     @ revienta ahi, y para eso esta DASV.
     @
-    @ NO requiere el global INF: el punto de corte es finito, y el infinito
-    @ se detecta por su caracter (ver abajo), no comparando objetos.
-    @
-    @ Los dos limites quedan tambien en la pila, por si el texto no entra
-    @ en la caja.
-    "Continuidad en el corte"
-    {
-      { "Rama izquierda, ej 'X^2':" "'X'" }
-      { "Rama derecha, ej '2*X':" "'X'" }
-      { "Punto de corte a:" "0" 0 }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> FI0 FD0 A
+    @ NO requiere el global INF: el punto de corte es finito, y el
+    @ infinito se detecta por su caracter (ver abajo), no comparando.
+    \-> FI0 FD0 A
+    \<<
+      @ Guardian de profundidad (CLAUDE.md 2.11): IFERR no limpia la pila,
+      @ asi que los argumentos de un comando que fallo quedan apilados.
+      @ Se anota la profundidad al entrar y se tira lo que sobre al salir.
+      DEPTH \-> D0
       \<<
         FI0 IF DUP TYPE 2 == THEN STR\-> END \-> FI
         \<<
@@ -209,58 +277,89 @@
               @ devuelve +oo (con el signo pegado, que es como la calculadora
               @ lo escribe sola) y el INF guardado por DINF es el oo pelado,
               @ asi que SAME daba falso y el veredicto salia "SALTO FINITO".
-              @ El caracter oo tiene codigo 159 (medido con DINF) y aparece
-              @ igual en +oo, -oo o 2*oo, asi que POS lo encuentra en todos.
+              @ El caracter oo tiene codigo 159 y aparece igual en +oo, -oo
+              @ o 2*oo, asi que POS lo encuentra en todos.
               LI \->STR 159 CHR POS LD \->STR 159 CHR POS + 'ES' STO
               @ Red de seguridad: si el CAS devolvio un numero gigante en vez
-              @ del simbolo, tambien es asintota vertical. Todo adentro del
-              @ IFERR porque con un simbolico el > puede no dar flag.
-              IFERR
-                LI \->NUM ABS LD \->NUM ABS MAX 1000000000 >
-                IF THEN 1 'ES' STO END
+              @ del simbolo, tambien es asintota vertical.
+              @ Solo actua si la deteccion por caracter NO encontro nada. Antes
+              @ pisaba ES siempre, y con eso tapaba si el detector primario habia
+              @ funcionado: el harness veia ES=1 (de esta red) tanto cuando el
+              @ caracter estaba como cuando no. Ahora el VALOR de ES dice quien lo
+              @ detecto: 3 = por el caracter oo, 1 = por el tamano del numero.
+              IF ES 0 ==
               THEN
-              END
-              "Lim izq: " LI \->STR + 10 CHR +
-              "Lim der: " + LD \->STR +
-              MSGBOX
-              IF ES 0 >
-              THEN
-                "ESENCIAL (2a esp.)" 10 CHR +
-                "Asint. vert. X=" + A \->STR +
-              ELSE
-                IF IG
+                IFERR
+                  LI \->NUM ABS LD \->NUM ABS MAX 1000000000 >
+                  IF THEN 1 'ES' STO END
                 THEN
-                  "LIMITES IGUALES" 10 CHR +
-                  "Ver f(a): evitable?" +
-                ELSE
-                  "SALTO FINITO" 10 CHR +
-                  "(1a especie)" +
                 END
               END
-              MSGBOX
-              LI LD
+              LI LD IG ES 4 \->LIST
+              \-> R \<< DEPTH D0 - DROPN R \>>
             \>>
           \>>
         \>>
+      \>>
+    \>>
+  \>>
+  'DCONTC' STO
+  \<<
+    @ DCONT - continuidad de una funcion a trozos en el punto de corte.
+    @ Cubre entero el punto 2 de la guia (los cuatro incisos).
+    @
+    @ Este objeto es SOLO la interfaz: formulario, cajas y veredicto.
+    @ La matematica esta en DCONTC, que toma 'FI' 'FD' A de la pila y
+    @ devuelve { LI LD IG ES }. Estan separados para que el harness
+    @ pueda probar el calculo sin poder tipear en un INFORM.
+    @
+    @ Los dos limites quedan tambien en la pila, por si el texto no entra
+    @ en la caja.
+    "Continuidad en el corte"
+    {
+      { "Rama izquierda, ej 'X^2':" "'X'" }
+      { "Rama derecha, ej '2*X':" "'X'" }
+      { "Punto de corte a:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DCONTC OBJ\-> DROP \-> LI LD IG ES
+      \<<
+        "Lim izq: " LI \->STR + 10 CHR +
+        "Lim der: " + LD \->STR +
+        MSGBOX
+        IF ES 0 >
+        THEN
+          "ESENCIAL (2a esp.)" 10 CHR +
+          "Asint. vertical" +
+        ELSE
+          IF IG
+          THEN
+            "LIMITES IGUALES" 10 CHR +
+            "Ver f(a): evitable?" +
+          ELSE
+            "SALTO FINITO" 10 CHR +
+            "(1a especie)" +
+          END
+        END
+        MSGBOX
+        LI LD
       \>>
     END
   \>>
   'DCONT' STO
   \<<
-    @ DDEF - derivada por definicion. Punto 4 de la guia.
-    @ En x0 se puede poner 'X' para obtener f'(X) simbolica.
-    @ Deja en la pila el cociente incremental SIN simplificar (n2) y la
-    @ derivada (n1): el cociente es lo que hay que copiar a la hoja para
-    @ mostrar el procedimiento, y casi nunca entra en una caja.
-    "Derivada por definicion"
-    {
-      { "f(X), ej 'X^2':" "'X^2'" }
-      { "Punto x0 ('X' = simbolico):" "'X'" }
-    }
-    { } { } { }
-    INFORM
-    IF THEN
-      OBJ\-> DROP \-> F0 P0
+    @ DDEFC - nucleo de DDEF. Derivada por definicion.
+    @ Uso:  'f(X)' X0 DDEFC        (X0 puede ser 'X' para la derivada simbolica)
+    @ Deja: n1 = { Q DV }
+    @         Q  = cociente incremental SIN simplificar (lo que va a la hoja),
+    @         DV = la derivada, o "EL CAS NO PUDO".
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DDEF.
+    \-> F0 P0
+    \<<
+      DEPTH \-> D0
       \<<
         F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
         \<<
@@ -276,36 +375,59 @@
                   "EL CAS NO PUDO"
                 END
                 'DV' STO
-                "Cociente increm.:" 10 CHR +
-                Q \->STR +
-                MSGBOX
-                "Derivada:" 10 CHR +
-                DV \->STR +
-                MSGBOX
-                Q DV
+                Q DV 2 \->LIST
+                \-> R \<< DEPTH D0 - DROPN R \>>
               \>>
             \>>
           \>>
         \>>
       \>>
-    END
+    \>>
   \>>
-  'DDEF' STO
+  'DDEFC' STO
   \<<
-    @ DTANOR - recta tangente y recta normal en x0.
-    @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
-    @ catedra tiene mal el signo en el punto 3c de la teoria.
-    @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
-    @ Las dos rectas quedan tambien en la pila (n2 tangente, n1 normal).
-    "Tangente y normal"
+    @ DDEF - derivada por definicion. Punto 4 de la guia.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DDEFC, que toma
+    @ 'f(X)' X0 de la pila y devuelve { Q DV }.
+    @ En x0 se puede poner 'X' para obtener f'(X) simbolica.
+    @ Deja en la pila el cociente incremental SIN simplificar (n2) y la
+    @ derivada (n1): el cociente es lo que hay que copiar a la hoja para
+    @ mostrar el procedimiento, y casi nunca entra en una caja.
+    "Derivada por definicion"
     {
       { "f(X), ej 'X^2':" "'X^2'" }
-      { "Punto x0:" "0" 0 }
+      { "Punto x0 ('X' = simbolico):" "'X'" }
     }
     { } { } { }
     INFORM
     IF THEN
-      OBJ\-> DROP \-> F0 X0
+      OBJ\-> DROP DDEFC OBJ\-> DROP \-> Q DV
+      \<<
+        "Cociente increm.:" 10 CHR +
+        Q \->STR +
+        MSGBOX
+        "Derivada:" 10 CHR +
+        DV \->STR +
+        MSGBOX
+        Q DV
+      \>>
+    END
+  \>>
+  'DDEF' STO
+  \<<
+    @ DTANORC - nucleo de DTANOR. Recta tangente y recta normal en x0.
+    @ Uso:  'f(X)' X0 DTANORC
+    @ Deja: n1 = { M Y0 TG NR }
+    @         M = f'(x0), Y0 = f(x0), TG = tangente, NR = normal.
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DTANOR.
+    @
+    @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
+    @ catedra tiene mal el signo en el punto 3c de la teoria.
+    @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
+    \-> F0 X0
+    \<<
+      DEPTH \-> D0
       \<<
         F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
         \<<
@@ -318,36 +440,97 @@
             THEN
               'X' X0 =
             ELSE
-              'Y' Y0 -1 M / 'X' X0 - * + EXPAND =
+              'Y' Y0 1 NEG M / 'X' X0 - * + EXPAND =
             END
             'NR' STO
-            "f'(x0) = " M \->STR + 10 CHR +
-            "f(x0) = " + Y0 \->STR +
-            MSGBOX
-            "Tangente:" 10 CHR +
-            TG \->STR +
-            MSGBOX
-            "Normal:" 10 CHR +
-            NR \->STR +
-            MSGBOX
-            TG NR
+            M Y0 TG NR 4 \->LIST
+            \-> R \<< DEPTH D0 - DROPN R \>>
           \>>
         \>>
+      \>>
+    \>>
+  \>>
+  'DTANORC' STO
+  \<<
+    @ DTANOR - recta tangente y recta normal en x0.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DTANORC, que
+    @ toma 'f(X)' X0 de la pila y devuelve { M Y0 TG NR }.
+    @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
+    @ catedra tiene mal el signo en el punto 3c de la teoria.
+    @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
+    @ Las dos rectas quedan tambien en la pila (n2 tangente, n1 normal).
+    "Tangente y normal"
+    {
+      { "f(X), ej 'X^2':" "'X^2'" }
+      { "Punto x0:" "0" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DTANORC OBJ\-> DROP \-> M Y0 TG NR
+      \<<
+        "f'(x0) = " M \->STR + 10 CHR +
+        "f(x0) = " + Y0 \->STR +
+        MSGBOX
+        "Tangente:" 10 CHR +
+        TG \->STR +
+        MSGBOX
+        "Normal:" 10 CHR +
+        NR \->STR +
+        MSGBOX
+        TG NR
       \>>
     END
   \>>
   'DTANOR' STO
   \<<
-    @ DASV - asintota vertical en un punto candidato.
-    @ No busca los candidatos solo: salen de anular denominadores o de
-    @ los bordes del dominio, y eso lo pone el usuario.
+    @ DASVC - nucleo de DASV. Asintota vertical en un punto candidato.
+    @ Uso:  'f(X)' A DASVC
+    @ Deja: n1 = { VI VD HAY }
+    @         VI = f(a-), VD = f(a+) sondeados numericamente,
+    @         HAY = 1 hay asintota, 0 queda acotada, -1 no se pudo evaluar.
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DASV.
+    @
+    @ No busca los candidatos solo: salen de anular denominadores o de los
+    @ bordes del dominio, y eso lo pone el usuario.
     @ Sondea numericamente a los dos lados en vez de pedirle al CAS un
-    @ limite lateral, porque la sintaxis 'X=a-' no se puede armar desde
-    @ la pila. Valores enormes y de signo opuesto es el caso tipico.
+    @ limite lateral, porque la sintaxis 'X=a-' no se puede armar desde la
+    @ pila. Valores enormes y de signo opuesto es el caso tipico.
     @ Umbral 1e5 y no 1e6: con el paso de 1e-6, un polo simple da
     @ exactamente 1e6, y 1e6 > 1e6 es falso. El caso 1/X en 0 daba
     @ SIN ASINTOTA con el umbral anterior.
-    @ Los dos valores quedan tambien en la pila.
+    \-> F0 A
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          0 0 0 \-> VI VD HAY
+          \<<
+            IFERR F 'X' A .000001 - = SUBST EVAL \->NUM THEN "INDEF" END 'VI' STO
+            IFERR F 'X' A .000001 + = SUBST EVAL \->NUM THEN "INDEF" END 'VD' STO
+            IFERR
+              IF VI ABS 100000 > VD ABS 100000 > OR THEN 1 ELSE 0 END
+            THEN
+              1 NEG
+            END
+            'HAY' STO
+            VI VD HAY 3 \->LIST
+            \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DASVC' STO
+  \<<
+    @ DASV - asintota vertical en un punto candidato.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DASVC, que toma
+    @ 'f(X)' A de la pila y devuelve { VI VD HAY }.
+    @ No busca los candidatos solo: salen de anular denominadores o de los
+    @ bordes del dominio, y eso lo pone el usuario.
+    @ Los dos valores sondeados quedan tambien en la pila.
     "Asintota vertical"
     {
       { "f(X), ej '1/X':" "'1/X'" }
@@ -358,38 +541,41 @@
     IF THEN
       OBJ\-> DROP \-> F0 A
       \<<
-        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        F0 A DASVC OBJ\-> DROP \-> VI VD HAY
         \<<
-          0 0 \-> VI VD
-          \<<
-            IFERR F 'X' A .000001 - = SUBST EVAL \->NUM THEN "INDEF" END 'VI' STO
-            IFERR F 'X' A .000001 + = SUBST EVAL \->NUM THEN "INDEF" END 'VD' STO
-            "f(a-) = " VI \->STR + 10 CHR +
-            "f(a+) = " + VD \->STR +
-            MSGBOX
-            IFERR
-              IF VI ABS 100000 > VD ABS 100000 > OR
-              THEN
-                "HAY ASINTOTA" 10 CHR +
-                "vertical en X=" + A \->STR +
-              ELSE
-                "SIN ASINTOTA" 10 CHR +
-                "Queda acotada cerca" +
-              END
+          "f(a-) = " VI \->STR + 10 CHR +
+          "f(a+) = " + VD \->STR +
+          MSGBOX
+          IF HAY 1 ==
+          THEN
+            "HAY ASINTOTA" 10 CHR +
+            "vertical en X=" + A \->STR +
+          ELSE
+            IF HAY 0 ==
             THEN
+              "SIN ASINTOTA" 10 CHR +
+              "Queda acotada cerca" +
+            ELSE
               "NO SE PUDO EVALUAR" 10 CHR +
               "a los dos lados" +
             END
-            MSGBOX
-            VI VD
-          \>>
+          END
+          MSGBOX
+          VI VD
         \>>
       \>>
     END
   \>>
   'DASV' STO
   \<<
-    @ DASHO - asintotas horizontales y oblicuas (TP 8, ej 5 y 6).
+    @ DASHOC - nucleo de DASHO. Asintotas horizontales y oblicuas.
+    @ Uso:  'f(X)' DASHOC
+    @ Deja: n1 = { MP BP MN BN TP TN }
+    @         MP/BP = m y b en +oo,  MN/BN = m y b en -oo,
+    @         TP/TN = el veredicto ya redactado para cada lado.
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DASHO.
+    @
     @ m = LIMIT(f/X), b = LIMIT(f - m*X), a los dos infinitos.
     @ Si m = 0 la asintota es horizontal (y = b); si no, oblicua.
     @ NO hace verticales: para eso esta DASV.
@@ -398,6 +584,67 @@
     @ El infinito NO puede venir del escape \.oo: ese produce un nombre
     @ global (TYPE 6) que solo se dibuja como infinito, y LIMIT termina
     @ sustituyendo en vez de calcular. Confirmado en la maquina.
+    @
+    @ El veredicto mira PRIMERO si m es infinita, por el caracter 159, y
+    @ recien despues compara contra cero. Antes iba derecho al \->NUM y el
+    @ caso m infinita (ej. X^2) caia en el IFERR y salia como "el CAS no
+    @ pudo", que es enganoso: el CAS pudo, la funcion no tiene asintota.
+    @ Esta es la unica copia de esta logica en la suite: DESTFUNC llama
+    @ aca en vez de repetirla, que es como se colo antes el mismo bug en
+    @ dos lugares y hubo que arreglarlo dos veces.
+    \-> F0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          0 0 0 0 "" "" \-> MP BP MN BN TP TN
+          \<<
+            IFERR F 'X' / 'X' INF = LIMIT EVAL THEN "INDEF" END 'MP' STO
+            IFERR F MP 'X' * - 'X' INF = LIMIT EVAL THEN "INDEF" END 'BP' STO
+            IFERR F 'X' / 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'MN' STO
+            IFERR F MN 'X' * - 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'BN' STO
+            IFERR
+              IF MP \->STR 159 CHR POS 0 >
+              THEN "sin asintota (m infinita)"
+              ELSE
+                IF MP \->NUM ABS .0000001 <
+                THEN "HORIZONTAL y = " BP \->STR +
+                ELSE "OBLICUA y = " MP \->STR + "X + " + BP \->STR +
+                END
+              END
+            THEN
+              "sin asintota o el CAS no pudo"
+            END
+            'TP' STO
+            IFERR
+              IF MN \->STR 159 CHR POS 0 >
+              THEN "sin asintota (m infinita)"
+              ELSE
+                IF MN \->NUM ABS .0000001 <
+                THEN "HORIZONTAL y = " BN \->STR +
+                ELSE "OBLICUA y = " MN \->STR + "X + " + BN \->STR +
+                END
+              END
+            THEN
+              "sin asintota o el CAS no pudo"
+            END
+            'TN' STO
+            MP BP MN BN TP TN 6 \->LIST
+            \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DASHOC' STO
+  \<<
+    @ DASHO - asintotas horizontales y oblicuas (TP 8, ej 5 y 6).
+    @ Este objeto es SOLO la interfaz: el calculo esta en DASHOC, que toma
+    @ 'f(X)' de la pila y devuelve { MP BP MN BN TP TN }.
+    @ NO hace verticales: para eso esta DASV.
+    @
+    @ REQUIERE el global INF (correr DINF una vez, ver SUITE-MAT1 2).
     @
     @ Deja en la pila n4 = m(+oo), n3 = b(+oo), n2 = m(-oo), n1 = b(-oo).
     IF INF TYPE 9 == NOT
@@ -411,68 +658,91 @@
       { } { } { }
       INFORM
       IF THEN
-        1 GET \-> F0
+        1 GET DASHOC OBJ\-> DROP \-> MP BP MN BN TP TN
         \<<
-          F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
-          \<<
-            0 0 0 0 \-> MP BP MN BN
-            \<<
-              IFERR F 'X' / 'X' INF = LIMIT EVAL THEN "INDEF" END 'MP' STO
-              IFERR F MP 'X' * - 'X' INF = LIMIT EVAL THEN "INDEF" END 'BP' STO
-              IFERR F 'X' / 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'MN' STO
-              IFERR F MN 'X' * - 'X' INF NEG = LIMIT EVAL THEN "INDEF" END 'BN' STO
-              "+oo: m=" MP \->STR + 10 CHR +
-              "     b=" + BP \->STR +
-              MSGBOX
-              IFERR
-                IF MP \->NUM ABS .0000001 <
-                THEN
-                  "+oo HORIZONTAL" 10 CHR +
-                  "y = " + BP \->STR +
-                ELSE
-                  "+oo OBLICUA" 10 CHR +
-                  "y = " + MP \->STR + "X + " + BP \->STR +
-                END
-              THEN
-                "+oo SIN ASINTOTA" 10 CHR +
-                "o el CAS no pudo" +
-              END
-              MSGBOX
-              "-oo: m=" MN \->STR + 10 CHR +
-              "     b=" + BN \->STR +
-              MSGBOX
-              IFERR
-                IF MN \->NUM ABS .0000001 <
-                THEN
-                  "-oo HORIZONTAL" 10 CHR +
-                  "y = " + BN \->STR +
-                ELSE
-                  "-oo OBLICUA" 10 CHR +
-                  "y = " + MN \->STR + "X + " + BN \->STR +
-                END
-              THEN
-                "-oo SIN ASINTOTA" 10 CHR +
-                "o el CAS no pudo" +
-              END
-              MSGBOX
-              MP BP MN BN
-            \>>
-          \>>
+          "+oo: m=" MP \->STR + 10 CHR +
+          "     b=" + BP \->STR +
+          MSGBOX
+          "+oo: " TP +
+          MSGBOX
+          "-oo: m=" MN \->STR + 10 CHR +
+          "     b=" + BN \->STR +
+          MSGBOX
+          "-oo: " TN +
+          MSGBOX
+          MP BP MN BN
         \>>
       END
     END
   \>>
   'DASHO' STO
   \<<
+    @ DOPFUNC - nucleo de DOPFUN. Operaciones con funciones y composicion.
+    @ Uso:  'f(X)' 'g(X)' X0 DOPFUNC
+    @ Deja: n1 = { SU RE PR CO FG GF FX GX }
+    @         SU/RE/PR/CO = f+g, f-g, f*g, f/g,
+    @         FG/GF = las dos composiciones f(g(X)) y g(f(X)),
+    @         FX/GX = esas composiciones evaluadas en X0, o "NO EXISTE".
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DOPFUN, que es
+    @ la que decide cuales de estos ocho resultados mostrar segun la
+    @ operacion elegida. Aca se calculan todos: es mas barato que repetir
+    @ el IFERR por rama y hace el nucleo comparable en una sola corrida.
+    @
+    @ El punto X0 sirve para el ejercicio 3 del TP 4, que pide evaluar
+    @ composiciones "si es posible": cuando el punto cae fuera del dominio
+    @ el resultado es "NO EXISTE", que es justo la respuesta buscada.
+    @
+    @ NO calcula dominios: eso es lo que hay que escribir a mano.
+    @ OJO con CO: SIMPLIFY cancela los factores comunes, asi que f/g pierde
+    @ las discontinuidades evitables. Con f = X^2-9 y g = X-3 devuelve X+3,
+    @ y el X=3 que hay que excluir del dominio no se ve. Medido en la 50g
+    @ probando domain49 (ver analisis/domain49 en el fork). Por eso DOPFUN
+    @ avisa en la caja del cociente.
+    \-> F0 G0 X0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
+          \<<
+            @ Evaluar la composicion en X0 decide por el TIPO del resultado:
+            @ con el modo Complex encendido \v/(-1) devuelve (0.,1.) en vez de
+            @ dar error, y un punto fuera del dominio real pasaba por bueno.
+            @ Medido en el emulador con f = \v/(X-1) en X0 = 0.
+            0 0 0 0 0 0 0 0 \-> SU RE PR CO FG GF FX GX
+            \<<
+              IFERR F G + EXPAND THEN "NO SE PUDO" END 'SU' STO
+              IFERR F G - EXPAND THEN "NO SE PUDO" END 'RE' STO
+              IFERR F G * EXPAND THEN "NO SE PUDO" END 'PR' STO
+              IFERR F G / SIMPLIFY THEN "NO SE PUDO" END 'CO' STO
+              IFERR F 'X' G = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'FG' STO
+              IFERR G 'X' F = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'GF' STO
+              IFERR FG 'X' X0 = SUBST EVAL \->NUM THEN "NO EXISTE" END
+              IF DUP TYPE 0 == NOT THEN DROP "NO EXISTE" END 'FX' STO
+              IFERR GF 'X' X0 = SUBST EVAL \->NUM THEN "NO EXISTE" END
+              IF DUP TYPE 0 == NOT THEN DROP "NO EXISTE" END 'GX' STO
+              SU RE PR CO FG GF FX GX 8 \->LIST
+              \-> R \<< DEPTH D0 - DROPN R \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DOPFUNC' STO
+  \<<
     @ DOPFUN - operaciones con funciones y composicion (TP 4 entero).
-    @ Suma, resta, producto, cociente f/g, y las dos composiciones.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DOPFUNC, que
+    @ toma 'f' 'g' X0 de la pila y devuelve
+    @ { SU RE PR CO FG GF FX GX }. Aca se elige que mostrar.
     @ Operacion: 0 = todas, 1 = f+g, 2 = f-g, 3 = f*g, 4 = f/g,
     @            5 = fog = f(g(X)), 6 = gof = g(f(X)).
     @ El punto x0 sirve para el ejercicio 3 del TP 4, que pide evaluar
     @ composiciones "si es posible": cuando el punto cae fuera del
     @ dominio la caja dice NO EXISTE, que es justo la respuesta buscada.
-    @ NO calcula dominios: eso es lo que hay que escribir a mano, y
-    @ deducirlo simbolicamente es un pozo sin fondo (ver SUITE-MAT1 4).
+    @ NO calcula dominios: eso es lo que hay que escribir a mano.
     @ Las dos composiciones quedan en la pila: n2 = fog, n1 = gof.
     "Operaciones con funciones"
     {
@@ -486,72 +756,112 @@
     IF THEN
       OBJ\-> DROP \-> F0 G0 OP X0
       \<<
-        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        F0 G0 X0 DOPFUNC OBJ\-> DROP \-> SU RE PR CO FG GF FX GX
         \<<
-          G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
-          \<<
-            0 0 \-> FG GF
-            \<<
-              IFERR F 'X' G = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'FG' STO
-              IFERR G 'X' F = SUBST EVAL SIMPLIFY THEN "NO SE PUDO" END 'GF' STO
-              IF OP 0 == OP 1 == OR THEN
-                "(f+g)(X) =" 10 CHR +
-                IFERR F G + EXPAND \->STR THEN "NO SE PUDO" END +
-                MSGBOX
-              END
-              IF OP 0 == OP 2 == OR THEN
-                "(f-g)(X) =" 10 CHR +
-                IFERR F G - EXPAND \->STR THEN "NO SE PUDO" END +
-                MSGBOX
-              END
-              IF OP 0 == OP 3 == OR THEN
-                "(f*g)(X) =" 10 CHR +
-                IFERR F G * EXPAND \->STR THEN "NO SE PUDO" END +
-                MSGBOX
-              END
-              IF OP 0 == OP 4 == OR THEN
-                "(f/g)(X) =" 10 CHR +
-                IFERR F G / SIMPLIFY \->STR THEN "NO SE PUDO" END +
-                MSGBOX
-              END
-              IF OP 0 == OP 5 == OR THEN
-                "(fog)(X) =" 10 CHR +
-                FG \->STR +
-                MSGBOX
-              END
-              IF OP 0 == OP 6 == OR THEN
-                "(gof)(X) =" 10 CHR +
-                GF \->STR +
-                MSGBOX
-              END
-              "(fog)(" X0 \->STR + ") =" + 10 CHR +
-              IFERR FG 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
-              MSGBOX
-              "(gof)(" X0 \->STR + ") =" + 10 CHR +
-              IFERR GF 'X' X0 = SUBST EVAL \->NUM \->STR THEN "NO EXISTE" END +
-              MSGBOX
-              FG GF
-            \>>
-          \>>
+          IF OP 0 == OP 1 == OR THEN
+            "(f+g)(X) =" 10 CHR + SU \->STR + MSGBOX
+          END
+          IF OP 0 == OP 2 == OR THEN
+            "(f-g)(X) =" 10 CHR + RE \->STR + MSGBOX
+          END
+          IF OP 0 == OP 3 == OR THEN
+            "(f*g)(X) =" 10 CHR + PR \->STR + MSGBOX
+          END
+          IF OP 0 == OP 4 == OR THEN
+            "(f/g)(X) =" 10 CHR + CO \->STR + MSGBOX
+            @ SIMPLIFY cancela los factores comunes, asi que el cociente que
+            @ se muestra puede haber perdido un punto del dominio: con
+            @ f = X^2-9 y g = X-3 devuelve X+3, y el X=3 que hay que excluir
+            @ no se ve. Medido en la 50g. La catedra pide justamente ese
+            @ punto, asi que se avisa en vez de callarlo.
+            "OJO: el dominio se saca" 10 CHR +
+            "ANTES de simplificar" +
+            MSGBOX
+          END
+          IF OP 0 == OP 5 == OR THEN
+            "(fog)(X) =" 10 CHR + FG \->STR + MSGBOX
+          END
+          IF OP 0 == OP 6 == OR THEN
+            "(gof)(X) =" 10 CHR + GF \->STR + MSGBOX
+          END
+          "(fog)(" X0 \->STR + ") =" + 10 CHR + FX \->STR + MSGBOX
+          "(gof)(" X0 \->STR + ") =" + 10 CHR + GX \->STR + MSGBOX
+          FG GF
         \>>
       \>>
     END
   \>>
   'DOPFUN' STO
   \<<
-    @ DESTFUN - estudio de funcion, hasta donde llegue el CAS.
-    @ Cada bloque va en su propio IFERR: si el CAS no puede con uno,
-    @ los demas se calculan igual. Un bloque que falla dice por que.
-    @ Cubre: derivada y puntos criticos, segunda derivada y candidatos
-    @ a inflexion, y asintotas horizontales u oblicuas a los dos lados.
-    @ La vertical es opcional y hay que darle el punto candidato: no se
-    @ deducen solos (salen de anular denominadores), ver SUITE-MAT1 4.
-    @ NO calcula dominio ni imagen: decision tomada, requiere matematica
-    @ simbolica fragil y el resultado no seria el dominio real.
+    @ DESTFUNC - nucleo de DESTFUN. Estudio de funcion.
+    @ Uso:  'f(X)' AV PV DESTFUNC       (AV = candidato vertical, PV = 1 probar)
+    @ Deja: n1 = { D1 Z1 D2 Z2 TP TN TV }
+    @         D1/Z1 = f' y sus ceros, D2/Z2 = f'' y sus ceros,
+    @         TP/TN = asintotas en +oo y -oo, TV = veredicto de la vertical.
     @
-    @ REQUIERE el global INF para las asintotas (correr DINF una vez,
-    @ ver SUITE-MAT1 2). El escape \.oo no sirve: produce un nombre
-    @ global (TYPE 6) y LIMIT termina sustituyendo en vez de calcular.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DESTFUN.
+    @
+    @ Cada bloque va en su propio IFERR: si el CAS no puede con uno, los
+    @ demas se calculan igual.
+    @ NO calcula dominio ni imagen: decision tomada, requiere matematica
+    @ simbolica fragil y el resultado no seria el dominio real. Ver ademas
+    @ analisis/domain49 en el fork: un programa dedicado a eso se equivoca
+    @ en las raices y en las discontinuidades evitables.
+    @
+    @ Las asintotas las calcula DASHOC, no este programa. Antes estaban
+    @ escritas dos veces y el bug del infinito hubo que arreglarlo dos
+    @ veces; la segunda copia se habia quedado sin arreglar.
+    @ REQUIERE el global INF, por DASHOC.
+    \-> F0 AV PV
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          0 0 0 0 "" "" "" \-> D1 Z1 D2 Z2 TP TN TV
+          \<<
+            IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
+            IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
+            IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
+            IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
+            IFERR
+              F DASHOC
+            THEN
+              { 0 0 0 0 "no se pudo" "no se pudo" }
+            END
+            DUP 5 GET 'TP' STO
+            6 GET 'TN' STO
+            IF PV 1 ==
+            THEN
+              IFERR
+                F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
+                F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
+                IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
+              THEN
+                "no se pudo evaluar"
+              END
+            ELSE
+              "no probada"
+            END
+            'TV' STO
+            D1 Z1 D2 Z2 TP TN TV 7 \->LIST
+            \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  'DESTFUNC' STO
+  \<<
+    @ DESTFUN - estudio de funcion, hasta donde llegue el CAS.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DESTFUNC, que
+    @ toma 'f(X)' AV PV de la pila y devuelve { D1 Z1 D2 Z2 TP TN TV }.
+    @ Las asintotas las calcula DASHOC, no una copia: antes esta logica
+    @ estaba escrita dos veces y el bug del infinito hubo que arreglarlo
+    @ dos veces (la segunda copia se habia quedado sin arreglar).
+    @ NO calcula dominio ni imagen: decision tomada, ver SUITE-MAT1 4.
+    @
+    @ REQUIERE el global INF (correr DINF una vez, ver SUITE-MAT1 2).
     @
     @ Deja en la pila n4 = f', n3 = ceros de f', n2 = f'', n1 = ceros de f''.
     IF INF TYPE 9 == NOT
@@ -571,79 +881,22 @@
       IF THEN
         OBJ\-> DROP \-> F0 AV PV
         \<<
-          F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+          F0 AV PV DESTFUNC OBJ\-> DROP \-> D1 Z1 D2 Z2 TP TN TV
           \<<
-            0 0 0 0 \-> D1 Z1 D2 Z2
-            \<<
-              IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
-              IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
-              IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
-              IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
-              "f'(X) =" 10 CHR +
-              D1 \->STR +
-              MSGBOX
-              "Criticos (f'=0):" 10 CHR +
-              Z1 \->STR +
-              MSGBOX
-              "f''(X) =" 10 CHR +
-              D2 \->STR +
-              MSGBOX
-              "Inflexion (f''=0):" 10 CHR +
-              Z2 \->STR +
-              MSGBOX
-              "En +oo:" 10 CHR +
-              IFERR
-                F 'X' / 'X' INF = LIMIT EVAL \-> M
-                \<<
-                  IF M \->STR 159 CHR POS 0 >
-                  THEN "sin asint. (m infinito)"
-                  ELSE
-                    IF M \->NUM ABS .0000001 <
-                    THEN "HORIZ. y = " F 'X' INF = LIMIT EVAL \->STR +
-                    ELSE "OBLICUA m = " M \->STR +
-                    END
-                  END
-                \>>
-              THEN
-                "sin asintota o el CAS no pudo"
-              END
-              +
-              MSGBOX
-              "En -oo:" 10 CHR +
-              IFERR
-                F 'X' / 'X' INF NEG = LIMIT EVAL \-> M
-                \<<
-                  IF M \->STR 159 CHR POS 0 >
-                  THEN "sin asint. (m infinito)"
-                  ELSE
-                    IF M \->NUM ABS .0000001 <
-                    THEN "HORIZ. y = " F 'X' INF NEG = LIMIT EVAL \->STR +
-                    ELSE "OBLICUA m = " M \->STR +
-                    END
-                  END
-                \>>
-              THEN
-                "sin asintota o el CAS no pudo"
-              END
-              +
-              MSGBOX
-              IF PV 1 == THEN
-                "En X=" AV \->STR + ":" + 10 CHR +
-                IFERR
-                  F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
-                  F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
-                  IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
-                THEN
-                  "no se pudo evaluar"
-                END
-                +
-                MSGBOX
-              END
-              "Detalle completo" 10 CHR +
-              "en la pila (4 niveles)" +
-              MSGBOX
-              D1 Z1 D2 Z2
-            \>>
+            "f'(X) =" 10 CHR + D1 \->STR + MSGBOX
+            "Criticos (f'=0):" 10 CHR + Z1 \->STR + MSGBOX
+            "f''(X) =" 10 CHR + D2 \->STR + MSGBOX
+            "Inflexion (f''=0):" 10 CHR + Z2 \->STR + MSGBOX
+            "En +oo:" 10 CHR + TP + MSGBOX
+            "En -oo:" 10 CHR + TN + MSGBOX
+            IF PV 1 ==
+            THEN
+              "En X=" AV \->STR + ":" + 10 CHR + TV + MSGBOX
+            END
+            "Detalle completo" 10 CHR +
+            "en la pila (4 niveles)" +
+            MSGBOX
+            D1 Z1 D2 Z2
           \>>
         \>>
       END
