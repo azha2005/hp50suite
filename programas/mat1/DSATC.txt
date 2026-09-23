@@ -1,0 +1,67 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DSATC - cumple X0 TODAS las condiciones de la lista? Lo usa DINTC.
+  @ Uso:  { { G1 C1 } ... } X0 DSATC
+  @ Deja: n1 = 1 si las cumple todas, 0 si alguna falla.
+  @         C = 0  G <> 0 ;  C = 1  G >= 0 ;  C = 2  G > 0 ;  C = 3  G = 0
+  @ X0 puede ser exacto (un punto critico, ej '-\v/2') o aproximado (un
+  @ punto de prueba adentro de un tramo).
+  @
+  @ Cuenta como que NO cumple (medido, casos-p1sonda*.txt):
+  @  - un resultado complejo: \v/ o LN de un negativo dan TYPE 1 aun con
+  @    el modo Complex apagado (CLAUDE.md 2.14: decidir por TYPE);
+  @  - un error: LN(0) da ERROR, y 0/0 da '?' que \->NUM no convierte;
+  @  - una magnitud absurda: 1/0 da 9.99E499 sin error (CLAUDE.md 2.19).
+  @ Cero es |G| < 1E-9, porque en un punto exacto irracional el \->NUM
+  @ puede dejar un residuo de redondeo.
+  \-> CL X0
+  \<<
+    1 \-> OK
+    \<<
+      IF CL SIZE 0 >
+      THEN
+        1 CL SIZE
+        FOR I
+          CL I GET OBJ\-> DROP \-> G C
+          \<<
+            DEPTH \-> D1
+            \<<
+              @ G puede ser un numero suelto (la base 2 de 2^X): SUBST
+              @ solo sobre algebraicos y nombres.
+              IFERR
+                G IF DUP TYPE 9 == OVER TYPE 6 == OR
+                THEN 'X' X0 = SUBST EVAL
+                END
+                \->NUM
+              THEN "ERR"
+              END
+              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+            \>>
+            \-> V
+            \<<
+              IF V TYPE 0 ==
+              THEN
+                IF V ABS 1.E400 >
+                THEN 0 'OK' STO
+                ELSE
+                  V ABS .000000001 < \-> Z
+                  \<<
+                    CASE
+                      C 0 == THEN Z NOT END
+                      C 1 == THEN V 0 > Z OR END
+                      C 2 == THEN V 0 > Z NOT AND END
+                      Z
+                    END
+                    IF NOT THEN 0 'OK' STO END
+                  \>>
+                END
+              ELSE 0 'OK' STO
+              END
+            \>>
+          \>>
+        NEXT
+      END
+      OK
+    \>>
+  \>>
+\>>

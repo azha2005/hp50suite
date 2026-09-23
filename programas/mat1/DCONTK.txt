@@ -1,0 +1,51 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCONTK - hallar la constante K para que la funcion a trozos sea
+  @ continua en a (ejercicio tipico de parcial 1).
+  @
+  @ Este objeto es SOLO la interfaz: formulario y cajas. La matematica
+  @ esta en DCONTKC, que toma 'IZQ' 'DER' A 'K' de la pila y devuelve
+  @ { SOLS LI LD MSG }. Separados para que el harness pueda probar el
+  @ calculo sin tipear en un INFORM.
+  @
+  @ El parametro puede llamarse distinto de K (ej. A): se escribe en el
+  @ cuarto campo. Vacio o invalido = K (lo decide DCONTKC).
+  @
+  @ Deja en la pila: n1 = lista de valores del parametro.
+  "Continuidad: hallar K"
+  {
+    { "Izq x<a:" "'X^2-K*X+3'" }
+    { "Der x>a:" "'(2*X-K)/(1+X)'" }
+    { "Punto a:" "1" 0 }
+    { "Parametro:" "K" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> FIZ FDZ AZ PZ
+    \<<
+      FIZ FDZ AZ PZ DCONTKC OBJ\-> DROP \-> SOLZ LIZ LDZ MSGZ
+      \<<
+        @ Nombre del parametro como texto, sin tildes, para la caja.
+        PZ
+        IF DUP TYPE 6 == THEN \->STR ELSE IF DUP TYPE 2 == NOT THEN DROP "K" END END
+        IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+        @ Un string se muestra tal cual; lo demas con \->STR.
+        LIZ IF DUP TYPE 2 == NOT THEN \->STR END
+        LDZ IF DUP TYPE 2 == NOT THEN \->STR END
+        @ Un solo valor se muestra suelto; varios, como lista.
+        SOLZ IF DUP SIZE 1 == THEN 1 GET END \->STR
+        \-> NOMZ SLIZ SLDZ SSOLZ
+        \<<
+          "Lim izq: " SLIZ + 10 CHR +
+          "Lim der: " + SLDZ +
+          MSGBOX
+          MSGZ 10 CHR +
+          NOMZ + " = " + SSOLZ +
+          MSGBOX
+          SOLZ
+        \>>
+      \>>
+    \>>
+  END
+\>>

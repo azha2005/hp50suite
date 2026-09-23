@@ -1,0 +1,44 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPAR - paridad de una funcion. Dos usos:
+  @  - f concreta: dejar F y G en 0. Ej '4*X+1/X'.
+  @  - el ejercicio teorico "si F es par y G impar, que es F(G(X))+X^3?":
+  @    escribir la expresion con F y G, y poner 1 (par) o -1 (impar) en
+  @    cada una. Se verifica con funciones representantes.
+  @
+  @ Este objeto es SOLO la interfaz. La matematica esta en DPARC, que
+  @ toma 'EXPR' PF PG de la pila y devuelve { K MSG P FP FMP FMX }.
+  @
+  @ Deja en la pila: n2 = f(-X), n1 = el veredicto.
+  "Paridad"
+  {
+    { "f(X), ej '4*X+1/X':" "'4*X+1/X'" }
+    { "F: 1 par, -1 impar:" "0 si no hay F" 0 }
+    { "G: 1 par, -1 impar:" "0 si no hay G" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> E PF PG
+    \<<
+      @ Un campo numerico nunca visitado vuelve vacio: vale 0.
+      PF IF DUP TYPE 0 == NOT THEN DROP 0 END
+      PG IF DUP TYPE 0 == NOT THEN DROP 0 END
+      \-> QF QG
+      \<<
+        E QF QG DPARC OBJ\-> DROP \-> K MSG P FP FMP FMX
+        \<<
+          "f(-X) =" 10 CHR + FMX \->STR + MSGBOX
+          MSG MSGBOX
+          IF K 0 ==
+          THEN
+            "Contraejemplo x=" P \->STR + 10 CHR +
+            "f(x)=" + FP \->STR + "  f(-x)=" + FMP \->STR +
+            MSGBOX
+          END
+          FMX MSG
+        \>>
+      \>>
+    \>>
+  END
+\>>

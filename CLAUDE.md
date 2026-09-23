@@ -531,6 +531,41 @@ revienta. Costó una corrida entera de `DRUFC`, donde los casos sin raíz pasaba
 y los que encontraban raíz daban `ERROR`. Cuando hay que decidir, decidir sobre
 los **coeficientes**, que son números.
 
+### 2.20 ⚠️ Medido para los programas de Parcial 1 (desigualdades, dominio, inversa)
+
+Tres sondeos antes de escribir `DDOM`/`DINEC`/`DINV`/`DCONTK`/`DPAR`
+(fork, `harness/casos-p1sonda.txt`, `casos-p1sonda2.txt`, `casos-p1sonda3.txt`).
+
+**`SOLVE` resuelve desigualdades, y se equivoca con racionales.**
+`'X^2-X-2>0' 'X' SOLVE` da `'X<-1 OR X>2'`, bien. Pero
+`'(X+1)/(X-2)\>=0' 'X' SOLVE` da `'X\<=-1 OR X\>=2'`: **mete el 2**, donde el
+denominador se anula. Salida prolija y falsa, otra vez. Por eso `DINEC` resuelve
+por tabla de signos (`DINTC`) y no con `SOLVE`. Sin solución da `'Impossible'`;
+con todo R da `'X'`.
+
+**El modo Complex (bandera −103) cambia lo que devuelven `ZEROS` y `SOLVE`.**
+El estado `Default 50g.E49` del emulador lo tiene **prendido**. Con −103
+prendido, `'ABS(6*X-3)-9' 'X' ZEROS` da `'(3*EXP(i*x1)+1)/2'` (basura compleja,
+sin error) y `'Y=2^X+1' 'X' SOLVE` trae `2*i*n1*π`. Con `-103 CF`: `{ -1 2 }` y
+`'X=LN(Y-1)/LN(2)'`. Los núcleos nuevos lo apagan adentro de `RCLF` … `STOF`.
+Aun apagado, `/` y `LN` de un negativo con `\->NUM` dan complejo: sigue
+valiendo §2.14.
+
+**`OBJ\->` sobre un algebraico deja argumentos, cantidad y función**, y así se
+recorre el árbol sin simplificar: `'(X-3)/(X^2-9)'` → `'X-3' 'X^2-9' 2. /`.
+`'X' OBJ\->` da ERROR (es un nombre, `TYPE` 6). La función con `\->STR NUM`:
+√ 131, `>` 62, `<` 60, `≥` 138, `≤` 137, `≠` 139. Con esos códigos se decide sin
+poner caracteres fuera de ASCII en el fuente.
+
+**Un límite lateral puede volver ETIQUETADO.** `'EXP(4/(X+1))'` en `'X=-1-0'`
+devolvió `:+: 0` (`TYPE` 12) en `DCONTKC`. Los núcleos viejos no lo veían porque
+hacen `LIMIT EVAL`, y el `EVAL` saca la etiqueta. Donde no se quiera `EVAL` (para
+no evaluar un parámetro que el usuario tenga guardado): `IF DUP TYPE 12 == THEN DTAG END`.
+
+Otros datos sueltos: `SIGNTAB` existe y marca con `'?'` donde la función no está
+definida; `SREPL` existe; `DEFINE` crea un global (`DPAR` lo usa para F y G, y
+las purga).
+
 ### 2.16 ⚠️ La bandera −105 decide cómo compila `STR\->`
 
 El modo **Aproximado/Exacto** es la bandera **−105**, y no es solo cómo se
@@ -791,7 +826,7 @@ cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
 
 ### Matemática I (suite aparte)
 
-41 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+54 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
 
 Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 
@@ -832,6 +867,25 @@ comodines. Una sola sustitución, y el `TEXPAND` posterior hace el resto. Con
 **47 de 47 casos** en el emulador (`harness/casos-ruf.txt` 19,
 `casos-wei.txt` 28), más 3 tandas de sondeo del CAS previas a escribirlos
 (`casos-nuevos*.txt`).
+
+Cinco más para **Parcial 1**, sacados de revisar los 42 parciales del
+recopilado (fork, `MEGATXT_TODOS_LOS_PARCIALES_MATE_1.txt`). Detalle en
+`SUITE-MAT1.md` §1.1:
+
+| Programa | Qué hace | Casos |
+|---|---|---|
+| `DINEC` | Inecuaciones por tabla de signos, en intervalos | 22 + 4 de control |
+| `DDOM` | Dominio natural por definición, **sin simplificar**, con las condiciones escritas | 32 |
+| `DINV` | Inversa sobre un dominio dado, con la imagen B y el aviso de no inyectiva | 26 |
+| `DCONTK` | El k que hace continua una función a trozos | 21 |
+| `DPAR` | Paridad; también la abstracta "F par, G impar" con representantes | 22 |
+
+`DDOM` y `DINEC` comparten un motor de tres objetos (`DCONDC`, `DSATC`,
+`DINTC`). **Este es el cálculo de dominio que §7 había descartado para
+`DTROZOS`**; la decisión de §7 sigue en pie para `DTROZOS`, que solo dibuja.
+Acá se hizo porque es un ejercicio de parcial, y con dos defensas contra la
+salida prolija y falsa: no simplifica (el bug de `domain49`) y tiene un sondeo de
+control que marca `NO CONFIABLE` cuando la tabla no coincide (probado: salta).
 
 Parcial 2 y final, **ya con `INFORM` como el resto**: `LHOP`, `DSEP`, `DSEPI`,
 `LAGR`. Estaban con entrada por pila y acá se había escrito que era "a

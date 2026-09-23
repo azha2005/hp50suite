@@ -1,0 +1,107 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCONDC - condiciones de dominio de una expresion, leidas del arbol
+  @ TAL COMO SE ESCRIBIO. Lo usan DDOMC y DINECC.
+  @ Uso:  'F(X)' DCONDC
+  @ Deja: n1 = { { G1 C1 } { G2 C2 } ... }
+  @         C = 0  G <> 0   (denominador, INV, potencia negativa)
+  @         C = 1  G >= 0   (raiz, potencia de denominador par)
+  @         C = 2  G > 0    (LN, LOG, base de potencia con X en el
+  @                          exponente, raiz par en un denominador)
+  @
+  @ Por que no se simplifica nada: SIMPLIFY cancela (X-3)/(X^2-9) a
+  @ 1/(X+3) y borra el 3 del dominio. Es el bug de domain49 (fork,
+  @ analisis/domain49/CASOS-PROBADOS.md). Aca cada condicion sale de la
+  @ subexpresion literal.
+  @
+  @ El recorrido es el de domain49: la pila misma es la pila de trabajo,
+  @ con { } como centinela abajo. OBJ\-> de un algebraico deja sus
+  @ argumentos, la cantidad y la funcion (medido, casos-p1sonda.txt):
+  @   '(X-3)/(X^2-9)' -> 'X-3' 'X^2-9' 2. /
+  @   '\v/(X-1)'       -> 'X-1' 1. (funcion de codigo 131)
+  @ Los argumentos quedan en la pila y se visitan en las vueltas
+  @ siguientes. Un nombre o un numero se descarta.
+  @
+  @ Sin RCLF ni guardian: no llama al CAS, solo desarma y compara.
+  \-> F0
+  \<<
+    F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+    \<<
+      { } \-> CL
+      \<<
+        { } F
+        DO
+          IF DUP TYPE 9 ==
+          THEN
+            OBJ\-> \->STR \-> N FS
+            \<<
+              CASE
+                FS "/" == FS "INV" == OR
+                THEN DUP 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                END
+                FS 131 CHR ==
+                THEN DUP 1 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                END
+                FS "LN" == FS "LOG" == OR
+                THEN DUP 2 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                END
+                FS "ASIN" == FS "ACOS" == OR
+                THEN
+                  DUP 1 SWAP SQ - 1 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                END
+                FS "TAN" == FS "SEC" == OR
+                THEN
+                  DUP COS 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                END
+                FS "^" ==
+                THEN
+                  @ Nivel 2 la base, nivel 1 el exponente.
+                  DUP \-> E
+                  \<<
+                    IF E \->STR "X" POS
+                    THEN
+                      @ f(X)^g(X): la catedra pide base > 0 (Modelo 1).
+                      OVER 2 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                    ELSE
+                      E \->NUM \-> EN
+                      \<<
+                        @ Denominador del exponente: el menor Q <= 12
+                        @ con EN*Q entero. 1 si es entero.
+                        0 1 12
+                        FOR Q
+                          IF DUP NOT
+                          THEN
+                            IF EN Q * DUP IP - ABS .000000001 <
+                            THEN DROP Q END
+                          END
+                        NEXT
+                        \-> Q
+                        \<<
+                          IF Q 2 MOD 0 == Q 0 > AND
+                          THEN
+                            @ Raiz de indice par: base >= 0, o > 0 si
+                            @ ademas el exponente es negativo.
+                            OVER IF EN 0 < THEN 2 ELSE 1 END
+                            2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                          ELSE
+                            IF EN 0 <
+                            THEN OVER 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                            END
+                          END
+                        \>>
+                      \>>
+                    END
+                  \>>
+                END
+              END
+            \>>
+          ELSE
+            DROP
+          END
+        UNTIL DUP TYPE 5 ==
+        END
+        DROP CL
+      \>>
+    \>>
+  \>>
+\>>

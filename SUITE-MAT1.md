@@ -56,6 +56,12 @@ generada para transferir (ver §3).
 | `DSEP` / `DSEPI` | Final | — | INFORM + `DSEPC`/`DSEPIC` | **8 de 8**. Con guardián de profundidad, y ahora avisan cuando `RISCH` deja la integral sin resolver (§2.17) |
 | `LAGR` | Final | — | INFORM + `LAGRC` | **1 de 1**: arma bien el lagrangiano |
 | `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | **5 de 5**: 7 y 8 casos, y los accesores devuelven lo que dicen |
+| `DDOM` | Parcial 1 | — | INFORM + `DDOMC` | **32 de 32**. Dominio natural por definición, sin simplificar (§1.1) |
+| `DINEC` | Parcial 1 | — | INFORM + `DINECC` | **22 de 22** + 4 de control. Inecuaciones por tabla de signos |
+| `DINV` | Parcial 1 | — | INFORM + `DINVC` | **26 de 26**. Inversa sobre un dominio dado, con la imagen B |
+| `DCONTK` | Parcial 1 | — | INFORM + `DCONTKC` | **21 de 21**. El k que hace continua una función a trozos |
+| `DPAR` | Parcial 1 | — | INFORM + `DPARC` | **22 de 22**. Paridad concreta y la abstracta "F par, G impar" |
+| `DCONDC` `DSATC` `DINTC` | motor | — | pila | lo usan `DDOMC` y `DINECC`; probados por dentro de esos dos |
 
 Parcial 1 está cubierto entero y ya en el estilo de la suite. `LHOP`, `DSEP`,
 `DSEPI` y `LAGR` **también**: se convirtieron a `INFORM` + núcleo `XXXC`. Acá
@@ -76,6 +82,54 @@ La columna TP refiere al recopilado `MEGA_TODOS_LOS_TPS (1).txt`.
 
 Pendientes de escribir: `AREA` (área entre curvas) e `IMPR` (integral impropia),
 ambos del bloque de Parcial 2. Ver §6.
+
+---
+
+
+### 1.1 Los cinco de Parcial 1 que salieron de los parciales (2026-09-23)
+
+Salieron de revisar los 42 exámenes de `MEGATXT_TODOS_LOS_PARCIALES_MATE_1.txt`
+(fork): son los tipos de ejercicio de Parcial 1 que se repiten y que la suite no
+cubría. Por frecuencia: inecuaciones (casi siempre el ejercicio 1), dominio
+natural (f/g, g∘f "por definición"), inversa con B, el k de continuidad y
+paridad.
+
+**`DDOM` / `DINEC` comparten un motor de tres objetos:**
+
+| Objeto | Qué hace |
+|---|---|
+| `DCONDC` | recorre el árbol **tal como se escribió** y junta las condiciones: denominador ≠ 0, radicando ≥ 0, argumento de `LN`/`LOG` > 0, potencia con X en el exponente → base > 0, exponente fraccionario de denominador par, `ASIN`/`ACOS`, `TAN` |
+| `DSATC` | ¿un punto cumple todas las condiciones? Complejo, error o 9.99E499 cuentan como "no" (§2.14, §2.19) |
+| `DINTC` | tabla de signos: puntos críticos con `ZEROS`, un punto de prueba por tramo, cada punto crítico evaluado **exacto** (de ahí el corchete o el paréntesis), y el texto en intervalos |
+
+El recorrido es el de `domain49` (pila con `{ }` de centinela, `OBJ\->`), pero
+sin su bug: `domain49` simplifica antes de buscar polos y `(X-3)/(X^2-9)` le da
+`R - {-3}`. `DDOM` da `R - {-3, 3}`. Por eso **la expresión se escribe sin
+simplificar**, y una composición se escribe ya compuesta (`'LN(X+2)'`).
+
+**Control por sondeo.** `DINTC` evalúa 31 puntos y los compara contra la tabla.
+Si `ZEROS` se salteó un punto crítico, la tabla miente callada. Medido:
+`'X^5-X-1>0'` daba `VACIO` y `'EXP(X)-3*X>0'` daba `R`, las dos falsas y
+prolijas. Con el control, el texto sale como `NO CONFIABLE: ...` y el aviso dice
+dónde no coincide (`casos-dinec-control.txt`, 4 de 4). O sea: un resultado sin
+prefijo pasó la tabla **y** el sondeo.
+
+**Límites conocidos.** Funciones periódicas en condiciones (`TAN`, trig en un
+denominador) salen con aviso "Periodica: no soportado". Con dos `ABS` distintos
+funciona porque `ZEROS` los resuelve con Complex apagado, pero no se probó más
+allá de eso.
+
+`DINV`: SOLVE `'Y=f'`, se queda con la rama que devuelve f(x0) a x0, la imagen
+desde los extremos (o límites laterales/al infinito, abiertos) y detecta la no
+inyectividad por los ceros de f' donde f da la vuelta (`X^3` no cuenta).
+`DCONTK`: laterales `'X=a-0'`/`'X=a+0'` con el parámetro adentro, `SOLVE`, y cada
+K verificado sustituyéndolo. `DPAR`: f(−p) contra ±f(p) en siete puntos
+(incluidos enteros, donde suelen estar los huecos del dominio) y dominio
+simétrico; el modo abstracto define F y G con representantes (`DEFINE`), no pisa
+una F o G del usuario y las purga al final.
+
+**Probado en el emulador (ROM 50g), no en hardware. Las interfaces `INFORM` no
+se probaron**: ninguna batería puede tipear en un formulario (§9).
 
 ---
 
@@ -431,7 +485,8 @@ aritméticas, `5` = fog, `6` = gof; con `0` son siete cajas seguidas, así que p
 un ejercicio puntual conviene elegir una. Las dos últimas cajas evalúan las
 composiciones en x0 y dicen **`NO EXISTE`** cuando el punto cae fuera del
 dominio — que es exactamente lo que pide el ejercicio 3 del TP 4 ("encontrar si
-es posible"). **No calcula dominios**: eso hay que escribirlo a mano.
+es posible"). **No calcula dominios**: para eso está `DDOM` (§1.1),
+que recibe la composición escrita sin simplificar.
 
 `DESTFUN` es el estudio completo, y llega hasta donde llegue el CAS: cada bloque
 va en su propio `IFERR`, así que si uno falla los demás se calculan igual. La

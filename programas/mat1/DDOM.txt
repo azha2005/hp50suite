@@ -1,0 +1,45 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DDOM - dominio natural de f(X), con las condiciones a la vista.
+  @ TP 1 y TP 4; el ejercicio de dominio de casi todo primer parcial:
+  @ f/g, g o f, f*g "empleando la definicion".
+  @
+  @ Escribir f SIN SIMPLIFICAR, como la da el enunciado: el dominio sale
+  @ de la expresion escrita. Para una composicion, escribirla ya
+  @ compuesta: g(x)=ln x, f(x)=x+2 -> 'LN(X+2)'.
+  @
+  @ Este objeto es SOLO la interfaz. La matematica esta en DDOMC, que
+  @ toma 'F' de la pila y devuelve { TXT CSTR PES MSG }.
+  @
+  @ Deja en la pila: n1 = el dominio como texto.
+  "Dominio natural"
+  {
+    { "f(X), ej '(X-3)/(X^2-9)':" "'(X-3)/(X^2-9)'" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F
+    \<<
+      F DDOMC OBJ\-> DROP \-> TXT CSTR PES MSG
+      \<<
+        @ Las condiciones de a dos por caja (CLAUDE.md 2.6).
+        IF CSTR SIZE 0 ==
+        THEN "Sin condiciones:" 10 CHR + "vale para todo X" + MSGBOX
+        ELSE
+          1 CSTR SIZE
+          FOR I
+            "Cond: " CSTR I GET +
+            IF I CSTR SIZE <
+            THEN 10 CHR + "Cond: " + CSTR I 1 + GET +
+            END
+            MSGBOX
+          2 STEP
+        END
+        "Dom f =" 10 CHR + TXT + MSGBOX
+        IF MSG SIZE THEN MSG MSGBOX END
+        TXT
+      \>>
+    \>>
+  END
+\>>

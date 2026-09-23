@@ -1,0 +1,357 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DINVC - nucleo de DINV. Funcion inversa sobre un dominio [A,B]:
+  @ el ejercicio de parcial "f: D -> B, dar B para que admita inversa y
+  @ hallar f^-1".
+  @ Uso:  'F(X)' A B DINVC
+  @   A, B = extremos del dominio. Un extremo infinito se acepta como el
+  @          infinito del CAS (con o sin signo) o como el nombre o string
+  @          INF / -INF. Se decide por \->STR: contiene "INF" o el
+  @          caracter 159 (CLAUDE.md 2.1); el signo, por un "-".
+  @ Deja: n1 = { FINV IMA IMB CA CB MSG }
+  @   FINV = f^-1 como expresion en X. "NO DESPEJO" si ninguna solucion
+  @          del CAS vuelve al dominio; "-" si f no es inyectiva.
+  @   IMA, IMB = extremos de la imagen, ya ordenados (si f decrece se
+  @          invierten). Un extremo infinito sale normalizado: -oo abajo,
+  @          +oo arriba. "?" si el CAS no pudo con el limite.
+  @   CA, CB = 1 si ese extremo de la imagen es cerrado, 0 si abierto.
+  @   MSG  = "OK", o "NO INYECTIVA: partir en x=..." si f' tiene un cero
+  @          adentro de (A,B) donde f da la vuelta. Si el dominio era
+  @          todo R agrega " Tramos: (-inf,z1] [z1,+inf)". Ahi FINV, IMA
+  @          e IMB son "-" y CA = CB = 0. "ERROR" si algo reventa afuera
+  @          de los IFERR internos.
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DINV.
+  @
+  @ Como decide cada cosa:
+  @  - Inyectividad: ceros reales de f' (DERIV + ZEROS, normalizado a
+  @    lista, CLAUDE.md 2.19) estrictamente adentro de (A,B). Un cero
+  @    cuenta solo si f da la vuelta ahi: f(z-h)-f(z) y f(z+h)-f(z) con
+  @    el mismo signo. Asi X^3 en 0 no se toma como no inyectiva.
+  @  - Sentido: signo de f(XI+h)-f(XI) en un punto interior XI.
+  @  - Extremo finito de la imagen: f en el extremo del dominio. Si f esta
+  @    definida ahi (real finito: TYPE, caracter 159, '?' y magnitud;
+  @    CLAUDE.md 2.14 y 2.19) el extremo es cerrado. Si no, limite
+  @    LATERAL ('X=a+0' / 'X=b-0', armado como texto con STR\->, como
+  @    DCONTFC) y el extremo es abierto.
+  @  - Extremo infinito del dominio: LIMIT en el infinito, abierto.
+  @  - f^-1: SOLVE 'Y=F' para X. De las soluciones se queda con la que
+  @    devuelve y0 = f(XI) a XI (es la rama del dominio), y despues
+  @    cambia Y por X. Si F tiene ABS( y el CAS no despeja, prueba con
+  @    ABS( cambiado por ( y por -( ; la verificacion contra XI es la
+  @    misma, asi que una rama equivocada no puede pasar.
+  @  - Todo con -103 CF (Complex apagado, medido: con Complex prendido
+  @    SOLVE devuelve ramas con i*n1). RCLF/STOF devuelve la maquina
+  @    como estaba, tambien si algo falla.
+  \-> F0 A0 B0
+  \<<
+    DEPTH \-> D0
+    \<<
+      RCLF \-> FL
+      \<<
+        -103 CF
+        IFERR
+          F0 IF DUP TYPE 2 == THEN STR\-> END
+          A0 \->STR B0 \->STR
+          \-> F SA SB
+          \<<
+            @ AI, BI: 0 finito, -1 menos infinito, 1 mas infinito.
+            IF SA "INF" POS SA 159 CHR POS + THEN IF SA "-" POS THEN -1 ELSE 1 END ELSE 0 END
+            IF SB "INF" POS SB 159 CHR POS + THEN IF SB "-" POS THEN -1 ELSE 1 END ELSE 0 END
+            \-> AI BI
+            \<<
+              IF AI THEN 0 ELSE A0 IF DUP TYPE 2 == THEN STR\-> END END
+              IF BI THEN 0 ELSE B0 IF DUP TYPE 2 == THEN STR\-> END END
+              \-> A B
+              \<<
+                A \->NUM B \->NUM
+                \-> AN BN
+                \<<
+                  @ Un punto interior del dominio.
+                  CASE
+                    AI 0 == BI 0 == AND THEN AN BN + 2 / END
+                    AI 0 == THEN AN 1 + END
+                    BI 0 == THEN BN 1 - END
+                    0.
+                  END
+                  \-> XI
+                  \<<
+                    @ Ceros de f' (ZEROS con una raiz no da lista).
+                    DEPTH \-> D1
+                    \<<
+                      IFERR F 'X' DERIV 'X' ZEROS THEN { } END
+                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                    \>>
+                    IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                    { } { }
+                    \-> ZL ZX ZN
+                    \<<
+                      @ ZX: los puntos de vuelta exactos, ZN: los mismos en real.
+                      IF ZL SIZE 0 >
+                      THEN
+                        1 ZL SIZE FOR k
+                          ZL k GET \-> Z
+                          \<<
+                            DEPTH \-> D1
+                            \<<
+                              IFERR Z \->NUM THEN "ERR" END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            \-> ZV
+                            \<<
+                              IF ZV TYPE 0 ==
+                              THEN
+                                IF AI -1 == ZV AN > OR BI 1 == ZV BN < OR AND
+                                THEN
+                                  @ Vuelta de verdad: los dos vecinos del mismo lado.
+                                  @ Si no se puede evaluar, se cuenta (conservador).
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR
+                                      F 'X' ZV .001 - = SUBST \->NUM
+                                      F 'X' ZV = SUBST \->NUM
+                                      F 'X' ZV .001 + = SUBST \->NUM
+                                      \-> P M Q
+                                      \<< P M - Q M - * 0 > \>>
+                                    THEN 1
+                                    END
+                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                  \>>
+                                  IF
+                                  THEN
+                                    ZX Z 1 \->LIST + 'ZX' STO
+                                    ZN ZV 1 \->LIST + 'ZN' STO
+                                  END
+                                END
+                              END
+                            \>>
+                          \>>
+                        NEXT
+                      END
+                      IF ZN SIZE 0 >
+                      THEN
+                        @ NO inyectiva: los puntos ordenados, en su forma exacta.
+                        ZN SORT { }
+                        \-> ZS ZT
+                        \<<
+                          1 ZS SIZE FOR k
+                            ZX ZN ZS k GET POS GET \->STR
+                            IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                            1 \->LIST ZT SWAP + 'ZT' STO
+                          NEXT
+                          "NO INYECTIVA: partir en x=" ZT 1 GET +
+                          IF ZT SIZE 1 >
+                          THEN
+                            2 ZT SIZE FOR k ", " + ZT k GET + NEXT
+                          END
+                          IF AI -1 == BI 1 == AND
+                          THEN
+                            " Tramos: (-inf," +
+                            1 ZT SIZE FOR k ZT k GET + "] [" + ZT k GET + "," + NEXT
+                            "+inf)" +
+                          END
+                          \-> MS
+                          \<< "-" "-" "-" 0 0 MS \>>
+                        \>>
+                      ELSE
+                        @ Inyectiva. Sentido de monotonia y un y interior.
+                        DEPTH \-> D1
+                        \<<
+                          IFERR F 'X' XI .001 + = SUBST \->NUM F 'X' XI = SUBST \->NUM - THEN 1 END
+                          \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                        \>>
+                        IF DUP TYPE 0 == THEN 0 < ELSE DROP 0 END
+                        DEPTH \-> D1
+                        \<<
+                          IFERR F 'X' XI = SUBST \->NUM THEN "ERR" END
+                          \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                        \>>
+                        \-> DECR Y0
+                        \<<
+                          @ Extremo izquierdo del dominio -> LA y si es cerrado.
+                          IF AI
+                          THEN
+                            DEPTH \-> D1
+                            \<<
+                              IFERR F 'X' IF AI 0 < THEN \oo NEG ELSE \oo END = LIMIT EVAL THEN "?" END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            0
+                          ELSE
+                            DEPTH \-> D1
+                            \<<
+                              IFERR F 'X' A = SUBST EVAL THEN "ERR" END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            \-> V
+                            \<<
+                              0
+                              IF V TYPE 2 == NOT
+                              THEN
+                                IF V \->STR 159 CHR POS V \->STR "?" POS + NOT
+                                THEN
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR V \->NUM THEN "ERR" END
+                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                  \>>
+                                  IF DUP TYPE 0 == THEN ABS 1.E400 < OR ELSE DROP END
+                                END
+                              END
+                              IF
+                              THEN V 1
+                              ELSE
+                                A \->STR
+                                IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                "'X=" SWAP + "+0'" + STR\->
+                                \-> EQ
+                                \<<
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR F EQ LIMIT EVAL THEN "?" END
+                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                  \>>
+                                \>>
+                                0
+                              END
+                            \>>
+                          END
+                          @ Extremo derecho del dominio -> LB y si es cerrado.
+                          IF BI
+                          THEN
+                            DEPTH \-> D1
+                            \<<
+                              IFERR F 'X' IF BI 0 < THEN \oo NEG ELSE \oo END = LIMIT EVAL THEN "?" END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            0
+                          ELSE
+                            DEPTH \-> D1
+                            \<<
+                              IFERR F 'X' B = SUBST EVAL THEN "ERR" END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            \-> V
+                            \<<
+                              0
+                              IF V TYPE 2 == NOT
+                              THEN
+                                IF V \->STR 159 CHR POS V \->STR "?" POS + NOT
+                                THEN
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR V \->NUM THEN "ERR" END
+                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                  \>>
+                                  IF DUP TYPE 0 == THEN ABS 1.E400 < OR ELSE DROP END
+                                END
+                              END
+                              IF
+                              THEN V 1
+                              ELSE
+                                B \->STR
+                                IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                "'X=" SWAP + "-0'" + STR\->
+                                \-> EQ
+                                \<<
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR F EQ LIMIT EVAL THEN "?" END
+                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                  \>>
+                                \>>
+                                0
+                              END
+                            \>>
+                          END
+                          \-> LA CA0 LB CB0
+                          \<<
+                            @ Si f decrece, la imagen va al reves.
+                            IF DECR THEN LB CB0 LA CA0 ELSE LA CA0 LB CB0 END
+                            \-> IA CA IB CB
+                            \<<
+                              @ Infinito normalizado por posicion, no por el
+                              @ signo que haya escrito el CAS.
+                              IF IA \->STR 159 CHR POS THEN \oo NEG 'IA' STO END
+                              IF IB \->STR 159 CHR POS THEN \oo 'IB' STO END
+                              @ Candidatas a despejar: F, y si tiene ABS( las
+                              @ dos ramas sin el valor absoluto.
+                              F 1 \->LIST
+                              IF F \->STR "ABS(" POS
+                              THEN
+                                F \->STR "ABS(" "(" SREPL DROP STR\-> 1 \->LIST +
+                                F \->STR "ABS(" "-(" SREPL DROP STR\-> 1 \->LIST +
+                              END
+                              "NO DESPEJO"
+                              \-> CND FI
+                              \<<
+                                1 CND SIZE FOR j
+                                  IF FI TYPE 2 ==
+                                  THEN
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR 'Y' CND j GET = 'X' SOLVE THEN { } END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                    IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                                    \-> SOLS
+                                    \<<
+                                      IF SOLS SIZE 0 >
+                                      THEN
+                                        1 SOLS SIZE FOR i
+                                          IF FI TYPE 2 ==
+                                          THEN
+                                            DEPTH \-> D1
+                                            \<<
+                                              IFERR SOLS i GET EQ\-> SWAP DROP THEN "ERR" END
+                                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                            \>>
+                                            \-> G
+                                            \<<
+                                              IF G TYPE 2 == NOT
+                                              THEN
+                                                DEPTH \-> D1
+                                                \<<
+                                                  IFERR G 'Y' Y0 = SUBST \->NUM THEN "ERR" END
+                                                  \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                                \>>
+                                                \-> XV
+                                                \<<
+                                                  @ La rama buena manda y0 de vuelta a XI.
+                                                  IF XV TYPE 0 ==
+                                                  THEN
+                                                    IF XV XI - ABS XI ABS 1 + .000001 * <
+                                                    THEN G 'Y' 'X' = SUBST 'FI' STO
+                                                    END
+                                                  END
+                                                \>>
+                                              END
+                                            \>>
+                                          END
+                                        NEXT
+                                      END
+                                    \>>
+                                  END
+                                NEXT
+                                FI IA IB CA CB "OK"
+                              \>>
+                            \>>
+                          \>>
+                        \>>
+                      END
+                      6 \->LIST
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        THEN
+          "-" "-" "-" 0 0 "ERROR" 6 \->LIST
+        END
+        FL STOF
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

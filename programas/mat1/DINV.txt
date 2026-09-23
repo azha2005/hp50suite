@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DINV - funcion inversa sobre un dominio dado: el ejercicio "f: D -> B,
+  @ encontrar B para que admita inversa y escribir f^-1". Esta en casi
+  @ todos los primeros parciales.
+  @
+  @ Los extremos a y b aceptan un numero, el infinito del teclado (con
+  @ o sin signo) o el nombre INF / -INF. Con a = -INF y b = INF y f no
+  @ inyectiva, sugiere en que tramos partir el dominio.
+  @
+  @ Este objeto es SOLO la interfaz. La matematica esta en DINVC, que
+  @ toma 'F' A B de la pila y devuelve { FINV IMA IMB CA CB MSG }.
+  @
+  @ Deja en la pila: n1 = f^-1(X).
+  "Funcion inversa"
+  {
+    { "f(X), ej '(X+2)^2-4':" "'(X+2)^2-4'" }
+    { "Dominio desde a:" "-2 (o -INF)" }
+    { "Dominio hasta b:" "INF" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F A B
+    \<<
+      F A B DINVC OBJ\-> DROP \-> FINV IA IB CA CB MSG
+      \<<
+        IF MSG "OK" ==
+        THEN
+          @ Extremos como texto, sin tildes; el infinito ya viene
+          @ normalizado (-oo abajo, +oo arriba).
+          IA \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+          IB \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+          \-> SA SB
+          \<<
+            "Im f = B =" 10 CHR +
+            IF CA THEN "[" ELSE "(" END + SA + ", " + SB +
+            IF CB THEN "]" ELSE ")" END +
+            MSGBOX
+          \>>
+          "f^-1(X) =" 10 CHR + FINV \->STR + MSGBOX
+          FINV
+        ELSE
+          MSG MSGBOX
+          MSG
+        END
+      \>>
+    \>>
+  END
+\>>

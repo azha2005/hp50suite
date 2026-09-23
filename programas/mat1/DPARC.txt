@@ -1,0 +1,182 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPARC - nucleo de DPAR. Paridad de una funcion, por definicion:
+  @ compara f(-X) con f(X) y con -f(X), y exige dominio simetrico.
+  @ Uso:  'EXPR' PF PG DPARC
+  @   PF, PG = 0 si la expresion no usa F ni G (funcion concreta);
+  @            1 si F (o G) es PAR, -1 si es IMPAR (modo abstracto:
+  @            "si F es par y G impar, que es F(G(X))+X^3?").
+  @ Deja: n1 = { K MSG P FP FMP FMX }
+  @   K   = 1 par, -1 impar, 0 ni par ni impar, 3 par e impar (f=0),
+  @         2 no se pudo decidir
+  @   MSG = el veredicto en texto
+  @   P, FP, FMP = contraejemplo: un punto p con f(p) y f(-p)
+  @         ("NO EXISTE" si no esta definida). 0 0 0 si es par o impar.
+  @   FMX = f(-X) escrita, que es lo que la catedra pide calcular.
+  @
+  @ Como decide: evaluando en siete puntos p (0.37 0.7 1 1.3 2 2.9 3).
+  @ Los enteros estan a proposito: ahi suelen estar los huecos del
+  @ dominio. ln|x-2| (resolucion 2014) no es par porque f(2) no existe
+  @ y f(-2) si. La simplificacion simbolica no sirve para decidir: puede
+  @ no llegar a 0 aunque la diferencia sea 0.
+  @
+  @ Modo abstracto: F y G se reemplazan por representantes con DEFINE
+  @   par:   X^4+3*X^2+2        impar: X^5+2*X^3+3*X
+  @ De grados distintos y con coeficientes distintos, para que una
+  @ cancelacion casual no fabrique una paridad que no esta. Es una
+  @ VERIFICACION con representantes, no una demostracion: el MSG lo dice.
+  @ Si el usuario ya tiene F o G como variables, NO se pisan: se avisa.
+  @ F y G se purgan al final aunque algo falle.
+  @ Supone que X no tiene valor guardado (como el resto de mat1).
+  \-> E0 PF PG
+  \<<
+    DEPTH \-> D0
+    \<<
+      RCLF \-> FL
+      \<<
+        -103 CF
+        E0 IF DUP TYPE 2 == THEN STR\-> END \-> E
+        \<<
+          IF PF PG OR
+          THEN
+            IF 'F' VTYPE -1 == 'G' VTYPE -1 == AND
+            THEN
+              DEPTH \-> D1
+              \<<
+                IFERR
+                  IF PF
+                  THEN
+                    IF PF 0 > THEN 'F(X)=X^4+3*X^2+2' ELSE 'F(X)=X^5+2*X^3+3*X' END
+                    DEFINE
+                  END
+                  IF PG
+                  THEN
+                    IF PG 0 > THEN 'G(X)=X^4+3*X^2+2' ELSE 'G(X)=X^5+2*X^3+3*X' END
+                    DEFINE
+                  END
+                  E EVAL
+                THEN "ERR"
+                END
+                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+              \>>
+              IF 'F' VTYPE -1 \=/ THEN 'F' PURGE END
+              IF 'G' VTYPE -1 \=/ THEN 'G' PURGE END
+            ELSE "EXISTE"
+            END
+          ELSE E
+          END
+          \-> EX
+          \<<
+            CASE
+              EX "EXISTE" SAME
+              THEN 2 "Ya hay variables F o G: borrarlas o renombrar" 0 0 0 0
+              END
+              EX "ERR" SAME
+              THEN 2 "No pude evaluar la expresion" 0 0 0 0
+              END
+              @ f(-X), escrita.
+              EX IF DUP TYPE 9 == OVER TYPE 6 == OR THEN 'X' '-X' = SUBST END
+              \-> FMX
+              \<<
+                1 1 0 0 0 0 0 0 0 0
+                \-> OKP OKI NDEF ASIM CP CFP CFM CIP CIFP CIFM
+                \<<
+                  { .37 .7 1 1.3 2 2.9 3 }
+                  1 7
+                  FOR I
+                    DUP I GET \-> P
+                    \<<
+                      @ f(p) y f(-p); "NO EXISTE" si no da un real finito.
+                      P P NEG 2 \->LIST
+                      1 2
+                      FOR J
+                        DUP J GET \-> XP
+                        \<<
+                          DEPTH \-> D1
+                          \<<
+                            IFERR
+                              EX IF DUP TYPE 9 == OVER TYPE 6 == OR
+                              THEN 'X' XP = SUBST EVAL
+                              END
+                              \->NUM
+                            THEN "ERR"
+                            END
+                            \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                          \>>
+                          IF DUP TYPE 0 ==
+                          THEN IF DUP ABS 1.E400 > THEN DROP "NO EXISTE" END
+                          ELSE DROP "NO EXISTE"
+                          END
+                        \>>
+                        SWAP
+                      NEXT
+                      DROP
+                      \-> A B
+                      \<<
+                        IF A TYPE 2 == B TYPE 2 == \=/
+                        THEN
+                          @ Definida de un lado y no del otro.
+                          IF ASIM NOT
+                          THEN 1 'ASIM' STO P 'CP' STO A 'CFP' STO B 'CFM' STO
+                          END
+                        ELSE
+                          IF A TYPE 0 ==
+                          THEN
+                            NDEF 1 + 'NDEF' STO
+                            A ABS 1 + .000000001 * \-> TOL
+                            \<<
+                              IF B A - ABS TOL > OKP AND
+                              THEN
+                                0 'OKP' STO
+                                @ Si ya hay un punto de dominio asimetrico,
+                                @ ese es el contraejemplo que se muestra.
+                                IF ASIM NOT
+                                THEN P 'CP' STO A 'CFP' STO B 'CFM' STO
+                                END
+                              END
+                              IF B A + ABS TOL > OKI AND
+                              THEN 0 'OKI' STO P 'CIP' STO A 'CIFP' STO B 'CIFM' STO
+                              END
+                            \>>
+                          END
+                        END
+                      \>>
+                    \>>
+                  NEXT
+                  DROP
+                  CASE
+                    ASIM
+                    THEN 0 "NI PAR NI IMPAR: dominio no simetrico" CP CFP CFM FMX
+                    END
+                    NDEF 0 ==
+                    THEN 2 "No pude evaluar f en los puntos" 0 0 0 FMX
+                    END
+                    OKP OKI AND
+                    THEN 3 "PAR e IMPAR: f = 0" 0 0 0 FMX
+                    END
+                    OKP
+                    THEN 1 "PAR: f(-X) = f(X)" 0 0 0 FMX
+                    END
+                    OKI
+                    THEN -1 "IMPAR: f(-X) = -f(X)" 0 0 0 FMX
+                    END
+                    @ Ni par ni impar: el contraejemplo de la paridad.
+                    0 "NI PAR NI IMPAR" CP CFP CFM FMX
+                  END
+                \>>
+              \>>
+            END
+            6 \->LIST
+            IF PF PG OR
+            THEN
+              DUP 2 GET " (verificado con representantes)" +
+              2 SWAP PUT
+            END
+          \>>
+        \>>
+        FL STOF
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

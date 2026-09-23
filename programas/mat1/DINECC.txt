@@ -1,0 +1,59 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DINECC - nucleo de DINEC. Resuelve una inecuacion en X por tabla
+  @ de signos (DINTC), respetando el dominio de las dos ramas.
+  @ Uso:  'L op R' DINECC      op: > < >= <= = <>
+  @ Deja: n1 = { TXT PES MSG }
+  @         TXT = conjunto solucion en intervalos
+  @         PES = puntos criticos exactos, ordenados (los que se
+  @               marcan en la recta real)
+  @         MSG = "" o avisos
+  @
+  @ Se pasa todo a G = L-R comparado con 0. Codigos medidos del
+  @ caracter de la funcion relacional (casos-p1sonda.txt):
+  @   > 62   < 60   >= 138   <= 137   <> 139   = 61
+  @ Con < y <= se usa -G, asi el motor solo conoce > >= = <>.
+  @ Ademas se agregan las condiciones de dominio de L-R (DCONDC): en
+  @ (X+1)/(X-2) >= 0 el 2 queda afuera aunque no sea un cero.
+  \-> Q0
+  \<<
+    DEPTH \-> D0
+    \<<
+      Q0 IF DUP TYPE 2 == THEN STR\-> END \-> Q
+      \<<
+        IF Q TYPE 9 == NOT
+        THEN "" { } "No es una inecuacion" 3 \->LIST
+        ELSE
+          Q OBJ\-> \->STR NUM \-> N OP
+          \<<
+            IF N 2 == NOT
+            THEN N DROPN "" { } "No es una inecuacion" 3 \->LIST
+            ELSE
+              - \-> G
+              \<<
+                CASE
+                  OP 62 == THEN G 2 END
+                  OP 60 == THEN G NEG 2 END
+                  OP 138 == THEN G 1 END
+                  OP 137 == THEN G NEG 1 END
+                  OP 61 == THEN G 3 END
+                  OP 139 == THEN G 0 END
+                  -1 -1
+                END
+                \-> G2 C
+                \<<
+                  IF C 0 <
+                  THEN "" { } "No es una inecuacion" 3 \->LIST
+                  ELSE
+                    G2 C 2 \->LIST 1 \->LIST G DCONDC + DINTC
+                  END
+                \>>
+              \>>
+            END
+          \>>
+        END
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

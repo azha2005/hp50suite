@@ -2013,4 +2013,1518 @@ DIR
       \>>
     END
   \>>
+  DCONDC
+  \<<
+    @ DCONDC - condiciones de dominio de una expresion, leidas del arbol
+    @ TAL COMO SE ESCRIBIO. Lo usan DDOMC y DINECC.
+    @ Uso:  'F(X)' DCONDC
+    @ Deja: n1 = { { G1 C1 } { G2 C2 } ... }
+    @         C = 0  G <> 0   (denominador, INV, potencia negativa)
+    @         C = 1  G >= 0   (raiz, potencia de denominador par)
+    @         C = 2  G > 0    (LN, LOG, base de potencia con X en el
+    @                          exponente, raiz par en un denominador)
+    @
+    @ Por que no se simplifica nada: SIMPLIFY cancela (X-3)/(X^2-9) a
+    @ 1/(X+3) y borra el 3 del dominio. Es el bug de domain49 (fork,
+    @ analisis/domain49/CASOS-PROBADOS.md). Aca cada condicion sale de la
+    @ subexpresion literal.
+    @
+    @ El recorrido es el de domain49: la pila misma es la pila de trabajo,
+    @ con { } como centinela abajo. OBJ\-> de un algebraico deja sus
+    @ argumentos, la cantidad y la funcion (medido, casos-p1sonda.txt):
+    @   '(X-3)/(X^2-9)' -> 'X-3' 'X^2-9' 2. /
+    @   '\v/(X-1)'       -> 'X-1' 1. (funcion de codigo 131)
+    @ Los argumentos quedan en la pila y se visitan en las vueltas
+    @ siguientes. Un nombre o un numero se descarta.
+    @
+    @ Sin RCLF ni guardian: no llama al CAS, solo desarma y compara.
+    \-> F0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        { } \-> CL
+        \<<
+          { } F
+          DO
+            IF DUP TYPE 9 ==
+            THEN
+              OBJ\-> \->STR \-> N FS
+              \<<
+                CASE
+                  FS "/" == FS "INV" == OR
+                  THEN DUP 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                  END
+                  FS 131 CHR ==
+                  THEN DUP 1 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                  END
+                  FS "LN" == FS "LOG" == OR
+                  THEN DUP 2 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                  END
+                  FS "ASIN" == FS "ACOS" == OR
+                  THEN
+                    DUP 1 SWAP SQ - 1 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                  END
+                  FS "TAN" == FS "SEC" == OR
+                  THEN
+                    DUP COS 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                  END
+                  FS "^" ==
+                  THEN
+                    @ Nivel 2 la base, nivel 1 el exponente.
+                    DUP \-> E
+                    \<<
+                      IF E \->STR "X" POS
+                      THEN
+                        @ f(X)^g(X): la catedra pide base > 0 (Modelo 1).
+                        OVER 2 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                      ELSE
+                        E \->NUM \-> EN
+                        \<<
+                          @ Denominador del exponente: el menor Q <= 12
+                          @ con EN*Q entero. 1 si es entero.
+                          0 1 12
+                          FOR Q
+                            IF DUP NOT
+                            THEN
+                              IF EN Q * DUP IP - ABS .000000001 <
+                              THEN DROP Q END
+                            END
+                          NEXT
+                          \-> Q
+                          \<<
+                            IF Q 2 MOD 0 == Q 0 > AND
+                            THEN
+                              @ Raiz de indice par: base >= 0, o > 0 si
+                              @ ademas el exponente es negativo.
+                              OVER IF EN 0 < THEN 2 ELSE 1 END
+                              2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                            ELSE
+                              IF EN 0 <
+                              THEN OVER 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+                              END
+                            END
+                          \>>
+                        \>>
+                      END
+                    \>>
+                  END
+                END
+              \>>
+            ELSE
+              DROP
+            END
+          UNTIL DUP TYPE 5 ==
+          END
+          DROP CL
+        \>>
+      \>>
+    \>>
+  \>>
+  DSATC
+  \<<
+    @ DSATC - cumple X0 TODAS las condiciones de la lista? Lo usa DINTC.
+    @ Uso:  { { G1 C1 } ... } X0 DSATC
+    @ Deja: n1 = 1 si las cumple todas, 0 si alguna falla.
+    @         C = 0  G <> 0 ;  C = 1  G >= 0 ;  C = 2  G > 0 ;  C = 3  G = 0
+    @ X0 puede ser exacto (un punto critico, ej '-\v/2') o aproximado (un
+    @ punto de prueba adentro de un tramo).
+    @
+    @ Cuenta como que NO cumple (medido, casos-p1sonda*.txt):
+    @  - un resultado complejo: \v/ o LN de un negativo dan TYPE 1 aun con
+    @    el modo Complex apagado (CLAUDE.md 2.14: decidir por TYPE);
+    @  - un error: LN(0) da ERROR, y 0/0 da '?' que \->NUM no convierte;
+    @  - una magnitud absurda: 1/0 da 9.99E499 sin error (CLAUDE.md 2.19).
+    @ Cero es |G| < 1E-9, porque en un punto exacto irracional el \->NUM
+    @ puede dejar un residuo de redondeo.
+    \-> CL X0
+    \<<
+      1 \-> OK
+      \<<
+        IF CL SIZE 0 >
+        THEN
+          1 CL SIZE
+          FOR I
+            CL I GET OBJ\-> DROP \-> G C
+            \<<
+              DEPTH \-> D1
+              \<<
+                @ G puede ser un numero suelto (la base 2 de 2^X): SUBST
+                @ solo sobre algebraicos y nombres.
+                IFERR
+                  G IF DUP TYPE 9 == OVER TYPE 6 == OR
+                  THEN 'X' X0 = SUBST EVAL
+                  END
+                  \->NUM
+                THEN "ERR"
+                END
+                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+              \>>
+              \-> V
+              \<<
+                IF V TYPE 0 ==
+                THEN
+                  IF V ABS 1.E400 >
+                  THEN 0 'OK' STO
+                  ELSE
+                    V ABS .000000001 < \-> Z
+                    \<<
+                      CASE
+                        C 0 == THEN Z NOT END
+                        C 1 == THEN V 0 > Z OR END
+                        C 2 == THEN V 0 > Z NOT AND END
+                        Z
+                      END
+                      IF NOT THEN 0 'OK' STO END
+                    \>>
+                  END
+                ELSE 0 'OK' STO
+                END
+              \>>
+            \>>
+          NEXT
+        END
+        OK
+      \>>
+    \>>
+  \>>
+  DINTC
+  \<<
+    @ DINTC - resuelve un sistema de condiciones sobre X por TABLA DE
+    @ SIGNOS, que es como lo resuelve la catedra. Motor de DDOMC y DINECC.
+    @ Uso:  { { G1 C1 } ... } DINTC
+    @         C = 0  G <> 0 ;  C = 1  G >= 0 ;  C = 2  G > 0 ;  C = 3  G = 0
+    @ Deja: n1 = { TXT PES MSG }
+    @         TXT = el conjunto en notacion de intervalos, ej
+    @               "(-oo, -1] U [2, +oo)" (con el caracter 159), "R",
+    @               "R - {-3, 3}" o "VACIO"
+    @         PES = puntos criticos, exactos y ordenados
+    @         MSG = "" o avisos (el CAS no pudo, periodica, o el sondeo
+    @               de control no coincide con la tabla)
+    @
+    @ Como:
+    @  1. Puntos criticos = ceros de cada G (ZEROS). Entre dos puntos
+    @     criticos consecutivos ninguna G cambia de signo.
+    @  2. Cada tramo se decide con UN punto de prueba, y cada punto
+    @     critico se decide en si mismo, con el valor EXACTO: asi sale el
+    @     corchete o el parentesis. Lo decide DSATC.
+    @  3. Control: se sondean 31 puntos y se comparan contra la tabla. Si
+    @     ZEROS se salteo un punto critico, la tabla miente y el sondeo lo
+    @     ve. Un resultado prolijo y equivocado es el peor caso de esta
+    @     suite (CLAUDE.md 2.1, 2.17); por eso el control.
+    @
+    @ Por que no SOLVE: medido (casos-p1sonda2.txt), '(X+1)/(X-2)>=0'
+    @ 'X' SOLVE da 'X<=-1 OR X>=2', con el 2 adentro, donde el denominador
+    @ se anula.
+    @
+    @ Modo Complex apagado adentro (-103 CF, RCLF/STOF): con el prendido,
+    @ ZEROS de 'ABS(6*X-3)-9' da basura compleja; apagado da { -1 2 }.
+    \-> CL
+    \<<
+      RCLF \-> FL
+      \<<
+        -103 CF
+        DEPTH \-> D0
+        \<<
+          { } { } "" \-> PE PN MSG
+          \<<
+            @ ---- 1. puntos criticos ----
+            IF CL SIZE 0 >
+            THEN
+              1 CL SIZE
+              FOR I
+                CL I GET 1 GET \-> G
+                \<<
+                  IF G TYPE 9 == G TYPE 6 == OR
+                  THEN
+                    DEPTH \-> D1
+                    \<<
+                      IFERR G 'X' ZEROS THEN "ERR" END
+                      \-> Z0 \<< DEPTH D1 - DROPN Z0 \>>
+                    \>>
+                    \-> Z
+                    \<<
+                      IF Z TYPE 2 ==
+                      THEN MSG "El CAS no resuelve " + G \->STR + "=0. " + 'MSG' STO
+                      ELSE
+                        Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                        \-> ZL
+                        \<<
+                          IF ZL SIZE 0 >
+                          THEN
+                            1 ZL SIZE
+                            FOR J
+                              ZL J GET \-> Z1
+                              \<<
+                                DEPTH \-> D1
+                                \<<
+                                  IFERR Z1 \->NUM THEN "ERR" END
+                                  \-> N0 \<< DEPTH D1 - DROPN N0 \>>
+                                \>>
+                                \-> ZN
+                                \<<
+                                  IF ZN TYPE 0 ==
+                                  THEN
+                                    0 \-> DUPL
+                                    \<<
+                                      IF PN SIZE 0 >
+                                      THEN
+                                        1 PN SIZE
+                                        FOR K
+                                          IF PN K GET ZN - ABS .000000001 <
+                                          THEN 1 'DUPL' STO
+                                          END
+                                        NEXT
+                                      END
+                                      IF DUPL NOT
+                                      THEN PE Z1 + 'PE' STO PN ZN + 'PN' STO
+                                      END
+                                    \>>
+                                  ELSE
+                                    @ Un complejo es una raiz no real: se
+                                    @ ignora. Un n1 es una familia periodica.
+                                    IF Z1 \->STR "n1" POS
+                                    THEN MSG "Periodica: no soportado. " + 'MSG' STO
+                                    END
+                                  END
+                                \>>
+                              \>>
+                            NEXT
+                          END
+                        \>>
+                      END
+                    \>>
+                  END
+                \>>
+              NEXT
+            END
+            @ ---- 2. ordenar: PS numericos, PES exactos en el mismo orden ----
+            PN SORT \-> PS
+            \<<
+              { }
+              IF PS SIZE 0 >
+              THEN
+                1 PS SIZE
+                FOR K
+                  PE PN PS K GET POS GET +
+                NEXT
+              END
+              PS SIZE \-> PES N
+              \<<
+                @ Textos de los puntos, sin las tildes del algebraico.
+                { }
+                IF N 0 >
+                THEN
+                  1 N
+                  FOR K
+                    PES K GET \->STR
+                    IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                    +
+                  NEXT
+                END
+                \-> PSS
+                \<<
+                  @ ---- 3. la tabla: B = { I0 P1 I1 ... PN IN } ----
+                  { }
+                  IF N 0 ==
+                  THEN CL .3183 DSATC +
+                  ELSE
+                    CL PS 1 GET 1 - DSATC +
+                    1 N
+                    FOR K
+                      CL PES K GET DSATC +
+                      IF K N <
+                      THEN CL PS K GET PS K 1 + GET + 2 / DSATC +
+                      ELSE CL PS N GET 1 + DSATC +
+                      END
+                    NEXT
+                  END
+                  \-> B
+                  \<<
+                    "" 1 \-> TXT ALL
+                    \<<
+                      @ ---- 4. el texto ----
+                      1 N 1 +
+                      FOR K
+                        IF B K 2 * 1 - GET NOT THEN 0 'ALL' STO END
+                      NEXT
+                      IF ALL
+                      THEN
+                        @ Todos los tramos adentro: "R", o "R - {...}"
+                        @ con los puntos sueltos que faltan.
+                        "R" 'TXT' STO
+                        "" \-> FS
+                        \<<
+                          IF N 0 >
+                          THEN
+                            1 N
+                            FOR K
+                              IF B K 2 * GET NOT
+                              THEN
+                                FS IF DUP SIZE THEN ", " + END
+                                PSS K GET + 'FS' STO
+                              END
+                            NEXT
+                          END
+                          IF FS SIZE
+                          THEN "R - {" FS + "}" + 'TXT' STO
+                          END
+                        \>>
+                      ELSE
+                        IF B 1 GET
+                        THEN "(-" 159 CHR + ", " + 'TXT' STO
+                        END
+                        IF N 0 >
+                        THEN
+                          1 N
+                          FOR K
+                            B K 2 * 1 - GET B K 2 * GET B K 2 * 1 + GET
+                            PSS K GET
+                            \-> L P R S
+                            \<<
+                              IF L
+                              THEN
+                                IF P
+                                THEN
+                                  IF R NOT THEN TXT S + "]" + 'TXT' STO END
+                                ELSE
+                                  TXT S + ")" + 'TXT' STO
+                                  IF R THEN TXT " U (" + S + ", " + 'TXT' STO END
+                                END
+                              ELSE
+                                IF R
+                                THEN
+                                  TXT IF DUP SIZE THEN " U " + END
+                                  IF P THEN "[" ELSE "(" END + S + ", " +
+                                  'TXT' STO
+                                ELSE
+                                  IF P
+                                  THEN
+                                    TXT IF DUP SIZE THEN " U " + END
+                                    "{" + S + "}" + 'TXT' STO
+                                  END
+                                END
+                              END
+                            \>>
+                          NEXT
+                        END
+                        IF B N 2 * 1 + GET
+                        THEN TXT "+" + 159 CHR + ")" + 'TXT' STO
+                        END
+                        IF TXT SIZE NOT THEN "VACIO" 'TXT' STO END
+                      END
+                      @ ---- 5. control por sondeo ----
+                      IF N 0 >
+                      THEN PS 1 GET 3 - PS N GET 3 +
+                      ELSE -5. 5.
+                      END
+                      \-> LO HI
+                      \<<
+                        0 \-> MAL
+                        \<<
+                          0 30
+                          FOR K
+                            HI LO - K * 30 / LO + \-> XK
+                            \<<
+                              0 \-> CERCA
+                              \<<
+                                IF N 0 >
+                                THEN
+                                  1 N
+                                  FOR J
+                                    IF PS J GET XK - ABS .000001 <
+                                    THEN 1 'CERCA' STO
+                                    END
+                                  NEXT
+                                END
+                                IF CERCA NOT MAL NOT AND
+                                THEN
+                                  0
+                                  IF N 0 >
+                                  THEN
+                                    1 N
+                                    FOR J
+                                      IF PS J GET XK < THEN 1 + END
+                                    NEXT
+                                  END
+                                  2 * 1 + B SWAP GET
+                                  CL XK DSATC
+                                  IF \=/
+                                  THEN
+                                    1 'MAL' STO
+                                    MSG "Ojo: el sondeo en x=" + XK 4 RND \->STR +
+                                    " no coincide con la tabla. " + 'MSG' STO
+                                  END
+                                END
+                              \>>
+                            \>>
+                          NEXT
+                        \>>
+                      \>>
+                      @ Con cualquier aviso el conjunto no se muestra limpio:
+                      @ medido con 'X^5-X-1>0', la tabla dio VACIO y solo el
+                      @ sondeo lo delato (casos-dinec-control.txt).
+                      IF MSG SIZE
+                      THEN "NO CONFIABLE: " TXT + 'TXT' STO
+                      END
+                      TXT PES MSG 3 \->LIST
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+        FL STOF
+      \>>
+    \>>
+  \>>
+  DDOMC
+  \<<
+    @ DDOMC - nucleo de DDOM. Dominio natural de f(X), por definicion:
+    @ junta las condiciones de la expresion TAL COMO SE ESCRIBIO (DCONDC)
+    @ y las resuelve por tabla de signos (DINTC).
+    @ Uso:  'F(X)' DDOMC
+    @ Deja: n1 = { TXT CSTR PES MSG }
+    @         TXT  = dominio en intervalos, ej "R - {-3, 3}"
+    @         CSTR = las condiciones como texto, ej { "X^2-9 <> 0" },
+    @                que es lo que la catedra quiere ver escrito
+    @         PES  = puntos criticos exactos, ordenados
+    @         MSG  = "" o avisos de DINTC
+    @
+    @ Diferencia con domain49 (fork, analisis/domain49): aquel simplifica
+    @ antes de buscar los polos y (X-3)/(X^2-9) le da R - {-3}. Aca las
+    @ condiciones salen del arbol sin tocar, y da R - {-3, 3}.
+    \-> F0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END DCONDC \-> CL
+        \<<
+          @ Las condiciones como texto: G, sin tildes, y el signo.
+          { }
+          IF CL SIZE 0 >
+          THEN
+            1 CL SIZE
+            FOR I
+              CL I GET OBJ\-> DROP \-> G C
+              \<<
+                G \->STR
+                IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                " " +
+                { 139 138 62 } C 1 + GET CHR + " 0" +
+                +
+              \>>
+            NEXT
+          END
+          \-> CSTR
+          \<<
+            IF CL SIZE 0 ==
+            THEN "R" CSTR { } "" 4 \->LIST
+            ELSE
+              CL DINTC OBJ\-> DROP \-> TXT PES MSG
+              \<< TXT CSTR PES MSG 4 \->LIST \>>
+            END
+          \>>
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  DDOM
+  \<<
+    @ DDOM - dominio natural de f(X), con las condiciones a la vista.
+    @ TP 1 y TP 4; el ejercicio de dominio de casi todo primer parcial:
+    @ f/g, g o f, f*g "empleando la definicion".
+    @
+    @ Escribir f SIN SIMPLIFICAR, como la da el enunciado: el dominio sale
+    @ de la expresion escrita. Para una composicion, escribirla ya
+    @ compuesta: g(x)=ln x, f(x)=x+2 -> 'LN(X+2)'.
+    @
+    @ Este objeto es SOLO la interfaz. La matematica esta en DDOMC, que
+    @ toma 'F' de la pila y devuelve { TXT CSTR PES MSG }.
+    @
+    @ Deja en la pila: n1 = el dominio como texto.
+    "Dominio natural"
+    {
+      { "f(X), ej '(X-3)/(X^2-9)':" "'(X-3)/(X^2-9)'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F
+      \<<
+        F DDOMC OBJ\-> DROP \-> TXT CSTR PES MSG
+        \<<
+          @ Las condiciones de a dos por caja (CLAUDE.md 2.6).
+          IF CSTR SIZE 0 ==
+          THEN "Sin condiciones:" 10 CHR + "vale para todo X" + MSGBOX
+          ELSE
+            1 CSTR SIZE
+            FOR I
+              "Cond: " CSTR I GET +
+              IF I CSTR SIZE <
+              THEN 10 CHR + "Cond: " + CSTR I 1 + GET +
+              END
+              MSGBOX
+            2 STEP
+          END
+          "Dom f =" 10 CHR + TXT + MSGBOX
+          IF MSG SIZE THEN MSG MSGBOX END
+          TXT
+        \>>
+      \>>
+    END
+  \>>
+  DINECC
+  \<<
+    @ DINECC - nucleo de DINEC. Resuelve una inecuacion en X por tabla
+    @ de signos (DINTC), respetando el dominio de las dos ramas.
+    @ Uso:  'L op R' DINECC      op: > < >= <= = <>
+    @ Deja: n1 = { TXT PES MSG }
+    @         TXT = conjunto solucion en intervalos
+    @         PES = puntos criticos exactos, ordenados (los que se
+    @               marcan en la recta real)
+    @         MSG = "" o avisos
+    @
+    @ Se pasa todo a G = L-R comparado con 0. Codigos medidos del
+    @ caracter de la funcion relacional (casos-p1sonda.txt):
+    @   > 62   < 60   >= 138   <= 137   <> 139   = 61
+    @ Con < y <= se usa -G, asi el motor solo conoce > >= = <>.
+    @ Ademas se agregan las condiciones de dominio de L-R (DCONDC): en
+    @ (X+1)/(X-2) >= 0 el 2 queda afuera aunque no sea un cero.
+    \-> Q0
+    \<<
+      DEPTH \-> D0
+      \<<
+        Q0 IF DUP TYPE 2 == THEN STR\-> END \-> Q
+        \<<
+          IF Q TYPE 9 == NOT
+          THEN "" { } "No es una inecuacion" 3 \->LIST
+          ELSE
+            Q OBJ\-> \->STR NUM \-> N OP
+            \<<
+              IF N 2 == NOT
+              THEN N DROPN "" { } "No es una inecuacion" 3 \->LIST
+              ELSE
+                - \-> G
+                \<<
+                  CASE
+                    OP 62 == THEN G 2 END
+                    OP 60 == THEN G NEG 2 END
+                    OP 138 == THEN G 1 END
+                    OP 137 == THEN G NEG 1 END
+                    OP 61 == THEN G 3 END
+                    OP 139 == THEN G 0 END
+                    -1 -1
+                  END
+                  \-> G2 C
+                  \<<
+                    IF C 0 <
+                    THEN "" { } "No es una inecuacion" 3 \->LIST
+                    ELSE
+                      G2 C 2 \->LIST 1 \->LIST G DCONDC + DINTC
+                    END
+                  \>>
+                \>>
+              END
+            \>>
+          END
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  DINEC
+  \<<
+    @ DINEC - inecuaciones por tabla de signos. Casi siempre es el
+    @ ejercicio 1 del primer parcial: |6x-3| >= 9, -x^2-x+2 <= 0,
+    @ (x+1)/(x-2) >= 0. Da el conjunto solucion en intervalos, listo para
+    @ comparar contra las opciones del multiple choice.
+    @
+    @ La inecuacion se escribe entera en el campo, con el simbolo del
+    @ teclado: 'ABS(6*X-3)>=9'.
+    @
+    @ Este objeto es SOLO la interfaz. La matematica esta en DINECC, que
+    @ toma la inecuacion de la pila y devuelve { TXT PES MSG }.
+    @
+    @ Deja en la pila: n2 = puntos criticos, n1 = el conjunto como texto.
+    "Inecuacion"
+    {
+      { "Inec, ej 'X^2-X-2>0':" "'X^2-X-2>0'" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> Q
+      \<<
+        Q DINECC OBJ\-> DROP \-> TXT PES MSG
+        \<<
+          IF TXT SIZE
+          THEN
+            "Puntos criticos:" 10 CHR + PES \->STR + MSGBOX
+            "S =" 10 CHR + TXT + MSGBOX
+          END
+          IF MSG SIZE THEN MSG MSGBOX END
+          PES TXT
+        \>>
+      \>>
+    END
+  \>>
+  DINVC
+  \<<
+    @ DINVC - nucleo de DINV. Funcion inversa sobre un dominio [A,B]:
+    @ el ejercicio de parcial "f: D -> B, dar B para que admita inversa y
+    @ hallar f^-1".
+    @ Uso:  'F(X)' A B DINVC
+    @   A, B = extremos del dominio. Un extremo infinito se acepta como el
+    @          infinito del CAS (con o sin signo) o como el nombre o string
+    @          INF / -INF. Se decide por \->STR: contiene "INF" o el
+    @          caracter 159 (CLAUDE.md 2.1); el signo, por un "-".
+    @ Deja: n1 = { FINV IMA IMB CA CB MSG }
+    @   FINV = f^-1 como expresion en X. "NO DESPEJO" si ninguna solucion
+    @          del CAS vuelve al dominio; "-" si f no es inyectiva.
+    @   IMA, IMB = extremos de la imagen, ya ordenados (si f decrece se
+    @          invierten). Un extremo infinito sale normalizado: -oo abajo,
+    @          +oo arriba. "?" si el CAS no pudo con el limite.
+    @   CA, CB = 1 si ese extremo de la imagen es cerrado, 0 si abierto.
+    @   MSG  = "OK", o "NO INYECTIVA: partir en x=..." si f' tiene un cero
+    @          adentro de (A,B) donde f da la vuelta. Si el dominio era
+    @          todo R agrega " Tramos: (-inf,z1] [z1,+inf)". Ahi FINV, IMA
+    @          e IMB son "-" y CA = CB = 0. "ERROR" si algo reventa afuera
+    @          de los IFERR internos.
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DINV.
+    @
+    @ Como decide cada cosa:
+    @  - Inyectividad: ceros reales de f' (DERIV + ZEROS, normalizado a
+    @    lista, CLAUDE.md 2.19) estrictamente adentro de (A,B). Un cero
+    @    cuenta solo si f da la vuelta ahi: f(z-h)-f(z) y f(z+h)-f(z) con
+    @    el mismo signo. Asi X^3 en 0 no se toma como no inyectiva.
+    @  - Sentido: signo de f(XI+h)-f(XI) en un punto interior XI.
+    @  - Extremo finito de la imagen: f en el extremo del dominio. Si f esta
+    @    definida ahi (real finito: TYPE, caracter 159, '?' y magnitud;
+    @    CLAUDE.md 2.14 y 2.19) el extremo es cerrado. Si no, limite
+    @    LATERAL ('X=a+0' / 'X=b-0', armado como texto con STR\->, como
+    @    DCONTFC) y el extremo es abierto.
+    @  - Extremo infinito del dominio: LIMIT en el infinito, abierto.
+    @  - f^-1: SOLVE 'Y=F' para X. De las soluciones se queda con la que
+    @    devuelve y0 = f(XI) a XI (es la rama del dominio), y despues
+    @    cambia Y por X. Si F tiene ABS( y el CAS no despeja, prueba con
+    @    ABS( cambiado por ( y por -( ; la verificacion contra XI es la
+    @    misma, asi que una rama equivocada no puede pasar.
+    @  - Todo con -103 CF (Complex apagado, medido: con Complex prendido
+    @    SOLVE devuelve ramas con i*n1). RCLF/STOF devuelve la maquina
+    @    como estaba, tambien si algo falla.
+    \-> F0 A0 B0
+    \<<
+      DEPTH \-> D0
+      \<<
+        RCLF \-> FL
+        \<<
+          -103 CF
+          IFERR
+            F0 IF DUP TYPE 2 == THEN STR\-> END
+            A0 \->STR B0 \->STR
+            \-> F SA SB
+            \<<
+              @ AI, BI: 0 finito, -1 menos infinito, 1 mas infinito.
+              IF SA "INF" POS SA 159 CHR POS + THEN IF SA "-" POS THEN -1 ELSE 1 END ELSE 0 END
+              IF SB "INF" POS SB 159 CHR POS + THEN IF SB "-" POS THEN -1 ELSE 1 END ELSE 0 END
+              \-> AI BI
+              \<<
+                IF AI THEN 0 ELSE A0 IF DUP TYPE 2 == THEN STR\-> END END
+                IF BI THEN 0 ELSE B0 IF DUP TYPE 2 == THEN STR\-> END END
+                \-> A B
+                \<<
+                  A \->NUM B \->NUM
+                  \-> AN BN
+                  \<<
+                    @ Un punto interior del dominio.
+                    CASE
+                      AI 0 == BI 0 == AND THEN AN BN + 2 / END
+                      AI 0 == THEN AN 1 + END
+                      BI 0 == THEN BN 1 - END
+                      0.
+                    END
+                    \-> XI
+                    \<<
+                      @ Ceros de f' (ZEROS con una raiz no da lista).
+                      DEPTH \-> D1
+                      \<<
+                        IFERR F 'X' DERIV 'X' ZEROS THEN { } END
+                        \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                      \>>
+                      IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                      { } { }
+                      \-> ZL ZX ZN
+                      \<<
+                        @ ZX: los puntos de vuelta exactos, ZN: los mismos en real.
+                        IF ZL SIZE 0 >
+                        THEN
+                          1 ZL SIZE FOR k
+                            ZL k GET \-> Z
+                            \<<
+                              DEPTH \-> D1
+                              \<<
+                                IFERR Z \->NUM THEN "ERR" END
+                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                              \>>
+                              \-> ZV
+                              \<<
+                                IF ZV TYPE 0 ==
+                                THEN
+                                  IF AI -1 == ZV AN > OR BI 1 == ZV BN < OR AND
+                                  THEN
+                                    @ Vuelta de verdad: los dos vecinos del mismo lado.
+                                    @ Si no se puede evaluar, se cuenta (conservador).
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR
+                                        F 'X' ZV .001 - = SUBST \->NUM
+                                        F 'X' ZV = SUBST \->NUM
+                                        F 'X' ZV .001 + = SUBST \->NUM
+                                        \-> P M Q
+                                        \<< P M - Q M - * 0 > \>>
+                                      THEN 1
+                                      END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                    IF
+                                    THEN
+                                      ZX Z 1 \->LIST + 'ZX' STO
+                                      ZN ZV 1 \->LIST + 'ZN' STO
+                                    END
+                                  END
+                                END
+                              \>>
+                            \>>
+                          NEXT
+                        END
+                        IF ZN SIZE 0 >
+                        THEN
+                          @ NO inyectiva: los puntos ordenados, en su forma exacta.
+                          ZN SORT { }
+                          \-> ZS ZT
+                          \<<
+                            1 ZS SIZE FOR k
+                              ZX ZN ZS k GET POS GET \->STR
+                              IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                              1 \->LIST ZT SWAP + 'ZT' STO
+                            NEXT
+                            "NO INYECTIVA: partir en x=" ZT 1 GET +
+                            IF ZT SIZE 1 >
+                            THEN
+                              2 ZT SIZE FOR k ", " + ZT k GET + NEXT
+                            END
+                            IF AI -1 == BI 1 == AND
+                            THEN
+                              " Tramos: (-inf," +
+                              1 ZT SIZE FOR k ZT k GET + "] [" + ZT k GET + "," + NEXT
+                              "+inf)" +
+                            END
+                            \-> MS
+                            \<< "-" "-" "-" 0 0 MS \>>
+                          \>>
+                        ELSE
+                          @ Inyectiva. Sentido de monotonia y un y interior.
+                          DEPTH \-> D1
+                          \<<
+                            IFERR F 'X' XI .001 + = SUBST \->NUM F 'X' XI = SUBST \->NUM - THEN 1 END
+                            \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                          \>>
+                          IF DUP TYPE 0 == THEN 0 < ELSE DROP 0 END
+                          DEPTH \-> D1
+                          \<<
+                            IFERR F 'X' XI = SUBST \->NUM THEN "ERR" END
+                            \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                          \>>
+                          \-> DECR Y0
+                          \<<
+                            @ Extremo izquierdo del dominio -> LA y si es cerrado.
+                            IF AI
+                            THEN
+                              DEPTH \-> D1
+                              \<<
+                                IFERR F 'X' IF AI 0 < THEN \oo NEG ELSE \oo END = LIMIT EVAL THEN "?" END
+                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                              \>>
+                              0
+                            ELSE
+                              DEPTH \-> D1
+                              \<<
+                                IFERR F 'X' A = SUBST EVAL THEN "ERR" END
+                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                              \>>
+                              \-> V
+                              \<<
+                                0
+                                IF V TYPE 2 == NOT
+                                THEN
+                                  IF V \->STR 159 CHR POS V \->STR "?" POS + NOT
+                                  THEN
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR V \->NUM THEN "ERR" END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                    IF DUP TYPE 0 == THEN ABS 1.E400 < OR ELSE DROP END
+                                  END
+                                END
+                                IF
+                                THEN V 1
+                                ELSE
+                                  A \->STR
+                                  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                  "'X=" SWAP + "+0'" + STR\->
+                                  \-> EQ
+                                  \<<
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR F EQ LIMIT EVAL THEN "?" END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                  \>>
+                                  0
+                                END
+                              \>>
+                            END
+                            @ Extremo derecho del dominio -> LB y si es cerrado.
+                            IF BI
+                            THEN
+                              DEPTH \-> D1
+                              \<<
+                                IFERR F 'X' IF BI 0 < THEN \oo NEG ELSE \oo END = LIMIT EVAL THEN "?" END
+                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                              \>>
+                              0
+                            ELSE
+                              DEPTH \-> D1
+                              \<<
+                                IFERR F 'X' B = SUBST EVAL THEN "ERR" END
+                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                              \>>
+                              \-> V
+                              \<<
+                                0
+                                IF V TYPE 2 == NOT
+                                THEN
+                                  IF V \->STR 159 CHR POS V \->STR "?" POS + NOT
+                                  THEN
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR V \->NUM THEN "ERR" END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                    IF DUP TYPE 0 == THEN ABS 1.E400 < OR ELSE DROP END
+                                  END
+                                END
+                                IF
+                                THEN V 1
+                                ELSE
+                                  B \->STR
+                                  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                  "'X=" SWAP + "-0'" + STR\->
+                                  \-> EQ
+                                  \<<
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR F EQ LIMIT EVAL THEN "?" END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                  \>>
+                                  0
+                                END
+                              \>>
+                            END
+                            \-> LA CA0 LB CB0
+                            \<<
+                              @ Si f decrece, la imagen va al reves.
+                              IF DECR THEN LB CB0 LA CA0 ELSE LA CA0 LB CB0 END
+                              \-> IA CA IB CB
+                              \<<
+                                @ Infinito normalizado por posicion, no por el
+                                @ signo que haya escrito el CAS.
+                                IF IA \->STR 159 CHR POS THEN \oo NEG 'IA' STO END
+                                IF IB \->STR 159 CHR POS THEN \oo 'IB' STO END
+                                @ Candidatas a despejar: F, y si tiene ABS( las
+                                @ dos ramas sin el valor absoluto.
+                                F 1 \->LIST
+                                IF F \->STR "ABS(" POS
+                                THEN
+                                  F \->STR "ABS(" "(" SREPL DROP STR\-> 1 \->LIST +
+                                  F \->STR "ABS(" "-(" SREPL DROP STR\-> 1 \->LIST +
+                                END
+                                "NO DESPEJO"
+                                \-> CND FI
+                                \<<
+                                  1 CND SIZE FOR j
+                                    IF FI TYPE 2 ==
+                                    THEN
+                                      DEPTH \-> D1
+                                      \<<
+                                        IFERR 'Y' CND j GET = 'X' SOLVE THEN { } END
+                                        \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                      \>>
+                                      IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                                      \-> SOLS
+                                      \<<
+                                        IF SOLS SIZE 0 >
+                                        THEN
+                                          1 SOLS SIZE FOR i
+                                            IF FI TYPE 2 ==
+                                            THEN
+                                              DEPTH \-> D1
+                                              \<<
+                                                IFERR SOLS i GET EQ\-> SWAP DROP THEN "ERR" END
+                                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                              \>>
+                                              \-> G
+                                              \<<
+                                                IF G TYPE 2 == NOT
+                                                THEN
+                                                  DEPTH \-> D1
+                                                  \<<
+                                                    IFERR G 'Y' Y0 = SUBST \->NUM THEN "ERR" END
+                                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                                  \>>
+                                                  \-> XV
+                                                  \<<
+                                                    @ La rama buena manda y0 de vuelta a XI.
+                                                    IF XV TYPE 0 ==
+                                                    THEN
+                                                      IF XV XI - ABS XI ABS 1 + .000001 * <
+                                                      THEN G 'Y' 'X' = SUBST 'FI' STO
+                                                      END
+                                                    END
+                                                  \>>
+                                                END
+                                              \>>
+                                            END
+                                          NEXT
+                                        END
+                                      \>>
+                                    END
+                                  NEXT
+                                  FI IA IB CA CB "OK"
+                                \>>
+                              \>>
+                            \>>
+                          \>>
+                        END
+                        6 \->LIST
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          THEN
+            "-" "-" "-" 0 0 "ERROR" 6 \->LIST
+          END
+          FL STOF
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  DINV
+  \<<
+    @ DINV - funcion inversa sobre un dominio dado: el ejercicio "f: D -> B,
+    @ encontrar B para que admita inversa y escribir f^-1". Esta en casi
+    @ todos los primeros parciales.
+    @
+    @ Los extremos a y b aceptan un numero, el infinito del teclado (con
+    @ o sin signo) o el nombre INF / -INF. Con a = -INF y b = INF y f no
+    @ inyectiva, sugiere en que tramos partir el dominio.
+    @
+    @ Este objeto es SOLO la interfaz. La matematica esta en DINVC, que
+    @ toma 'F' A B de la pila y devuelve { FINV IMA IMB CA CB MSG }.
+    @
+    @ Deja en la pila: n1 = f^-1(X).
+    "Funcion inversa"
+    {
+      { "f(X), ej '(X+2)^2-4':" "'(X+2)^2-4'" }
+      { "Dominio desde a:" "-2 (o -INF)" }
+      { "Dominio hasta b:" "INF" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F A B
+      \<<
+        F A B DINVC OBJ\-> DROP \-> FINV IA IB CA CB MSG
+        \<<
+          IF MSG "OK" ==
+          THEN
+            @ Extremos como texto, sin tildes; el infinito ya viene
+            @ normalizado (-oo abajo, +oo arriba).
+            IA \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+            IB \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+            \-> SA SB
+            \<<
+              "Im f = B =" 10 CHR +
+              IF CA THEN "[" ELSE "(" END + SA + ", " + SB +
+              IF CB THEN "]" ELSE ")" END +
+              MSGBOX
+            \>>
+            "f^-1(X) =" 10 CHR + FINV \->STR + MSGBOX
+            FINV
+          ELSE
+            MSG MSGBOX
+            MSG
+          END
+        \>>
+      \>>
+    END
+  \>>
+  DCONTKC
+  \<<
+    @ DCONTKC - nucleo de DCONTK. Ejercicio de parcial: hallar el valor de
+    @ la constante K para que la funcion a trozos sea continua en a.
+    @ Uso:  'RAMA_IZQ' 'RAMA_DER' A 'K' DCONTKC
+    @         RAMA_IZQ = la rama de x<a (o x<=a), RAMA_DER = la de x>a
+    @         (o x>=a). Algebraicos o strings. El parametro puede ser un
+    @         nombre o un string ("K"); si no es ninguno, se usa K.
+    @ Deja: n1 = { SOLS LI LD MSG }
+    @         SOLS = lista de valores del parametro (lados derechos de lo
+    @                que devuelve SOLVE), ya verificados sustituyendo.
+    @         LI, LD = limites laterales simbolicos (con K adentro), o
+    @                "ERR" si el CAS fallo.
+    @         MSG  = "OK", "NO HAY K", "LIMITE INFINITO", "LIMITE NO EXISTE",
+    @                "EL CAS NO PUDO", o "SIN VERIFICAR" (SOLVE dio valores
+    @                pero ninguno paso la sustitucion: SOLS trae los crudos).
+    @
+    @ Sin INFORM ni MSGBOX A PROPOSITO: eso lo pone DCONTK, asi el harness
+    @ puede probar este objeto por pila.
+    @
+    @ Medido antes (harness/casos-p1sonda.txt, BRIEF-P1):
+    @  - 'X^2-K*X+3' en 'X=1-0' da '-(K-4)'; '(2*X-K)/(1+X)' en 'X=1+0'
+    @    da '-((K-2)/2)'; '4-K=(2-K)/2' 'K' SOLVE da 'K=6' SUELTO.
+    @  - Los laterales se arman como TEXTO y se compilan con STR\-> (desde
+    @    la pila a 0 - se reduce a a). Igual que DCONTFC.
+    @  - Con -103 prendido SOLVE devuelve basura compleja: se apaga con
+    @    RCLF/STOF y se restaura antes de salir.
+    @
+    @ El parametro NO se guarda con STO (no se pisa un global del usuario)
+    @ y a los limites NO se les hace EVAL, que tomaria el valor de un K
+    @ global si existiera. Los locales llevan Z al final para no chocar con
+    @ el nombre del parametro (A, K, k...).
+    \-> FIZ0 FDZ0 AZ PZ0
+    \<<
+      DEPTH \-> D0
+      \<<
+        RCLF \-> FLZ
+        \<<
+          -103 CF
+          FIZ0 IF DUP TYPE 2 == THEN STR\-> END
+          FDZ0 IF DUP TYPE 2 == THEN STR\-> END
+          @ Parametro: un string "K" se compila entre comillas simples para
+          @ que quede el NOMBRE y no se evalue un K global.
+          PZ0 IF DUP TYPE 2 == THEN "'" SWAP + "'" + STR\-> END
+          IF DUP TYPE 6 == NOT THEN DROP 'K' END
+          @ a como texto sin tildes, para armar 'X=a-0' y 'X=a+0'
+          AZ \->STR
+          IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+          \-> FIZ FDZ PZ ASZ
+          \<<
+            "'X=" ASZ + "-0'" + STR\->
+            "'X=" ASZ + "+0'" + STR\->
+            \-> EQIZ EQDZ
+            \<<
+              @ Laterales, cada uno con su guardian (CLAUDE.md 2.11).
+              DEPTH \-> D1
+              \<<
+                IFERR FIZ EQIZ LIMIT IF DUP TYPE 12 == THEN DTAG END THEN "ERR" END
+                \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+              \>>
+              DEPTH \-> D1
+              \<<
+                IFERR FDZ EQDZ LIMIT IF DUP TYPE 12 == THEN DTAG END THEN "ERR" END
+                \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+              \>>
+              \-> LIZ LDZ
+              \<<
+                CASE
+                  LIZ TYPE 2 == LDZ TYPE 2 == OR
+                  THEN { } "EL CAS NO PUDO"
+                  END
+                  @ Infinito por el caracter 159 (CLAUDE.md 2.1), no con SAME.
+                  LIZ \->STR 159 CHR POS LDZ \->STR 159 CHR POS + 0 >
+                  THEN { } "LIMITE INFINITO"
+                  END
+                  LIZ \->STR "?" POS LDZ \->STR "?" POS + 0 >
+                  THEN { } "LIMITE NO EXISTE"
+                  END
+                  @ Caso normal: LI = LD, despejar el parametro.
+                  DEPTH \-> D1
+                  \<<
+                    IFERR LIZ LDZ = PZ SOLVE THEN "ERR" END
+                    \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+                  \>>
+                  \-> SZ
+                  \<<
+                    IF SZ TYPE 2 ==
+                    THEN { } "EL CAS NO PUDO"
+                    ELSE
+                      @ SOLVE da 'K=6' suelto o una lista: normalizar.
+                      SZ IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                      { } { }
+                      \-> LSZ VSZ OKZ
+                      \<<
+                        @ FOR corre al menos una vez (CLAUDE.md 2.7).
+                        IF LSZ SIZE 0 >
+                        THEN
+                          1 LSZ SIZE
+                          FOR JZ
+                            LSZ JZ GET \-> EZ
+                            \<<
+                              @ Solo ecuaciones 'P=valor' con P el parametro.
+                              IF EZ TYPE 9 ==
+                              THEN
+                                IF EZ \->STR "=" POS 0 >
+                                THEN
+                                  EZ OBJ\-> DROP DROP \-> LHZ RHZ
+                                  \<<
+                                    IF LHZ PZ SAME
+                                    THEN
+                                      @ '-6' sale como algebraico: EVAL lo
+                                      @ deja entero. Con guardian.
+                                      RHZ
+                                      IF DUP TYPE 9 ==
+                                      THEN
+                                        DEPTH \-> D1
+                                        \<<
+                                          IFERR RHZ EVAL THEN RHZ END
+                                          \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+                                        \>>
+                                        SWAP DROP
+                                      END
+                                      \-> VZ
+                                      \<<
+                                        VSZ VZ 1 \->LIST + 'VSZ' STO
+                                        @ Verificacion: LI-LD con P=valor
+                                        @ tiene que dar 0 (numerico, real).
+                                        DEPTH \-> D1
+                                        \<<
+                                          IFERR
+                                            LIZ LDZ -
+                                            IF DUP TYPE 9 == THEN PZ VZ = SUBST END
+                                            \->NUM
+                                            IF DUP TYPE 0 ==
+                                            THEN ABS .000001 <
+                                            ELSE DROP 0
+                                            END
+                                          THEN 0
+                                          END
+                                          \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+                                        \>>
+                                        IF THEN OKZ VZ 1 \->LIST + 'OKZ' STO END
+                                      \>>
+                                    END
+                                  \>>
+                                END
+                              END
+                            \>>
+                          NEXT
+                        END
+                        CASE
+                          VSZ SIZE 0 == THEN { } "NO HAY K" END
+                          OKZ SIZE 0 == THEN VSZ "SIN VERIFICAR" END
+                          OKZ "OK"
+                        END
+                      \>>
+                    END
+                  \>>
+                END
+                \-> SOLZ MSGZ
+                \<<
+                  SOLZ LIZ LDZ MSGZ 4 \->LIST
+                \>>
+              \>>
+            \>>
+          \>>
+          FLZ STOF
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  DCONTK
+  \<<
+    @ DCONTK - hallar la constante K para que la funcion a trozos sea
+    @ continua en a (ejercicio tipico de parcial 1).
+    @
+    @ Este objeto es SOLO la interfaz: formulario y cajas. La matematica
+    @ esta en DCONTKC, que toma 'IZQ' 'DER' A 'K' de la pila y devuelve
+    @ { SOLS LI LD MSG }. Separados para que el harness pueda probar el
+    @ calculo sin tipear en un INFORM.
+    @
+    @ El parametro puede llamarse distinto de K (ej. A): se escribe en el
+    @ cuarto campo. Vacio o invalido = K (lo decide DCONTKC).
+    @
+    @ Deja en la pila: n1 = lista de valores del parametro.
+    "Continuidad: hallar K"
+    {
+      { "Izq x<a:" "'X^2-K*X+3'" }
+      { "Der x>a:" "'(2*X-K)/(1+X)'" }
+      { "Punto a:" "1" 0 }
+      { "Parametro:" "K" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> FIZ FDZ AZ PZ
+      \<<
+        FIZ FDZ AZ PZ DCONTKC OBJ\-> DROP \-> SOLZ LIZ LDZ MSGZ
+        \<<
+          @ Nombre del parametro como texto, sin tildes, para la caja.
+          PZ
+          IF DUP TYPE 6 == THEN \->STR ELSE IF DUP TYPE 2 == NOT THEN DROP "K" END END
+          IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+          @ Un string se muestra tal cual; lo demas con \->STR.
+          LIZ IF DUP TYPE 2 == NOT THEN \->STR END
+          LDZ IF DUP TYPE 2 == NOT THEN \->STR END
+          @ Un solo valor se muestra suelto; varios, como lista.
+          SOLZ IF DUP SIZE 1 == THEN 1 GET END \->STR
+          \-> NOMZ SLIZ SLDZ SSOLZ
+          \<<
+            "Lim izq: " SLIZ + 10 CHR +
+            "Lim der: " + SLDZ +
+            MSGBOX
+            MSGZ 10 CHR +
+            NOMZ + " = " + SSOLZ +
+            MSGBOX
+            SOLZ
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  DPARC
+  \<<
+    @ DPARC - nucleo de DPAR. Paridad de una funcion, por definicion:
+    @ compara f(-X) con f(X) y con -f(X), y exige dominio simetrico.
+    @ Uso:  'EXPR' PF PG DPARC
+    @   PF, PG = 0 si la expresion no usa F ni G (funcion concreta);
+    @            1 si F (o G) es PAR, -1 si es IMPAR (modo abstracto:
+    @            "si F es par y G impar, que es F(G(X))+X^3?").
+    @ Deja: n1 = { K MSG P FP FMP FMX }
+    @   K   = 1 par, -1 impar, 0 ni par ni impar, 3 par e impar (f=0),
+    @         2 no se pudo decidir
+    @   MSG = el veredicto en texto
+    @   P, FP, FMP = contraejemplo: un punto p con f(p) y f(-p)
+    @         ("NO EXISTE" si no esta definida). 0 0 0 si es par o impar.
+    @   FMX = f(-X) escrita, que es lo que la catedra pide calcular.
+    @
+    @ Como decide: evaluando en siete puntos p (0.37 0.7 1 1.3 2 2.9 3).
+    @ Los enteros estan a proposito: ahi suelen estar los huecos del
+    @ dominio. ln|x-2| (resolucion 2014) no es par porque f(2) no existe
+    @ y f(-2) si. La simplificacion simbolica no sirve para decidir: puede
+    @ no llegar a 0 aunque la diferencia sea 0.
+    @
+    @ Modo abstracto: F y G se reemplazan por representantes con DEFINE
+    @   par:   X^4+3*X^2+2        impar: X^5+2*X^3+3*X
+    @ De grados distintos y con coeficientes distintos, para que una
+    @ cancelacion casual no fabrique una paridad que no esta. Es una
+    @ VERIFICACION con representantes, no una demostracion: el MSG lo dice.
+    @ Si el usuario ya tiene F o G como variables, NO se pisan: se avisa.
+    @ F y G se purgan al final aunque algo falle.
+    @ Supone que X no tiene valor guardado (como el resto de mat1).
+    \-> E0 PF PG
+    \<<
+      DEPTH \-> D0
+      \<<
+        RCLF \-> FL
+        \<<
+          -103 CF
+          E0 IF DUP TYPE 2 == THEN STR\-> END \-> E
+          \<<
+            IF PF PG OR
+            THEN
+              IF 'F' VTYPE -1 == 'G' VTYPE -1 == AND
+              THEN
+                DEPTH \-> D1
+                \<<
+                  IFERR
+                    IF PF
+                    THEN
+                      IF PF 0 > THEN 'F(X)=X^4+3*X^2+2' ELSE 'F(X)=X^5+2*X^3+3*X' END
+                      DEFINE
+                    END
+                    IF PG
+                    THEN
+                      IF PG 0 > THEN 'G(X)=X^4+3*X^2+2' ELSE 'G(X)=X^5+2*X^3+3*X' END
+                      DEFINE
+                    END
+                    E EVAL
+                  THEN "ERR"
+                  END
+                  \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                \>>
+                IF 'F' VTYPE -1 \=/ THEN 'F' PURGE END
+                IF 'G' VTYPE -1 \=/ THEN 'G' PURGE END
+              ELSE "EXISTE"
+              END
+            ELSE E
+            END
+            \-> EX
+            \<<
+              CASE
+                EX "EXISTE" SAME
+                THEN 2 "Ya hay variables F o G: borrarlas o renombrar" 0 0 0 0
+                END
+                EX "ERR" SAME
+                THEN 2 "No pude evaluar la expresion" 0 0 0 0
+                END
+                @ f(-X), escrita.
+                EX IF DUP TYPE 9 == OVER TYPE 6 == OR THEN 'X' '-X' = SUBST END
+                \-> FMX
+                \<<
+                  1 1 0 0 0 0 0 0 0 0
+                  \-> OKP OKI NDEF ASIM CP CFP CFM CIP CIFP CIFM
+                  \<<
+                    { .37 .7 1 1.3 2 2.9 3 }
+                    1 7
+                    FOR I
+                      DUP I GET \-> P
+                      \<<
+                        @ f(p) y f(-p); "NO EXISTE" si no da un real finito.
+                        P P NEG 2 \->LIST
+                        1 2
+                        FOR J
+                          DUP J GET \-> XP
+                          \<<
+                            DEPTH \-> D1
+                            \<<
+                              IFERR
+                                EX IF DUP TYPE 9 == OVER TYPE 6 == OR
+                                THEN 'X' XP = SUBST EVAL
+                                END
+                                \->NUM
+                              THEN "ERR"
+                              END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            IF DUP TYPE 0 ==
+                            THEN IF DUP ABS 1.E400 > THEN DROP "NO EXISTE" END
+                            ELSE DROP "NO EXISTE"
+                            END
+                          \>>
+                          SWAP
+                        NEXT
+                        DROP
+                        \-> A B
+                        \<<
+                          IF A TYPE 2 == B TYPE 2 == \=/
+                          THEN
+                            @ Definida de un lado y no del otro.
+                            IF ASIM NOT
+                            THEN 1 'ASIM' STO P 'CP' STO A 'CFP' STO B 'CFM' STO
+                            END
+                          ELSE
+                            IF A TYPE 0 ==
+                            THEN
+                              NDEF 1 + 'NDEF' STO
+                              A ABS 1 + .000000001 * \-> TOL
+                              \<<
+                                IF B A - ABS TOL > OKP AND
+                                THEN
+                                  0 'OKP' STO
+                                  @ Si ya hay un punto de dominio asimetrico,
+                                  @ ese es el contraejemplo que se muestra.
+                                  IF ASIM NOT
+                                  THEN P 'CP' STO A 'CFP' STO B 'CFM' STO
+                                  END
+                                END
+                                IF B A + ABS TOL > OKI AND
+                                THEN 0 'OKI' STO P 'CIP' STO A 'CIFP' STO B 'CIFM' STO
+                                END
+                              \>>
+                            END
+                          END
+                        \>>
+                      \>>
+                    NEXT
+                    DROP
+                    CASE
+                      ASIM
+                      THEN 0 "NI PAR NI IMPAR: dominio no simetrico" CP CFP CFM FMX
+                      END
+                      NDEF 0 ==
+                      THEN 2 "No pude evaluar f en los puntos" 0 0 0 FMX
+                      END
+                      OKP OKI AND
+                      THEN 3 "PAR e IMPAR: f = 0" 0 0 0 FMX
+                      END
+                      OKP
+                      THEN 1 "PAR: f(-X) = f(X)" 0 0 0 FMX
+                      END
+                      OKI
+                      THEN -1 "IMPAR: f(-X) = -f(X)" 0 0 0 FMX
+                      END
+                      @ Ni par ni impar: el contraejemplo de la paridad.
+                      0 "NI PAR NI IMPAR" CP CFP CFM FMX
+                    END
+                  \>>
+                \>>
+              END
+              6 \->LIST
+              IF PF PG OR
+              THEN
+                DUP 2 GET " (verificado con representantes)" +
+                2 SWAP PUT
+              END
+            \>>
+          \>>
+          FL STOF
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  DPAR
+  \<<
+    @ DPAR - paridad de una funcion. Dos usos:
+    @  - f concreta: dejar F y G en 0. Ej '4*X+1/X'.
+    @  - el ejercicio teorico "si F es par y G impar, que es F(G(X))+X^3?":
+    @    escribir la expresion con F y G, y poner 1 (par) o -1 (impar) en
+    @    cada una. Se verifica con funciones representantes.
+    @
+    @ Este objeto es SOLO la interfaz. La matematica esta en DPARC, que
+    @ toma 'EXPR' PF PG de la pila y devuelve { K MSG P FP FMP FMX }.
+    @
+    @ Deja en la pila: n2 = f(-X), n1 = el veredicto.
+    "Paridad"
+    {
+      { "f(X), ej '4*X+1/X':" "'4*X+1/X'" }
+      { "F: 1 par, -1 impar:" "0 si no hay F" 0 }
+      { "G: 1 par, -1 impar:" "0 si no hay G" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> E PF PG
+      \<<
+        @ Un campo numerico nunca visitado vuelve vacio: vale 0.
+        PF IF DUP TYPE 0 == NOT THEN DROP 0 END
+        PG IF DUP TYPE 0 == NOT THEN DROP 0 END
+        \-> QF QG
+        \<<
+          E QF QG DPARC OBJ\-> DROP \-> K MSG P FP FMP FMX
+          \<<
+            "f(-X) =" 10 CHR + FMX \->STR + MSGBOX
+            MSG MSGBOX
+            IF K 0 ==
+            THEN
+              "Contraejemplo x=" P \->STR + 10 CHR +
+              "f(x)=" + FP \->STR + "  f(-x)=" + FMP \->STR +
+              MSGBOX
+            END
+            FMX MSG
+          \>>
+        \>>
+      \>>
+    END
+  \>>
 END

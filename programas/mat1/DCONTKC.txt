@@ -1,0 +1,172 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCONTKC - nucleo de DCONTK. Ejercicio de parcial: hallar el valor de
+  @ la constante K para que la funcion a trozos sea continua en a.
+  @ Uso:  'RAMA_IZQ' 'RAMA_DER' A 'K' DCONTKC
+  @         RAMA_IZQ = la rama de x<a (o x<=a), RAMA_DER = la de x>a
+  @         (o x>=a). Algebraicos o strings. El parametro puede ser un
+  @         nombre o un string ("K"); si no es ninguno, se usa K.
+  @ Deja: n1 = { SOLS LI LD MSG }
+  @         SOLS = lista de valores del parametro (lados derechos de lo
+  @                que devuelve SOLVE), ya verificados sustituyendo.
+  @         LI, LD = limites laterales simbolicos (con K adentro), o
+  @                "ERR" si el CAS fallo.
+  @         MSG  = "OK", "NO HAY K", "LIMITE INFINITO", "LIMITE NO EXISTE",
+  @                "EL CAS NO PUDO", o "SIN VERIFICAR" (SOLVE dio valores
+  @                pero ninguno paso la sustitucion: SOLS trae los crudos).
+  @
+  @ Sin INFORM ni MSGBOX A PROPOSITO: eso lo pone DCONTK, asi el harness
+  @ puede probar este objeto por pila.
+  @
+  @ Medido antes (harness/casos-p1sonda.txt, BRIEF-P1):
+  @  - 'X^2-K*X+3' en 'X=1-0' da '-(K-4)'; '(2*X-K)/(1+X)' en 'X=1+0'
+  @    da '-((K-2)/2)'; '4-K=(2-K)/2' 'K' SOLVE da 'K=6' SUELTO.
+  @  - Los laterales se arman como TEXTO y se compilan con STR\-> (desde
+  @    la pila a 0 - se reduce a a). Igual que DCONTFC.
+  @  - Con -103 prendido SOLVE devuelve basura compleja: se apaga con
+  @    RCLF/STOF y se restaura antes de salir.
+  @
+  @ El parametro NO se guarda con STO (no se pisa un global del usuario)
+  @ y a los limites NO se les hace EVAL, que tomaria el valor de un K
+  @ global si existiera. Los locales llevan Z al final para no chocar con
+  @ el nombre del parametro (A, K, k...).
+  \-> FIZ0 FDZ0 AZ PZ0
+  \<<
+    DEPTH \-> D0
+    \<<
+      RCLF \-> FLZ
+      \<<
+        -103 CF
+        FIZ0 IF DUP TYPE 2 == THEN STR\-> END
+        FDZ0 IF DUP TYPE 2 == THEN STR\-> END
+        @ Parametro: un string "K" se compila entre comillas simples para
+        @ que quede el NOMBRE y no se evalue un K global.
+        PZ0 IF DUP TYPE 2 == THEN "'" SWAP + "'" + STR\-> END
+        IF DUP TYPE 6 == NOT THEN DROP 'K' END
+        @ a como texto sin tildes, para armar 'X=a-0' y 'X=a+0'
+        AZ \->STR
+        IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+        \-> FIZ FDZ PZ ASZ
+        \<<
+          "'X=" ASZ + "-0'" + STR\->
+          "'X=" ASZ + "+0'" + STR\->
+          \-> EQIZ EQDZ
+          \<<
+            @ Laterales, cada uno con su guardian (CLAUDE.md 2.11).
+            DEPTH \-> D1
+            \<<
+              IFERR FIZ EQIZ LIMIT IF DUP TYPE 12 == THEN DTAG END THEN "ERR" END
+              \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+            \>>
+            DEPTH \-> D1
+            \<<
+              IFERR FDZ EQDZ LIMIT IF DUP TYPE 12 == THEN DTAG END THEN "ERR" END
+              \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+            \>>
+            \-> LIZ LDZ
+            \<<
+              CASE
+                LIZ TYPE 2 == LDZ TYPE 2 == OR
+                THEN { } "EL CAS NO PUDO"
+                END
+                @ Infinito por el caracter 159 (CLAUDE.md 2.1), no con SAME.
+                LIZ \->STR 159 CHR POS LDZ \->STR 159 CHR POS + 0 >
+                THEN { } "LIMITE INFINITO"
+                END
+                LIZ \->STR "?" POS LDZ \->STR "?" POS + 0 >
+                THEN { } "LIMITE NO EXISTE"
+                END
+                @ Caso normal: LI = LD, despejar el parametro.
+                DEPTH \-> D1
+                \<<
+                  IFERR LIZ LDZ = PZ SOLVE THEN "ERR" END
+                  \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+                \>>
+                \-> SZ
+                \<<
+                  IF SZ TYPE 2 ==
+                  THEN { } "EL CAS NO PUDO"
+                  ELSE
+                    @ SOLVE da 'K=6' suelto o una lista: normalizar.
+                    SZ IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                    { } { }
+                    \-> LSZ VSZ OKZ
+                    \<<
+                      @ FOR corre al menos una vez (CLAUDE.md 2.7).
+                      IF LSZ SIZE 0 >
+                      THEN
+                        1 LSZ SIZE
+                        FOR JZ
+                          LSZ JZ GET \-> EZ
+                          \<<
+                            @ Solo ecuaciones 'P=valor' con P el parametro.
+                            IF EZ TYPE 9 ==
+                            THEN
+                              IF EZ \->STR "=" POS 0 >
+                              THEN
+                                EZ OBJ\-> DROP DROP \-> LHZ RHZ
+                                \<<
+                                  IF LHZ PZ SAME
+                                  THEN
+                                    @ '-6' sale como algebraico: EVAL lo
+                                    @ deja entero. Con guardian.
+                                    RHZ
+                                    IF DUP TYPE 9 ==
+                                    THEN
+                                      DEPTH \-> D1
+                                      \<<
+                                        IFERR RHZ EVAL THEN RHZ END
+                                        \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+                                      \>>
+                                      SWAP DROP
+                                    END
+                                    \-> VZ
+                                    \<<
+                                      VSZ VZ 1 \->LIST + 'VSZ' STO
+                                      @ Verificacion: LI-LD con P=valor
+                                      @ tiene que dar 0 (numerico, real).
+                                      DEPTH \-> D1
+                                      \<<
+                                        IFERR
+                                          LIZ LDZ -
+                                          IF DUP TYPE 9 == THEN PZ VZ = SUBST END
+                                          \->NUM
+                                          IF DUP TYPE 0 ==
+                                          THEN ABS .000001 <
+                                          ELSE DROP 0
+                                          END
+                                        THEN 0
+                                        END
+                                        \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+                                      \>>
+                                      IF THEN OKZ VZ 1 \->LIST + 'OKZ' STO END
+                                    \>>
+                                  END
+                                \>>
+                              END
+                            END
+                          \>>
+                        NEXT
+                      END
+                      CASE
+                        VSZ SIZE 0 == THEN { } "NO HAY K" END
+                        OKZ SIZE 0 == THEN VSZ "SIN VERIFICAR" END
+                        OKZ "OK"
+                      END
+                    \>>
+                  END
+                \>>
+              END
+              \-> SOLZ MSGZ
+              \<<
+                SOLZ LIZ LDZ MSGZ 4 \->LIST
+              \>>
+            \>>
+          \>>
+        \>>
+        FLZ STOF
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

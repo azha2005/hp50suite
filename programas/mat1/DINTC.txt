@@ -1,0 +1,292 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DINTC - resuelve un sistema de condiciones sobre X por TABLA DE
+  @ SIGNOS, que es como lo resuelve la catedra. Motor de DDOMC y DINECC.
+  @ Uso:  { { G1 C1 } ... } DINTC
+  @         C = 0  G <> 0 ;  C = 1  G >= 0 ;  C = 2  G > 0 ;  C = 3  G = 0
+  @ Deja: n1 = { TXT PES MSG }
+  @         TXT = el conjunto en notacion de intervalos, ej
+  @               "(-oo, -1] U [2, +oo)" (con el caracter 159), "R",
+  @               "R - {-3, 3}" o "VACIO"
+  @         PES = puntos criticos, exactos y ordenados
+  @         MSG = "" o avisos (el CAS no pudo, periodica, o el sondeo
+  @               de control no coincide con la tabla)
+  @
+  @ Como:
+  @  1. Puntos criticos = ceros de cada G (ZEROS). Entre dos puntos
+  @     criticos consecutivos ninguna G cambia de signo.
+  @  2. Cada tramo se decide con UN punto de prueba, y cada punto
+  @     critico se decide en si mismo, con el valor EXACTO: asi sale el
+  @     corchete o el parentesis. Lo decide DSATC.
+  @  3. Control: se sondean 31 puntos y se comparan contra la tabla. Si
+  @     ZEROS se salteo un punto critico, la tabla miente y el sondeo lo
+  @     ve. Un resultado prolijo y equivocado es el peor caso de esta
+  @     suite (CLAUDE.md 2.1, 2.17); por eso el control.
+  @
+  @ Por que no SOLVE: medido (casos-p1sonda2.txt), '(X+1)/(X-2)>=0'
+  @ 'X' SOLVE da 'X<=-1 OR X>=2', con el 2 adentro, donde el denominador
+  @ se anula.
+  @
+  @ Modo Complex apagado adentro (-103 CF, RCLF/STOF): con el prendido,
+  @ ZEROS de 'ABS(6*X-3)-9' da basura compleja; apagado da { -1 2 }.
+  \-> CL
+  \<<
+    RCLF \-> FL
+    \<<
+      -103 CF
+      DEPTH \-> D0
+      \<<
+        { } { } "" \-> PE PN MSG
+        \<<
+          @ ---- 1. puntos criticos ----
+          IF CL SIZE 0 >
+          THEN
+            1 CL SIZE
+            FOR I
+              CL I GET 1 GET \-> G
+              \<<
+                IF G TYPE 9 == G TYPE 6 == OR
+                THEN
+                  DEPTH \-> D1
+                  \<<
+                    IFERR G 'X' ZEROS THEN "ERR" END
+                    \-> Z0 \<< DEPTH D1 - DROPN Z0 \>>
+                  \>>
+                  \-> Z
+                  \<<
+                    IF Z TYPE 2 ==
+                    THEN MSG "El CAS no resuelve " + G \->STR + "=0. " + 'MSG' STO
+                    ELSE
+                      Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                      \-> ZL
+                      \<<
+                        IF ZL SIZE 0 >
+                        THEN
+                          1 ZL SIZE
+                          FOR J
+                            ZL J GET \-> Z1
+                            \<<
+                              DEPTH \-> D1
+                              \<<
+                                IFERR Z1 \->NUM THEN "ERR" END
+                                \-> N0 \<< DEPTH D1 - DROPN N0 \>>
+                              \>>
+                              \-> ZN
+                              \<<
+                                IF ZN TYPE 0 ==
+                                THEN
+                                  0 \-> DUPL
+                                  \<<
+                                    IF PN SIZE 0 >
+                                    THEN
+                                      1 PN SIZE
+                                      FOR K
+                                        IF PN K GET ZN - ABS .000000001 <
+                                        THEN 1 'DUPL' STO
+                                        END
+                                      NEXT
+                                    END
+                                    IF DUPL NOT
+                                    THEN PE Z1 + 'PE' STO PN ZN + 'PN' STO
+                                    END
+                                  \>>
+                                ELSE
+                                  @ Un complejo es una raiz no real: se
+                                  @ ignora. Un n1 es una familia periodica.
+                                  IF Z1 \->STR "n1" POS
+                                  THEN MSG "Periodica: no soportado. " + 'MSG' STO
+                                  END
+                                END
+                              \>>
+                            \>>
+                          NEXT
+                        END
+                      \>>
+                    END
+                  \>>
+                END
+              \>>
+            NEXT
+          END
+          @ ---- 2. ordenar: PS numericos, PES exactos en el mismo orden ----
+          PN SORT \-> PS
+          \<<
+            { }
+            IF PS SIZE 0 >
+            THEN
+              1 PS SIZE
+              FOR K
+                PE PN PS K GET POS GET +
+              NEXT
+            END
+            PS SIZE \-> PES N
+            \<<
+              @ Textos de los puntos, sin las tildes del algebraico.
+              { }
+              IF N 0 >
+              THEN
+                1 N
+                FOR K
+                  PES K GET \->STR
+                  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                  +
+                NEXT
+              END
+              \-> PSS
+              \<<
+                @ ---- 3. la tabla: B = { I0 P1 I1 ... PN IN } ----
+                { }
+                IF N 0 ==
+                THEN CL .3183 DSATC +
+                ELSE
+                  CL PS 1 GET 1 - DSATC +
+                  1 N
+                  FOR K
+                    CL PES K GET DSATC +
+                    IF K N <
+                    THEN CL PS K GET PS K 1 + GET + 2 / DSATC +
+                    ELSE CL PS N GET 1 + DSATC +
+                    END
+                  NEXT
+                END
+                \-> B
+                \<<
+                  "" 1 \-> TXT ALL
+                  \<<
+                    @ ---- 4. el texto ----
+                    1 N 1 +
+                    FOR K
+                      IF B K 2 * 1 - GET NOT THEN 0 'ALL' STO END
+                    NEXT
+                    IF ALL
+                    THEN
+                      @ Todos los tramos adentro: "R", o "R - {...}"
+                      @ con los puntos sueltos que faltan.
+                      "R" 'TXT' STO
+                      "" \-> FS
+                      \<<
+                        IF N 0 >
+                        THEN
+                          1 N
+                          FOR K
+                            IF B K 2 * GET NOT
+                            THEN
+                              FS IF DUP SIZE THEN ", " + END
+                              PSS K GET + 'FS' STO
+                            END
+                          NEXT
+                        END
+                        IF FS SIZE
+                        THEN "R - {" FS + "}" + 'TXT' STO
+                        END
+                      \>>
+                    ELSE
+                      IF B 1 GET
+                      THEN "(-" 159 CHR + ", " + 'TXT' STO
+                      END
+                      IF N 0 >
+                      THEN
+                        1 N
+                        FOR K
+                          B K 2 * 1 - GET B K 2 * GET B K 2 * 1 + GET
+                          PSS K GET
+                          \-> L P R S
+                          \<<
+                            IF L
+                            THEN
+                              IF P
+                              THEN
+                                IF R NOT THEN TXT S + "]" + 'TXT' STO END
+                              ELSE
+                                TXT S + ")" + 'TXT' STO
+                                IF R THEN TXT " U (" + S + ", " + 'TXT' STO END
+                              END
+                            ELSE
+                              IF R
+                              THEN
+                                TXT IF DUP SIZE THEN " U " + END
+                                IF P THEN "[" ELSE "(" END + S + ", " +
+                                'TXT' STO
+                              ELSE
+                                IF P
+                                THEN
+                                  TXT IF DUP SIZE THEN " U " + END
+                                  "{" + S + "}" + 'TXT' STO
+                                END
+                              END
+                            END
+                          \>>
+                        NEXT
+                      END
+                      IF B N 2 * 1 + GET
+                      THEN TXT "+" + 159 CHR + ")" + 'TXT' STO
+                      END
+                      IF TXT SIZE NOT THEN "VACIO" 'TXT' STO END
+                    END
+                    @ ---- 5. control por sondeo ----
+                    IF N 0 >
+                    THEN PS 1 GET 3 - PS N GET 3 +
+                    ELSE -5. 5.
+                    END
+                    \-> LO HI
+                    \<<
+                      0 \-> MAL
+                      \<<
+                        0 30
+                        FOR K
+                          HI LO - K * 30 / LO + \-> XK
+                          \<<
+                            0 \-> CERCA
+                            \<<
+                              IF N 0 >
+                              THEN
+                                1 N
+                                FOR J
+                                  IF PS J GET XK - ABS .000001 <
+                                  THEN 1 'CERCA' STO
+                                  END
+                                NEXT
+                              END
+                              IF CERCA NOT MAL NOT AND
+                              THEN
+                                0
+                                IF N 0 >
+                                THEN
+                                  1 N
+                                  FOR J
+                                    IF PS J GET XK < THEN 1 + END
+                                  NEXT
+                                END
+                                2 * 1 + B SWAP GET
+                                CL XK DSATC
+                                IF \=/
+                                THEN
+                                  1 'MAL' STO
+                                  MSG "Ojo: el sondeo en x=" + XK 4 RND \->STR +
+                                  " no coincide con la tabla. " + 'MSG' STO
+                                END
+                              END
+                            \>>
+                          \>>
+                        NEXT
+                      \>>
+                    \>>
+                    @ Con cualquier aviso el conjunto no se muestra limpio:
+                    @ medido con 'X^5-X-1>0', la tabla dio VACIO y solo el
+                    @ sondeo lo delato (casos-dinec-control.txt).
+                    IF MSG SIZE
+                    THEN "NO CONFIABLE: " TXT + 'TXT' STO
+                    END
+                    TXT PES MSG 3 \->LIST
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+      FL STOF
+    \>>
+  \>>
+\>>

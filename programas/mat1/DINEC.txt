@@ -1,0 +1,36 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DINEC - inecuaciones por tabla de signos. Casi siempre es el
+  @ ejercicio 1 del primer parcial: |6x-3| >= 9, -x^2-x+2 <= 0,
+  @ (x+1)/(x-2) >= 0. Da el conjunto solucion en intervalos, listo para
+  @ comparar contra las opciones del multiple choice.
+  @
+  @ La inecuacion se escribe entera en el campo, con el simbolo del
+  @ teclado: 'ABS(6*X-3)>=9'.
+  @
+  @ Este objeto es SOLO la interfaz. La matematica esta en DINECC, que
+  @ toma la inecuacion de la pila y devuelve { TXT PES MSG }.
+  @
+  @ Deja en la pila: n2 = puntos criticos, n1 = el conjunto como texto.
+  "Inecuacion"
+  {
+    { "Inec, ej 'X^2-X-2>0':" "'X^2-X-2>0'" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> Q
+    \<<
+      Q DINECC OBJ\-> DROP \-> TXT PES MSG
+      \<<
+        IF TXT SIZE
+        THEN
+          "Puntos criticos:" 10 CHR + PES \->STR + MSGBOX
+          "S =" 10 CHR + TXT + MSGBOX
+        END
+        IF MSG SIZE THEN MSG MSGBOX END
+        PES TXT
+      \>>
+    \>>
+  END
+\>>

@@ -1,0 +1,52 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DDOMC - nucleo de DDOM. Dominio natural de f(X), por definicion:
+  @ junta las condiciones de la expresion TAL COMO SE ESCRIBIO (DCONDC)
+  @ y las resuelve por tabla de signos (DINTC).
+  @ Uso:  'F(X)' DDOMC
+  @ Deja: n1 = { TXT CSTR PES MSG }
+  @         TXT  = dominio en intervalos, ej "R - {-3, 3}"
+  @         CSTR = las condiciones como texto, ej { "X^2-9 <> 0" },
+  @                que es lo que la catedra quiere ver escrito
+  @         PES  = puntos criticos exactos, ordenados
+  @         MSG  = "" o avisos de DINTC
+  @
+  @ Diferencia con domain49 (fork, analisis/domain49): aquel simplifica
+  @ antes de buscar los polos y (X-3)/(X^2-9) le da R - {-3}. Aca las
+  @ condiciones salen del arbol sin tocar, y da R - {-3, 3}.
+  \-> F0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END DCONDC \-> CL
+      \<<
+        @ Las condiciones como texto: G, sin tildes, y el signo.
+        { }
+        IF CL SIZE 0 >
+        THEN
+          1 CL SIZE
+          FOR I
+            CL I GET OBJ\-> DROP \-> G C
+            \<<
+              G \->STR
+              IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+              " " +
+              { 139 138 62 } C 1 + GET CHR + " 0" +
+              +
+            \>>
+          NEXT
+        END
+        \-> CSTR
+        \<<
+          IF CL SIZE 0 ==
+          THEN "R" CSTR { } "" 4 \->LIST
+          ELSE
+            CL DINTC OBJ\-> DROP \-> TXT PES MSG
+            \<< TXT CSTR PES MSG 4 \->LIST \>>
+          END
+        \>>
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>
