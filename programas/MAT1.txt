@@ -349,6 +349,242 @@ DIR
       \>>
     END
   \>>
+  DCONTFC
+  \<<
+    @ DCONTFC - nucleo de DCONTF. Continuidad de UNA funcion (no a trozos)
+    @ en un punto a: las tres condiciones del TP 9 y la clasificacion de
+    @ la catedra (evitable si el limite existe, inevitable si no).
+    @ Uso:  'F(X)' A DCONTFC
+    @ Deja: n1 = { FA LI LD K }
+    @         FA = f(a), o "NO EXISTE"
+    @         LI, LD = limites laterales, o "NO EXISTE"; con ~ adelante
+    @                  si salieron del sondeo numerico y no del CAS
+    @         K = veredicto: 0 continua, 1 evitable (no existe f(a)),
+    @             2 evitable (f(a) distinto del lim), 3 salto finito,
+    @             4 lim infinito, 5 lateral no existe,
+    @             6 continua de un solo lado (a es borde del dominio)
+    @
+    @ Sin INFORM ni MSGBOX A PROPOSITO: eso lo pone DCONTF, asi el harness
+    @ puede probar este objeto por pila.
+    @
+    @ Medido antes de escribir esto (harness/casos-lateral.txt, emulador
+    @ con ROM de 50g, 14 de 20 con los 6 restantes explicados):
+    @  - 'X=a-0' y 'X=a+0' son limites laterales de verdad: ABS(X)/X en
+    @    0 da -1 y 1, y 1/X da -oo y +oo CON signo.
+    @  - Armada desde numeros de la pila no sirve ('X' 0 0 - = da X=0),
+    @    pero compilada desde texto con STR\-> si. Por eso se arma como
+    @    texto.
+    @  - El CAS ignora el dominio: \v/X en 0-0 da 0. Un lateral fuera del
+    @    dominio se detecta con el sondeo numerico en a -/+ 1e-6, que ahi
+    @    devuelve un complejo (CLAUDE.md 2.14: decidir por TYPE).
+    @  - f(a) fuera del dominio NO da error: 0/0 da '?', 1/0 da 'oo' (y
+    @    9.99999999999E499 con \->NUM). Se decide por el caracter 159,
+    @    por el "?" y por la magnitud, no con IFERR.
+    @  - 'SIN(1/X)' en 0+0 da '?': lateral que no existe.
+    @
+    @ Cada IFERR lleva su guardian de profundidad (CLAUDE.md 2.11): los
+    @ laterales se acumulan en la pila y un argumento que quedara de un
+    @ comando fallido correria todo.
+    \-> F0 A
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          @ a como texto sin tildes, para armar 'X=a-0'
+          A \->STR
+          IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+          \-> AS
+          \<<
+            @ Un paso por lado: S=-1 izquierda, S=1 derecha.
+            @ Cada paso deja 3 valores: lo que se muestra, el valor, y
+            @ el codigo 0 finito, 1 infinito, 2 no existe.
+            -1 1 FOR S
+              "'X=" AS + IF S 0 < THEN "-0'" ELSE "+0'" END + STR\->
+              \-> EQ
+              \<<
+                DEPTH \-> D1
+                \<<
+                  IFERR F 'X' A S .000001 * + = SUBST EVAL \->NUM THEN "ERR" END
+                  \-> P0 \<< DEPTH D1 - DROPN P0 \>>
+                \>>
+                DEPTH \-> D1
+                \<<
+                  IFERR F EQ LIMIT EVAL THEN "ERR" END
+                  \-> L0 \<< DEPTH D1 - DROPN L0 \>>
+                \>>
+                \-> P L
+                \<<
+                  "NO EXISTE" 0 3 \-> D N K
+                  \<<
+                    @ Fuera del dominio de ese lado: el sondeo no da un real.
+                    IF P TYPE 0 == NOT THEN 2 'K' STO END
+                    IF K 3 == L TYPE 2 == NOT AND
+                    THEN
+                      IF L \->STR 159 CHR POS
+                      THEN L 'D' STO 1 'K' STO
+                      ELSE
+                        IF L \->STR "?" POS
+                        THEN 2 'K' STO
+                        ELSE
+                          DEPTH \-> D1
+                          \<<
+                            IFERR L \->NUM THEN "ERR" END
+                            \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                          \>>
+                          IF DUP TYPE 0 ==
+                          THEN 'N' STO L 'D' STO 0 'K' STO
+                          ELSE DROP
+                          END
+                        END
+                      END
+                    END
+                    @ El CAS no resolvio: vale el sondeo, marcado con ~
+                    IF K 3 ==
+                    THEN
+                      IF P ABS 100000 >
+                      THEN
+                        1 'K' STO
+                        "~" IF P 0 < THEN "-" ELSE "+" END + "inf" + 'D' STO
+                      ELSE
+                        0 'K' STO P 'N' STO "~" P 6 RND \->STR + 'D' STO
+                      END
+                    END
+                    D N K
+                  \>>
+                \>>
+              \>>
+            2 STEP
+            \-> LI LIN LIK LD LDN LDK
+            \<<
+              @ Condicion 1: f(a).
+              DEPTH \-> D1
+              \<<
+                IFERR F 'X' A = SUBST EVAL THEN "ERR" END
+                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+              \>>
+              \-> V
+              \<<
+                "NO EXISTE" 0 0 \-> FA FAN FAE
+                \<<
+                  IF V TYPE 2 == NOT
+                  THEN
+                    IF V \->STR 159 CHR POS V \->STR "?" POS + NOT
+                    THEN
+                      DEPTH \-> D1
+                      \<<
+                        IFERR V \->NUM THEN "ERR" END
+                        \-> V1 \<< DEPTH D1 - DROPN V1 \>>
+                      \>>
+                      IF DUP TYPE 0 ==
+                      THEN
+                        IF DUP ABS 1.E400 <
+                        THEN 'FAN' STO V 'FA' STO 1 'FAE' STO
+                        ELSE DROP
+                        END
+                      ELSE DROP
+                      END
+                    END
+                  END
+                  @ Condicion 2: el limite existe si los laterales son finitos
+                  @ e iguales. Condicion 3: coincide con f(a).
+                  IF LIK 0 == LDK 0 == AND
+                  THEN LIN LDN - ABS LIN ABS 1 + .000001 * <
+                  ELSE 0
+                  END
+                  \-> EQL
+                  \<<
+                    IF EQL
+                    THEN
+                      IF FAE
+                      THEN
+                        IF FAN LIN - ABS LIN ABS 1 + .000001 * <
+                        THEN 0 ELSE 2 END
+                      ELSE 1
+                      END
+                    ELSE
+                      IF LIK 1 == LDK 1 == OR
+                      THEN 4
+                      ELSE
+                        IF LIK 2 == LDK 2 == OR
+                        THEN
+                          @ Borde del dominio: un lado no existe y el otro
+                          @ coincide con f(a), ej '\v/X' en 0.
+                          0
+                          IF FAE
+                          THEN
+                            IF LIK 0 == THEN FAN LIN - ABS LIN ABS 1 + .000001 * < OR END
+                            IF LDK 0 == THEN FAN LDN - ABS LDN ABS 1 + .000001 * < OR END
+                          END
+                          IF THEN 6 ELSE 5 END
+                        ELSE 3
+                        END
+                      END
+                    END
+                    \-> K
+                    \<<
+                      FA LI LD K 4 \->LIST
+                      \-> R \<< DEPTH D0 - DROPN R \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DCONTF
+  \<<
+    @ DCONTF - continuidad de UNA funcion (no a trozos) en un punto a.
+    @ Para funciones a trozos esta DCONT. Cubre el TP 9 (ej. 2 y 3).
+    @
+    @ Este objeto es SOLO la interfaz: formulario y cajas. La matematica
+    @ esta en DCONTFC, que toma 'F' A de la pila y devuelve
+    @ { FA LI LD K }. Separados para que el harness pueda probar el
+    @ calculo sin tipear en un INFORM.
+    @
+    @ Deja en la pila: n3 = f(a), n2 = lim izq, n1 = lim der.
+    "Continuidad de f"
+    {
+      { "f(X), ej '1/X':" "'1/X'" }
+      { "Punto a:" "1" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F A
+      \<<
+        F A DCONTFC OBJ\-> DROP \-> FA LI LD K
+        \<<
+          @ Un string se muestra tal cual; lo demas con \->STR.
+          FA IF DUP TYPE 2 == NOT THEN \->STR END
+          LI IF DUP TYPE 2 == NOT THEN \->STR END
+          LD IF DUP TYPE 2 == NOT THEN \->STR END
+          \-> SFA SLI SLD
+          \<<
+            "f(a) = " SFA + 10 CHR +
+            "Lim izq: " + SLI +
+            MSGBOX
+            "Lim der: " SLD +
+            MSGBOX
+            CASE
+              K 0 == THEN "CONTINUA" 10 CHR + "f(a) = lim" + END
+              K 1 == THEN "EVITABLE (no f(a))" 10 CHR + "Redefinir f(a)=" + SLI + END
+              K 2 == THEN "EVITABLE f(a)<>lim" 10 CHR + "Redefinir f(a)=" + SLI + END
+              K 3 == THEN "INEVITABLE (esencial)" 10 CHR + "salto finito (1a esp)" + END
+              K 4 == THEN "INEVITABLE (esencial)" 10 CHR + "lim infinito (2a esp)" + END
+              K 5 == THEN "INEVITABLE (esencial)" 10 CHR + "lim lateral no existe" + END
+              "CONTINUA de 1 lado" 10 CHR + "a: borde del dominio" +
+            END
+            MSGBOX
+            FA LI LD
+          \>>
+        \>>
+      \>>
+    END
+  \>>
   DDEFC
   \<<
     @ DDEFC - nucleo de DDEF. Derivada por definicion.

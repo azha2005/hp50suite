@@ -24,7 +24,7 @@ $salida = Join-Path $PSScriptRoot 'MAT1-EMU.txt'
 
 # Los datos de prueba primero, para que existan antes que TD y TF.
 $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
-           'DVFGC','DVFG','DDOMPC','DDOMP','DCONTC','DCONT',
+           'DVFGC','DVFG','DDOMPC','DDOMP','DCONTC','DCONT','DCONTFC','DCONTF',
            'DDEFC','DDEF','DTANORC','DTANOR','DASVC','DASV',
            'DASHOC','DASHO','DOPFUNC','DOPFUN','DESTFUNC','DESTFUN',
            'LHOPC','LHOP','DSEPC','DSEP','DSEPIC','DSEPI',

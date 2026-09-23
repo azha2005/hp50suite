@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCONTF - continuidad de UNA funcion (no a trozos) en un punto a.
+  @ Para funciones a trozos esta DCONT. Cubre el TP 9 (ej. 2 y 3).
+  @
+  @ Este objeto es SOLO la interfaz: formulario y cajas. La matematica
+  @ esta en DCONTFC, que toma 'F' A de la pila y devuelve
+  @ { FA LI LD K }. Separados para que el harness pueda probar el
+  @ calculo sin tipear en un INFORM.
+  @
+  @ Deja en la pila: n3 = f(a), n2 = lim izq, n1 = lim der.
+  "Continuidad de f"
+  {
+    { "f(X), ej '1/X':" "'1/X'" }
+    { "Punto a:" "1" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F A
+    \<<
+      F A DCONTFC OBJ\-> DROP \-> FA LI LD K
+      \<<
+        @ Un string se muestra tal cual; lo demas con \->STR.
+        FA IF DUP TYPE 2 == NOT THEN \->STR END
+        LI IF DUP TYPE 2 == NOT THEN \->STR END
+        LD IF DUP TYPE 2 == NOT THEN \->STR END
+        \-> SFA SLI SLD
+        \<<
+          "f(a) = " SFA + 10 CHR +
+          "Lim izq: " + SLI +
+          MSGBOX
+          "Lim der: " SLD +
+          MSGBOX
+          CASE
+            K 0 == THEN "CONTINUA" 10 CHR + "f(a) = lim" + END
+            K 1 == THEN "EVITABLE (no f(a))" 10 CHR + "Redefinir f(a)=" + SLI + END
+            K 2 == THEN "EVITABLE f(a)<>lim" 10 CHR + "Redefinir f(a)=" + SLI + END
+            K 3 == THEN "INEVITABLE (esencial)" 10 CHR + "salto finito (1a esp)" + END
+            K 4 == THEN "INEVITABLE (esencial)" 10 CHR + "lim infinito (2a esp)" + END
+            K 5 == THEN "INEVITABLE (esencial)" 10 CHR + "lim lateral no existe" + END
+            "CONTINUA de 1 lado" 10 CHR + "a: borde del dominio" +
+          END
+          MSGBOX
+          FA LI LD
+        \>>
+      \>>
+    \>>
+  END
+\>>

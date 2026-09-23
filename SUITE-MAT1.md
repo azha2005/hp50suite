@@ -44,6 +44,7 @@ generada para transferir (ver §3).
 | `TCHK` | — | — | pila | **4 de 4**. El chequeo del ∞ usaba `\.oo` y daba por bueno un `'1/\.oo'` sin evaluar; ahora va por `INF` |
 | `DOPFUN` | Parcial 1 | TP 4 | INFORM + `DOPFUNC` | **4 de 4**. Avisa que el cociente sale simplificado |
 | `DCONT` | Parcial 1 | TP 7 | INFORM + `DCONTC` | **4 de 4** (continua, salto, evitable, esencial). No requiere `INF` |
+| `DCONTF` | Parcial 1 | TP 9 | INFORM + `DCONTFC` | **22 de 22** en el emulador (`harness/casos-dcontf.txt`). Una sola f(X), no a trozos. Laterales de verdad. No requiere `INF` |
 | `DASHO` | Parcial 1 | TP 8 | INFORM + `DASHOC` | **4 de 4**. Ahora distingue *m* infinita de "el CAS no pudo". Requiere `INF` |
 | `DASV` | Parcial 1 | TP 8 | INFORM + `DASVC` | **4 de 4** (polo simple, polo doble, acotada) |
 | `DDEF` | Parcial 1 | TP 9 | INFORM + `DDEFC` | **3 de 3** (simbólica y en un punto) |
@@ -382,6 +383,8 @@ por `a-crlf.ps1`.
   bien igual, porque solo mira si hay infinito; el signo que muestra la caja no
   significa nada en ese caso. Si algún día importa el signo, hay que pasar a
   límites laterales de verdad.
+  **Ya se midió** (`harness/casos-lateral.txt`): `'X=a-0'` y `'X=a+0'` son
+  laterales de verdad y dan el ∞ con signo. `DCONTF` los usa; `DCONT` todavía no.
 
 ---
 
@@ -413,6 +416,7 @@ visitado no rompe nada.
 |---|---|---|---|
 | `DOPFUN` | f(X), g(X), operación, x0 | una por operación pedida; dos de evaluación | n2 = fog, n1 = gof |
 | `DCONT` | rama izq, rama der, punto a | límites; veredicto | n2 = lím izq, n1 = lím der |
+| `DCONTF` | f(X), punto a | f(a) y lím izq; lím der; veredicto | n3 = f(a), n2 = lím izq, n1 = lím der |
 | `DASHO` | f(X) | m y b en +∞; clasificación; ídem en −∞ | n4..n1 = m(+∞), b(+∞), m(−∞), b(−∞) |
 | `DASV` | f(X), punto a | valores a los dos lados; veredicto | n2 = f(a−e), n1 = f(a+e) |
 | `DDEF` | f(X), x0 (`'X'` = simbólico) | cociente; derivada | n2 = cociente, n1 = derivada |
@@ -437,6 +441,15 @@ asíntota vertical es opcional porque el candidato lo tiene que poner el usuario
 salto finito, y límites iguales. Ese último caso no se puede cerrar solo con los
 límites — la caja dice explícitamente que hay que comparar con f(a) para separar
 continua de evitable.
+
+`DCONTF` es el par de `DCONT` para una función que **no** es a trozos (TP 9,
+ej. 2 y 3). Chequea las tres condiciones y clasifica como la cátedra:
+**evitable** si el límite existe (sin f(a), o con f(a) distinto), **inevitable
+(esencial)** si no existe (salto finito, límite infinito, o un lateral que no
+existe). Cuando a es borde del dominio, como `\v/X` en 0, dice **continua de
+un solo lado**. En los evitables la caja dice con qué valor redefinir f(a).
+Usa límites laterales de verdad (`'X=a-0'`, armado como texto porque desde la
+pila `a 0 -` se reduce a `a`); lo medido está en el comentario de `DCONTFC`.
 
 `DTANOR` corrige el signo: la pendiente de la normal es `-1/f'(x0)`. La
 afirmación del punto 3c de la teoría de la guía es falsa por el signo. Si
@@ -657,6 +670,31 @@ Donde dice "en la pila", es lo que queda además de las cajas.
 límites bien pero el veredicto "SALTO FINITO", por el `SAME` contra `INF` que se
 describe en §2. Ahora el infinito se detecta por el carácter 159. Rehacer este
 caso para confirmar el arreglo; los dos primeros no dependen de eso.
+
+### DCONTF
+
+**22 de 22 en el emulador con ROM de 50g** (`harness/casos-dcontf.txt`, el
+núcleo `DCONTFC`). La interfaz solo se comprobó que compila.
+
+| f(X) | a | Debe dar |
+|---|---|---|
+| `'X^2+1'` | `2` | f(a) `5`, laterales `5` → **CONTINUA** |
+| `'(X^2-1)/(X-1)'` | `1` | f(a) NO EXISTE, laterales `2` → **EVITABLE**, redefinir f(1)=2 |
+| `'X^2/(X^4-X^2)'` | `0` | f(a) NO EXISTE, laterales `-1` → **EVITABLE** (TP 9, ej. 2a) |
+| `'X^2/(X^4-X^2)'` | `1` y `-1` | lateral infinito → **INEVITABLE** |
+| `'ABS(X)/X^2'` | `0` | laterales `+∞` → **INEVITABLE** (TP 9, ej. 3c) |
+| `'ABS(X)/X'` | `0` | laterales `-1` y `1` → **INEVITABLE**, salto finito |
+| `'1/X'` | `0` | laterales `-∞` y `+∞`, con signo |
+| `'\v/X'` | `0` | izq NO EXISTE, der `0`, f(0)=0 → **CONTINUA de 1 lado** |
+| `'SIN(1/X)'` | `0` | laterales `?` → **INEVITABLE**, lateral no existe |
+
+Dos trampas medidas antes de escribirlo (`harness/casos-lateral.txt`):
+
+- **El CAS ignora el dominio en los laterales**: `'\v/X' 'X=0-0' LIMIT` da `0`.
+  El lado fuera del dominio se reconoce porque el sondeo numérico en a−1e-6
+  devuelve un complejo (§2.14 de CLAUDE.md: por `TYPE`).
+- **f(a) fuera del dominio no da error**: `0/0` da `'?'` y `1/0` da `'∞'`. Se
+  decide por el texto (159 y `?`) y la magnitud, no con `IFERR`.
 
 ### DASV
 

@@ -20,7 +20,7 @@ Matemática I está en `../SUITE-MAT1.md`, que también se subordina a CLAUDE.md
    `'NOMBRE' STO` y después se usan escribiendo el nombre de la variable en
    cualquier campo "Datos:".
 4. **`MAT1.txt`** (Matemática I) es una sola transferencia que cae como una
-   subcarpeta con los 18 objetos adentro. Ver abajo.
+   subcarpeta con los 41 objetos adentro. Ver abajo.
 5. **`DINF.txt`**, y guardarlo en `HOME`. Se corre **una vez**: se pone el
    símbolo ∞ del teclado en el nivel 1 de la pila y se ejecuta. Deja el global
    `INF`, sin el cual `DASHO` y `DESTFUN` no calculan asíntotas (`DCONT` ya no
@@ -53,8 +53,8 @@ mismo:
 
 | Archivo | Para | Forma |
 |---|---|---|
-| `MAT1.txt` | La calculadora real, por Conn4x | Un `DIR` con los 18 objetos |
-| `MAT1-EMU.txt` | Emu48, por `ASCIIBIN` | Un programa instalador que hace los 18 `STO` |
+| `MAT1.txt` | La calculadora real, por Conn4x | Un `DIR` con los 41 objetos |
+| `MAT1-EMU.txt` | Emu48, por `ASCIIBIN` | Un programa instalador que hace los 41 `STO` |
 
 `ASCIIBIN` falla a veces con directorios, de ahí la segunda forma. El detalle
 está en `../SUITE-MAT1.md` §9. **`verificar.ps1` le marca huérfanos a

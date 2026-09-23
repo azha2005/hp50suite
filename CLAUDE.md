@@ -455,6 +455,11 @@ DEPTH \-> D0
 `LIMIT` de `1/X` en 0 abre **"Unsigned inf. Solve?"** y se queda esperando una
 respuesta. Un programa que corre solo se cuelga ahí hasta que alguien contesta.
 
+**Los límites laterales de verdad existen** y no tienen ese problema: `'X=a-0'` y
+`'X=a+0'` dan el ∞ con signo (`harness/casos-lateral.txt`). Desde la pila no se
+pueden armar (`a 0 -` se reduce a `a`): hay que compilarlos desde texto con
+`STR\->`, como hace `DCONTFC`. Ojo: ignoran el dominio (`\v/X` en `0-0` da `0`).
+
 Afecta a `DCONT` con una rama que revienta en el punto de corte, que es
 justamente el caso interesante. Y la respuesta por defecto (YES) devuelve el
 infinito **sin signo**, que es por qué `DCONT` informó `lim izq +∞` para `1/X`
@@ -785,7 +790,7 @@ cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
 
 ### Matemática I (suite aparte)
 
-39 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+41 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
 
 Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 
@@ -793,6 +798,7 @@ Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 |---|---|---|
 | `DOPFUN` | Suma, resta, producto, cociente y las dos composiciones | 4 |
 | `DCONT` | Continuidad de una función a trozos en el punto de corte | 7 |
+| `DCONTF` | Continuidad de una función que no es a trozos en un punto; evitable/inevitable | 9 |
 | `DASHO` | Asíntotas horizontales y oblicuas, a los dos infinitos | 8 |
 | `DASV` | Asíntota vertical en un punto candidato | 8 |
 | `DDEF` | Derivada por definición, con el cociente incremental a la vista | 9 |
