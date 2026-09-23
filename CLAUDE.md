@@ -458,12 +458,13 @@ respuesta. Un programa que corre solo se cuelga ahí hasta que alguien contesta.
 **Los límites laterales de verdad existen** y no tienen ese problema: `'X=a-0'` y
 `'X=a+0'` dan el ∞ con signo (`harness/casos-lateral.txt`). Desde la pila no se
 pueden armar (`a 0 -` se reduce a `a`): hay que compilarlos desde texto con
-`STR\->`, como hace `DCONTFC`. Ojo: ignoran el dominio (`\v/X` en `0-0` da `0`).
+`STR\->`, como hacen `DCONTC` y `DCONTFC`. Ojo: ignoran el dominio (`\v/X` en `0-0` da `0`).
 
-Afecta a `DCONT` con una rama que revienta en el punto de corte, que es
+Afectaba a `DCONT` con una rama que revienta en el punto de corte, que es
 justamente el caso interesante. Y la respuesta por defecto (YES) devuelve el
-infinito **sin signo**, que es por qué `DCONT` informó `lim izq +∞` para `1/X`
-cuando el límite lateral verdadero es −∞.
+infinito **sin signo**, que es por qué `DCONT` informaba `lim izq +∞` para `1/X`
+cuando el límite lateral verdadero es −∞. **Resuelto:** `DCONT` pasó a
+laterales y ahora da −∞.
 
 ### 2.13 Matrices como salida tipo tabla
 

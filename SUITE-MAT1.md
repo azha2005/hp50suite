@@ -43,7 +43,7 @@ generada para transferir (ver §3).
 |---|---|---|---|---|
 | `TCHK` | — | — | pila | **4 de 4**. El chequeo del ∞ usaba `\.oo` y daba por bueno un `'1/\.oo'` sin evaluar; ahora va por `INF` |
 | `DOPFUN` | Parcial 1 | TP 4 | INFORM + `DOPFUNC` | **4 de 4**. Avisa que el cociente sale simplificado |
-| `DCONT` | Parcial 1 | TP 7 | INFORM + `DCONTC` | **4 de 4** (continua, salto, evitable, esencial). No requiere `INF` |
+| `DCONT` | Parcial 1 | TP 7 | INFORM + `DCONTC` | **6 de 6** (continua, salto, evitable, esencial por los dos lados, corte negativo). Laterales con signo. No requiere `INF` |
 | `DCONTF` | Parcial 1 | TP 9 | INFORM + `DCONTFC` | **22 de 22** en el emulador (`harness/casos-dcontf.txt`). Una sola f(X), no a trozos. Laterales de verdad. No requiere `INF` |
 | `DASHO` | Parcial 1 | TP 8 | INFORM + `DASHOC` | **4 de 4**. Ahora distingue *m* infinita de "el CAS no pudo". Requiere `INF` |
 | `DASV` | Parcial 1 | TP 8 | INFORM + `DASVC` | **4 de 4** (polo simple, polo doble, acotada) |
@@ -331,9 +331,10 @@ por `a-crlf.ps1`.
   `'X=a-'` no se puede construir desde la pila. Evalúa en `a ± 0.000001` y compara
   contra 1e6. Es una heurística, no una demostración.
 
-- **`DCONT` usa el límite ordinario en el punto, no los laterales.** Cada rama por
-  separado es una función común y el límite ordinario alcanza; el lateral solo
-  haría falta si la rama misma revienta ahí, y para eso está `DASV`.
+- **`DCONT` usa límites laterales de verdad**: la rama izquierda en `'X=a-0'`,
+  la derecha en `'X=a+0'`. Antes usaba el límite ordinario, con el argumento de
+  que cada rama es una función común; pero cuando la rama revienta en el corte
+  —el caso interesante— el ordinario devolvía el ∞ sin signo (ver §5).
 
 - **`LAGR` no clasifica los puntos críticos.** Los exámenes modelo nunca lo
   piden, así que no arma el hessiano orlado.
@@ -381,10 +382,10 @@ por `a-crlf.ps1`.
   devuelve el infinito **sin signo**: por eso `DCONT` mostró `lim izq +∞` para
   `1/X` cuando el límite lateral verdadero es −∞. El veredicto (ESENCIAL) sale
   bien igual, porque solo mira si hay infinito; el signo que muestra la caja no
-  significa nada en ese caso. Si algún día importa el signo, hay que pasar a
-  límites laterales de verdad.
-  **Ya se midió** (`harness/casos-lateral.txt`): `'X=a-0'` y `'X=a+0'` son
-  laterales de verdad y dan el ∞ con signo. `DCONTF` los usa; `DCONT` todavía no.
+  significa nada en ese caso.
+  **Resuelto:** `DCONT` y `DCONTF` usan laterales de verdad (`'X=a-0'`,
+  `'X=a+0'`, medidos en `harness/casos-lateral.txt`), que dan el ∞ con signo:
+  `1/X` por izquierda en 0 ahora da −∞.
 
 ---
 
@@ -664,12 +665,18 @@ Donde dice "en la pila", es lo que queda además de las cajas.
 |---|---|---|
 | `'X+1'` / `'X+3'` | `1` | lím izq `2`, lím der `4` → **SALTO FINITO** |
 | `'X^2'` / `'2*X-1'` | `1` | lím izq `1`, lím der `1` → **LIMITES IGUALES** |
-| `'1/X'` / `'X'` | `0` | lím izq `+∞`, lím der `0` → **ESENCIAL** |
+| `'1/X'` / `'X'` | `0` | lím izq `-∞`, lím der `0` → **ESENCIAL** |
+| `'X'` / `'1/X'` | `0` | lím izq `0`, lím der `+∞` → **ESENCIAL** |
+| `'X'` / `'X+1'` | `-1` | lím izq `-1`, lím der `0` → **SALTO FINITO** |
 
 **El tercero falló y ya está arreglado.** Corrido en la máquina, daba los dos
 límites bien pero el veredicto "SALTO FINITO", por el `SAME` contra `INF` que se
 describe en §2. Ahora el infinito se detecta por el carácter 159. Rehacer este
 caso para confirmar el arreglo; los dos primeros no dependen de eso.
+
+**Con laterales, 6 de 6 en el emulador** (`harness/casos-mat1.txt`). El tercero
+decía `+∞` en esta tabla y en la batería: era el ∞ sin signo del límite
+ordinario, copiado como si fuera lo correcto. El lateral verdadero es −∞.
 
 ### DCONTF
 

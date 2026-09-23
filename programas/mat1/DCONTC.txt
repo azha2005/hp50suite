@@ -11,9 +11,13 @@
   @ el harness puede correr este objeto con argumentos de pila y
   @ comparar el resultado, que con el formulario soldado no se podia.
   @
-  @ Cada rama por separado es una funcion comun, asi que alcanza con el
-  @ limite ordinario en a; el lateral solo haria falta si la rama misma
-  @ revienta ahi, y para eso esta DASV.
+  @ Limites LATERALES de verdad: la rama izquierda en 'X=a-0' y la
+  @ derecha en 'X=a+0'. Antes era el limite ordinario, y con una rama que
+  @ revienta en el corte el CAS abria "Unsigned inf. Solve?" y devolvia el
+  @ infinito SIN signo: '1/X' por izquierda en 0 daba +oo en vez de -oo.
+  @ Medido (harness/casos-lateral.txt): los laterales dan el signo bien.
+  @ Se arman como texto y se compilan con STR\->, porque desde la pila
+  @ 'X' A 0 - = se reduce a X=a. Igual que DCONTFC.
   @
   @ NO requiere el global INF: el punto de corte es finito, y el
   @ infinito se detecta por su caracter (ver abajo), no comparando.
@@ -28,10 +32,16 @@
       \<<
         FD0 IF DUP TYPE 2 == THEN STR\-> END \-> FD
         \<<
-          0 0 0 0 \-> LI LD IG ES
+          @ a como texto sin tildes, para armar 'X=a-0' y 'X=a+0'
+          A \->STR
+          IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+          \-> AS
           \<<
-            IFERR FI 'X' A = LIMIT EVAL THEN "INDEF" END 'LI' STO
-            IFERR FD 'X' A = LIMIT EVAL THEN "INDEF" END 'LD' STO
+          "'X=" AS + "-0'" + STR\-> "'X=" AS + "+0'" + STR\->
+          0 0 0 0 \-> EQI EQD LI LD IG ES
+          \<<
+            IFERR FI EQI LIMIT EVAL THEN "INDEF" END 'LI' STO
+            IFERR FD EQD LIMIT EVAL THEN "INDEF" END 'LD' STO
             IFERR LI \->NUM LD \->NUM - ABS .0000001 < THEN LI LD SAME END 'IG' STO
             @ Deteccion del infinito POR EL CARACTER, no por SAME contra INF.
             @ Probado en la maquina: con rama izq '1/X' y corte 0, LIMIT
@@ -58,6 +68,7 @@
             END
             LI LD IG ES 4 \->LIST
             \-> R \<< DEPTH D0 - DROPN R \>>
+          \>>
           \>>
         \>>
       \>>
