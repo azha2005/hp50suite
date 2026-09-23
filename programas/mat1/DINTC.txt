@@ -4,13 +4,17 @@
   @ SIGNOS, que es como lo resuelve la catedra. Motor de DDOMC y DINECC.
   @ Uso:  { { G1 C1 } ... } DINTC
   @         C = 0  G <> 0 ;  C = 1  G >= 0 ;  C = 2  G > 0 ;  C = 3  G = 0
-  @ Deja: n1 = { TXT PES MSG }
+  @ Deja: n1 = { TXT PES MSG TXT2 }
   @         TXT = el conjunto en notacion de intervalos, ej
   @               "(-oo, -1] U [2, +oo)" (con el caracter 159), "R",
   @               "R - {-3, 3}" o "VACIO"
   @         PES = puntos criticos, exactos y ordenados
   @         MSG = "" o avisos (el CAS no pudo, periodica, o el sondeo
   @               de control no coincide con la tabla)
+  @         TXT2 = el mismo conjunto escrito de la otra manera, o "" si
+  @               no hay otra: "(-oo, -3) U (-3, 3) U (3, +oo)" cuando TXT
+  @               es "R - {-3, 3}", y "(1, +oo) - {3}" cuando TXT es
+  @               "(1, 3) U (3, +oo)"
   @
   @ Como:
   @  1. Puntos criticos = ceros de cada G (ZEROS). Entre dos puntos
@@ -151,38 +155,24 @@
                 END
                 \-> B
                 \<<
-                  "" 1 \-> TXT ALL
+                  "" "" 1 { } \-> TXT TXT2 ALL HS
                   \<<
-                    @ ---- 4. el texto ----
+                    @ ---- 4. el texto, escrito de dos maneras ----
+                    @ Un HUECO es un punto que falta con los dos tramos
+                    @ vecinos adentro. M=0 escribe intervalos puros:
+                    @   (1, 3) U (3, +oo)
+                    @ M=1 saltea los huecos y los lista aparte:
+                    @   (1, +oo) - {3}      y con todo R:  R - {-3, 3}
+                    @ Las dos son correctas; la catedra usa las dos.
                     1 N 1 +
                     FOR K
                       IF B K 2 * 1 - GET NOT THEN 0 'ALL' STO END
                     NEXT
-                    IF ALL
-                    THEN
-                      @ Todos los tramos adentro: "R", o "R - {...}"
-                      @ con los puntos sueltos que faltan.
-                      "R" 'TXT' STO
-                      "" \-> FS
-                      \<<
-                        IF N 0 >
-                        THEN
-                          1 N
-                          FOR K
-                            IF B K 2 * GET NOT
-                            THEN
-                              FS IF DUP SIZE THEN ", " + END
-                              PSS K GET + 'FS' STO
-                            END
-                          NEXT
-                        END
-                        IF FS SIZE
-                        THEN "R - {" FS + "}" + 'TXT' STO
-                        END
-                      \>>
-                    ELSE
+                    0 1
+                    FOR M
+                      ""
                       IF B 1 GET
-                      THEN "(-" 159 CHR + ", " + 'TXT' STO
+                      THEN "(-" 159 CHR + ", " + +
                       END
                       IF N 0 >
                       THEN
@@ -190,39 +180,73 @@
                         FOR K
                           B K 2 * 1 - GET B K 2 * GET B K 2 * 1 + GET
                           PSS K GET
-                          \-> L P R S
+                          \-> L P0 R S
                           \<<
-                            IF L
-                            THEN
-                              IF P
+                            P0
+                            IF M L R AND AND P0 NOT AND
+                            THEN DROP 1 HS S + 'HS' STO
+                            END
+                            \-> P
+                            \<<
+                              @ El texto en armado esta en el nivel 1.
+                              IF L
                               THEN
-                                IF R NOT THEN TXT S + "]" + 'TXT' STO END
-                              ELSE
-                                TXT S + ")" + 'TXT' STO
-                                IF R THEN TXT " U (" + S + ", " + 'TXT' STO END
-                              END
-                            ELSE
-                              IF R
-                              THEN
-                                TXT IF DUP SIZE THEN " U " + END
-                                IF P THEN "[" ELSE "(" END + S + ", " +
-                                'TXT' STO
-                              ELSE
                                 IF P
                                 THEN
-                                  TXT IF DUP SIZE THEN " U " + END
-                                  "{" + S + "}" + 'TXT' STO
+                                  IF R NOT THEN S + "]" + END
+                                ELSE
+                                  S + ")" +
+                                  IF R THEN " U (" + S + ", " + END
+                                END
+                              ELSE
+                                IF R
+                                THEN
+                                  IF DUP SIZE THEN " U " + END
+                                  IF P THEN "[" ELSE "(" END + S + ", " +
+                                ELSE
+                                  IF P
+                                  THEN
+                                    IF DUP SIZE THEN " U " + END
+                                    "{" + S + "}" +
+                                  END
                                 END
                               END
-                            END
+                            \>>
                           \>>
                         NEXT
                       END
                       IF B N 2 * 1 + GET
-                      THEN TXT "+" + 159 CHR + ")" + 'TXT' STO
+                      THEN "+" + 159 CHR + ")" +
                       END
-                      IF TXT SIZE NOT THEN "VACIO" 'TXT' STO END
-                    END
+                      IF DUP SIZE NOT THEN DROP "VACIO" END
+                      @ Toda la recta se escribe R.
+                      IF DUP "(-" 159 CHR + ", +" + 159 CHR + ")" + ==
+                      THEN DROP "R"
+                      END
+                    NEXT
+                    \-> T0 T1
+                    \<<
+                      IF HS SIZE
+                      THEN
+                        HS 1 GET
+                        IF HS SIZE 1 >
+                        THEN
+                          2 HS SIZE
+                          FOR K ", " + HS K GET + NEXT
+                        END
+                        \-> HT
+                        \<<
+                          T1 " - {" + HT + "}" +
+                          @ Con todo R adentro manda la forma con huecos;
+                          @ si no, la de intervalos, y la otra va de segunda.
+                          IF ALL
+                          THEN 'TXT' STO T0 'TXT2' STO
+                          ELSE 'TXT2' STO T0 'TXT' STO
+                          END
+                        \>>
+                      ELSE T0 'TXT' STO
+                      END
+                    \>>
                     @ ---- 5. control por sondeo ----
                     IF N 0 >
                     THEN PS 1 GET 3 - PS N GET 3 +
@@ -275,9 +299,9 @@
                     @ medido con 'X^5-X-1>0', la tabla dio VACIO y solo el
                     @ sondeo lo delato (casos-dinec-control.txt).
                     IF MSG SIZE
-                    THEN "NO CONFIABLE: " TXT + 'TXT' STO
+                    THEN "NO CONFIABLE: " TXT + 'TXT' STO "" 'TXT2' STO
                     END
-                    TXT PES MSG 3 \->LIST
+                    TXT PES MSG TXT2 4 \->LIST
                   \>>
                 \>>
               \>>

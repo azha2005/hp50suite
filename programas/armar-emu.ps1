@@ -31,7 +31,7 @@ $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
            'LAGRC','LAGR',
            'DRUFC','DRUF','DWEIERC','DWEIER',
            'DBOLZC','DBOLZ','DWSUSC','DWSUS',
-           'DCONDC','DSATC','DINTC','DDOMC','DDOM','DINECC','DINEC',
+           'DCONDC','DSATC','DINTC','DRELC','DDOMC','DDOM','DINECC','DINEC',
            'DINVC','DINV','DCONTKC','DCONTK','DPARC','DPAR')
 
 $lineas = New-Object System.Collections.Generic.List[string]

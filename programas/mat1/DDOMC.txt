@@ -1,20 +1,35 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DDOMC - nucleo de DDOM. Dominio natural de f(X), por definicion:
-  @ junta las condiciones de la expresion TAL COMO SE ESCRIBIO (DCONDC)
-  @ y las resuelve por tabla de signos (DINTC).
-  @ Uso:  'F(X)' DDOMC
-  @ Deja: n1 = { TXT CSTR PES MSG }
+  @ DDOMC - nucleo de DDOM. Dominio de f(X), por definicion: junta las
+  @ condiciones de la expresion TAL COMO SE ESCRIBIO (DCONDC), le suma
+  @ el dominio dado en el enunciado si lo hay, y resuelve todo junto por
+  @ tabla de signos (DINTC).
+  @ Uso:  'F(X)' RES DDOMC
+  @   RES = 0 si el enunciado no da dominio (dominio natural), o:
+  @         { a b }              el intervalo [a,b]
+  @         { { a b } { c d } }  varios, uno por funcion: se intersecan
+  @         'X>0'                una desigualdad (dominio abierto o
+  @                              infinito), o una lista de ellas
+  @         Un extremo INF / -INF (o el infinito) no pone condicion.
+  @ Deja: n1 = { TXT CSTR PES MSG TXT2 }
   @         TXT  = dominio en intervalos, ej "R - {-3, 3}"
   @         CSTR = las condiciones como texto, ej { "X^2-9 <> 0" },
-  @                que es lo que la catedra quiere ver escrito
+  @                que es lo que la catedra quiere ver escrito; las del
+  @                enunciado van al final con "Dado: "
   @         PES  = puntos criticos exactos, ordenados
-  @         MSG  = "" o avisos de DINTC
+  @         MSG  = "" o avisos de DINTC, y si una restriccion no se
+  @                entendio
+  @         TXT2 = el dominio escrito de la otra manera, o "":
+  @                "(1, +oo) - {3}" si TXT es "(1, 3) U (3, +oo)"
   @
   @ Diferencia con domain49 (fork, analisis/domain49): aquel simplifica
   @ antes de buscar los polos y (X-3)/(X^2-9) le da R - {-3}. Aca las
   @ condiciones salen del arbol sin tocar, y da R - {-3, 3}.
-  \-> F0
+  @
+  @ El dominio dado entra como condiciones mas del mismo sistema: la
+  @ interseccion con el natural (2024 T2: f/g con f:[-3,4], g:[-1,7])
+  @ sale sola, con los corchetes decididos igual que el resto.
+  \-> F0 RES0
   \<<
     DEPTH \-> D0
     \<<
@@ -38,12 +53,81 @@
         END
         \-> CSTR
         \<<
-          IF CL SIZE 0 ==
-          THEN "R" CSTR { } "" 4 \->LIST
-          ELSE
-            CL DINTC OBJ\-> DROP \-> TXT PES MSG
-            \<< TXT CSTR PES MSG 4 \->LIST \>>
+          @ ---- el dominio dado, normalizado a lista de restricciones ----
+          RES0
+          IF DUP TYPE 2 == THEN STR\-> END
+          IF DUP TYPE 9 == THEN 1 \->LIST END
+          IF DUP TYPE 5 == NOT THEN DROP { } END
+          @ { a b } suelto es UN intervalo, no dos restricciones.
+          IF DUP SIZE 2 ==
+          THEN
+            IF DUP 1 GET TYPE 5 == OVER 1 GET DRELC SIZE OR NOT
+            THEN 1 \->LIST
+            END
           END
+          \-> RL
+          \<<
+            { } { } "" \-> RC RS RMSG
+            \<<
+              IF RL SIZE 0 >
+              THEN
+                1 RL SIZE
+                FOR I
+                  RL I GET \-> E
+                  \<<
+                    IF E TYPE 5 ==
+                    THEN
+                      IF E SIZE 2 ==
+                      THEN
+                        E 1 GET E 2 GET \-> A B
+                        \<<
+                          @ Extremo izquierdo: X - a >= 0.
+                          IF A \->STR "INF" POS A \->STR 159 CHR POS + NOT
+                          THEN
+                            'X' A - 1 2 \->LIST 1 \->LIST RC SWAP + 'RC' STO
+                            A \->STR
+                            IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                            "Dado: X " 138 CHR + " " + SWAP +
+                            RS SWAP + 'RS' STO
+                          END
+                          @ Extremo derecho: b - X >= 0.
+                          IF B \->STR "INF" POS B \->STR 159 CHR POS + NOT
+                          THEN
+                            B 'X' - 1 2 \->LIST 1 \->LIST RC SWAP + 'RC' STO
+                            B \->STR
+                            IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                            "Dado: X " 137 CHR + " " + SWAP +
+                            RS SWAP + 'RS' STO
+                          END
+                        \>>
+                      ELSE RMSG "Intervalo mal escrito: { a b }. " + 'RMSG' STO
+                      END
+                    ELSE
+                      E DRELC
+                      IF DUP SIZE 0 ==
+                      THEN DROP RMSG "Restriccion no entendida. " + 'RMSG' STO
+                      ELSE
+                        OBJ\-> DROP DROP 2 \->LIST 1 \->LIST RC SWAP + 'RC' STO
+                        E \->STR
+                        IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                        "Dado: " SWAP +
+                        RS SWAP + 'RS' STO
+                      END
+                    END
+                  \>>
+                NEXT
+              END
+              CL RC + \-> CT
+              \<<
+                IF CT SIZE 0 ==
+                THEN "R" CSTR RS + { } RMSG "" 5 \->LIST
+                ELSE
+                  CT DINTC OBJ\-> DROP \-> TXT PES MSG TXT2
+                  \<< TXT CSTR RS + PES MSG RMSG + TXT2 5 \->LIST \>>
+                END
+              \>>
+            \>>
+          \>>
         \>>
       \>>
       \-> R \<< DEPTH D0 - DROPN R \>>

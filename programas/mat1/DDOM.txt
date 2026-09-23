@@ -1,44 +1,62 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DDOM - dominio natural de f(X), con las condiciones a la vista.
-  @ TP 1 y TP 4; el ejercicio de dominio de casi todo primer parcial:
-  @ f/g, g o f, f*g "empleando la definicion".
+  @ DDOM - dominio de f(X), con las condiciones a la vista.
+  @ El ejercicio de dominio de casi todo primer parcial: f/g, g o f,
+  @ f*g "empleando la definicion".
   @
   @ Escribir f SIN SIMPLIFICAR, como la da el enunciado: el dominio sale
   @ de la expresion escrita. Para una composicion, escribirla ya
   @ compuesta: g(x)=ln x, f(x)=x+2 -> 'LN(X+2)'.
   @
-  @ Este objeto es SOLO la interfaz. La matematica esta en DDOMC, que
-  @ toma 'F' de la pila y devuelve { TXT CSTR PES MSG }.
+  @ Dominio dado en el enunciado (ej 2024 T2: f:[-3,4], g:[-1,7]): poner
+  @ el interruptor en 1 y escribir { -3 4 }, o uno por funcion
+  @ { { -3 4 } { -1 7 } }, o desigualdades 'X>0'. Con el interruptor en 0
+  @ el tercer campo se ignora y sale el dominio natural.
   @
-  @ Deja en la pila: n1 = el dominio como texto.
-  "Dominio natural"
+  @ Este objeto es SOLO la interfaz. La matematica esta en DDOMC, que
+  @ toma 'F' RES de la pila y devuelve { TXT CSTR PES MSG TXT2 }.
+  @
+  @ Deja en la pila: n1 = el dominio como texto; si hay otra forma de
+  @ escribirlo, n2 = esa otra forma.
+  "Dominio"
   {
     { "f(X), ej '(X-3)/(X^2-9)':" "'(X-3)/(X^2-9)'" }
+    { "Dom. dado? 1 si, 0 no:" "0 = dominio natural" 0 }
+    { "Dom. dado, ej {-3 4}:" "{ a b }, {{a b}{c d}} o 'X>0'" }
   }
   { } { } { }
   INFORM
   IF THEN
-    OBJ\-> DROP \-> F
+    OBJ\-> DROP \-> F T RES
     \<<
-      F DDOMC OBJ\-> DROP \-> TXT CSTR PES MSG
+      @ Con el interruptor apagado (o el campo vacio) no hay restriccion.
+      IF T TYPE 0 == THEN T 1 == ELSE 0 END
+      IF THEN RES ELSE 0 END
+      \-> R
       \<<
-        @ Las condiciones de a dos por caja (CLAUDE.md 2.6).
-        IF CSTR SIZE 0 ==
-        THEN "Sin condiciones:" 10 CHR + "vale para todo X" + MSGBOX
-        ELSE
-          1 CSTR SIZE
-          FOR I
-            "Cond: " CSTR I GET +
-            IF I CSTR SIZE <
-            THEN 10 CHR + "Cond: " + CSTR I 1 + GET +
-            END
-            MSGBOX
-          2 STEP
-        END
-        "Dom f =" 10 CHR + TXT + MSGBOX
-        IF MSG SIZE THEN MSG MSGBOX END
-        TXT
+        F R DDOMC OBJ\-> DROP \-> TXT CSTR PES MSG TXT2
+        \<<
+          @ Las condiciones de a dos por caja (CLAUDE.md 2.6).
+          IF CSTR SIZE 0 ==
+          THEN "Sin condiciones:" 10 CHR + "vale para todo X" + MSGBOX
+          ELSE
+            1 CSTR SIZE
+            FOR I
+              "Cond: " CSTR I GET +
+              IF I CSTR SIZE <
+              THEN 10 CHR + "Cond: " + CSTR I 1 + GET +
+              END
+              MSGBOX
+            2 STEP
+          END
+          "Dom f =" 10 CHR + TXT + MSGBOX
+          @ La misma respuesta escrita de la otra manera:
+          @ R - {-3, 3}  <->  (-oo, -3) U (-3, 3) U (3, +oo)
+          IF TXT2 SIZE THEN "O bien:" 10 CHR + TXT2 + MSGBOX END
+          IF MSG SIZE THEN MSG MSGBOX END
+          IF TXT2 SIZE THEN TXT2 END
+          TXT
+        \>>
       \>>
     \>>
   END

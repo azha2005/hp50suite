@@ -9,7 +9,7 @@
   @ teclado: 'ABS(6*X-3)>=9'.
   @
   @ Este objeto es SOLO la interfaz. La matematica esta en DINECC, que
-  @ toma la inecuacion de la pila y devuelve { TXT PES MSG }.
+  @ toma la inecuacion de la pila y devuelve { TXT PES MSG TXT2 }.
   @
   @ Deja en la pila: n2 = puntos criticos, n1 = el conjunto como texto.
   "Inecuacion"
@@ -21,12 +21,13 @@
   IF THEN
     OBJ\-> DROP \-> Q
     \<<
-      Q DINECC OBJ\-> DROP \-> TXT PES MSG
+      Q DINECC OBJ\-> DROP \-> TXT PES MSG TXT2
       \<<
         IF TXT SIZE
         THEN
           "Puntos criticos:" 10 CHR + PES \->STR + MSGBOX
           "S =" 10 CHR + TXT + MSGBOX
+          IF TXT2 SIZE THEN "O bien:" 10 CHR + TXT2 + MSGBOX END
         END
         IF MSG SIZE THEN MSG MSGBOX END
         PES TXT

@@ -826,7 +826,7 @@ cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
 
 ### Matemática I (suite aparte)
 
-54 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+55 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
 
 Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 
@@ -874,14 +874,15 @@ recopilado (fork, `MEGATXT_TODOS_LOS_PARCIALES_MATE_1.txt`). Detalle en
 
 | Programa | Qué hace | Casos |
 |---|---|---|
-| `DINEC` | Inecuaciones por tabla de signos, en intervalos | 22 + 4 de control |
-| `DDOM` | Dominio natural por definición, **sin simplificar**, con las condiciones escritas | 32 |
+| `DINEC` | Inecuaciones por tabla de signos, en intervalos | 25 + 5 de control |
+| `DDOM` | Dominio por definición, **sin simplificar**, con las condiciones escritas; natural o con el dominio dado en el enunciado | 51 |
 | `DINV` | Inversa sobre un dominio dado, con la imagen B y el aviso de no inyectiva | 26 |
 | `DCONTK` | El k que hace continua una función a trozos | 21 |
 | `DPAR` | Paridad; también la abstracta "F par, G impar" con representantes | 22 |
 
-`DDOM` y `DINEC` comparten un motor de tres objetos (`DCONDC`, `DSATC`,
-`DINTC`). **Este es el cálculo de dominio que §7 había descartado para
+`DDOM` y `DINEC` comparten un motor de cuatro objetos (`DCONDC`, `DSATC`,
+`DINTC`, `DRELC`). Los dos muestran el resultado de dos maneras cuando se
+puede: `R - {-3, 3}` y `(-∞, -3) U (-3, 3) U (3, +∞)`. **Este es el cálculo de dominio que §7 había descartado para
 `DTROZOS`**; la decisión de §7 sigue en pie para `DTROZOS`, que solo dibuja.
 Acá se hizo porque es un ejercicio de parcial, y con dos defensas contra la
 salida prolija y falsa: no simplifica (el bug de `domain49`) y tiene un sondeo de

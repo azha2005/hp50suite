@@ -56,12 +56,12 @@ generada para transferir (ver §3).
 | `DSEP` / `DSEPI` | Final | — | INFORM + `DSEPC`/`DSEPIC` | **8 de 8**. Con guardián de profundidad, y ahora avisan cuando `RISCH` deja la integral sin resolver (§2.17) |
 | `LAGR` | Final | — | INFORM + `LAGRC` | **1 de 1**: arma bien el lagrangiano |
 | `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | **5 de 5**: 7 y 8 casos, y los accesores devuelven lo que dicen |
-| `DDOM` | Parcial 1 | — | INFORM + `DDOMC` | **32 de 32**. Dominio natural por definición, sin simplificar (§1.1) |
-| `DINEC` | Parcial 1 | — | INFORM + `DINECC` | **22 de 22** + 4 de control. Inecuaciones por tabla de signos |
+| `DDOM` | Parcial 1 | — | INFORM + `DDOMC` | **51 de 51**. Dominio por definición, sin simplificar, natural o con el dominio dado en el enunciado (§1.1) |
+| `DINEC` | Parcial 1 | — | INFORM + `DINECC` | **25 de 25** + 5 de control. Inecuaciones por tabla de signos |
 | `DINV` | Parcial 1 | — | INFORM + `DINVC` | **26 de 26**. Inversa sobre un dominio dado, con la imagen B |
 | `DCONTK` | Parcial 1 | — | INFORM + `DCONTKC` | **21 de 21**. El k que hace continua una función a trozos |
 | `DPAR` | Parcial 1 | — | INFORM + `DPARC` | **22 de 22**. Paridad concreta y la abstracta "F par, G impar" |
-| `DCONDC` `DSATC` `DINTC` | motor | — | pila | lo usan `DDOMC` y `DINECC`; probados por dentro de esos dos |
+| `DCONDC` `DSATC` `DINTC` `DRELC` | motor | — | pila | lo usan `DDOMC` y `DINECC`; probados por dentro de esos dos |
 
 Parcial 1 está cubierto entero y ya en el estilo de la suite. `LHOP`, `DSEP`,
 `DSEPI` y `LAGR` **también**: se convirtieron a `INFORM` + núcleo `XXXC`. Acá
@@ -106,6 +106,28 @@ El recorrido es el de `domain49` (pila con `{ }` de centinela, `OBJ\->`), pero
 sin su bug: `domain49` simplifica antes de buscar polos y `(X-3)/(X^2-9)` le da
 `R - {-3}`. `DDOM` da `R - {-3, 3}`. Por eso **la expresión se escribe sin
 simplificar**, y una composición se escribe ya compuesta (`'LN(X+2)'`).
+
+**Dos escrituras del mismo conjunto.** `DINTC` arma el texto dos veces: con
+intervalos puros y salteando los *huecos* (un punto que falta con los dos
+tramos vecinos adentro), que van aparte con `- {…}`. La interfaz muestra la
+principal y, en otra caja, "O bien:" la otra:
+
+| Principal | O bien |
+|---|---|
+| `R - {-3, 3}` | `(-∞, -3) U (-3, 3) U (3, +∞)` |
+| `(1, 3) U (3, +∞)` | `(1, +∞) - {3}` |
+| `[-2, 2]` | — (no hay huecos) |
+
+**Dominio dado en el enunciado** (`DDOM`, interruptor en el formulario). Hay
+ejercicios que dan el dominio de cada función (2024 T2: f: [−3, 4], g: [−1, 7],
+dominio de f/g). El núcleo recibe `'F' RES`: `RES = 0` es el dominio natural;
+`{ a b }` es [a, b]; `{ { a b } { c d } }` es uno por función; `'X>0'` (o una
+lista de desigualdades) sirve para los abiertos o infinitos; un extremo `INF`
+no pone condición. Cada restricción entra como una condición más del mismo
+sistema, así que la intersección con el dominio natural sale sola y con los
+corchetes decididos igual que el resto: el 2024 T2 da `(-1, 4]`. Las
+restricciones aparecen en la lista de condiciones como `Dado: X ≥ -3`. El paso
+de desigualdad a condición está en `DRELC`, que comparten `DDOMC` y `DINECC`.
 
 **Control por sondeo.** `DINTC` evalúa 31 puntos y los compara contra la tabla.
 Si `ZEROS` se salteó un punto crítico, la tabla miente callada. Medido:
