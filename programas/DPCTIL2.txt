@@ -1,0 +1,48 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPCTIL2 - percentil por tres metodos, para ver de donde sale una
+  @ diferencia en una opcion multiple:
+  @   Clase    Lp=(p/100)(n+1): el del profesor (diapositiva de Cicowiez),
+  @            el de Anderson 2020 y el PERCENTIL.EXC de Excel.
+  @   And.2012 i=(p/100)n: el de la edicion en castellano del libro.
+  @   Excel    PERCENTIL.INC / CUARTIL.INC: el del apunte de Excel.
+  @ Interfaz: el calculo esta en DPCTIL2C.
+  "Percentil: 3 metodos"
+  {
+    { "Datos:" "Vector [x] o Lista {x}" }
+    { "Percentil p (0-100):" "50" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DPCTIL2C OBJ\-> DROP \-> N LP VCL FUERA AI APOS VAND COINC VINC
+    \<<
+      "Clase Lp: " LP \->STR + 10 CHR +
+      "Valor: " + VCL \->STR +
+      MSGBOX
+      IF FUERA -1 == THEN "Lp < 1:" 10 CHR + "se usa el minimo" + MSGBOX END
+      IF FUERA 1 == THEN "Lp > n:" 10 CHR + "se usa el maximo" + MSGBOX END
+      IF AI FP 0 ==
+      THEN
+        "And.2012 i=" AI \->STR + " ent." + 10 CHR +
+        "Promedio: " + VAND \->STR +
+        MSGBOX
+      ELSE
+        "And.2012 i=" AI \->STR + 10 CHR +
+        "Pos " + APOS \->STR + ": " + VAND \->STR +
+        MSGBOX
+      END
+      "Excel .INC:" 10 CHR +
+      VINC \->STR +
+      MSGBOX
+      IF COINC 1 == VCL VINC - ABS 1E-9 < AND
+      THEN
+        "Los 3 coinciden" MSGBOX
+      ELSE
+        "Metodos difieren:" 10 CHR +
+        "usar el de clase" +
+        MSGBOX
+      END
+    \>>
+  END
+\>>

@@ -259,7 +259,19 @@ DIR
     @ Deja: n1 = { K H START FREQ MAT }
     @         FREQ = vector de frecuencias absolutas por clase,
     @         MAT  = matriz K x 6: Inicio, Fin, Abs, Acum.Abs, %, Acum.%
-    @ Con K=0 usa Sturges: K = 1 + 3.322*log(N), redondeado.
+    @ Automatico = la regla de la catedra (diapositiva de Cicowiez,
+    @ "Calcular el tamanio del intervalo", con el ejemplo Big Mac):
+    @   K0 = Sturges, 1 + 3.322*log(N), redondeado        (6.49 -> 6)
+    @   Ancho = R/K0 redondeado HACIA ARRIBA a 1 cifra significativa
+    @           (0.9067 -> 1, 4.2 -> 5)
+    @   Inicio = el multiplo del ancho justo debajo del minimo (1.62 -> 1)
+    @   K = las clases que hagan falta para cubrir hasta el maximo
+    @ Con BMHIST da las 7 clases 1-2, 2-3 ... 7-8 de la diapositiva, y
+    @ con HORAS da K=5, Ancho=5, Inicio=10, que es el enunciado de catedra.
+    @ Si K se fija a mano se respeta; si con el inicio redondeado no llega
+    @ a cubrir el maximo, arranca en el minimo.
+    @ Las clases son [a, b): cerradas a izquierda ("1.00 - 1.99"), y la
+    @ ultima tambien toma el borde derecho.
     @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DFRECTABLA.
     @
     @ El bucle de filas deja los 6 valores de cada fila en la pila sin
@@ -284,17 +296,43 @@ DIR
               ELSE
                 KWANT
               END
-              \->NUM \-> K
+              \->NUM \-> K0
               \<<
                 IF HWANT 0 == THEN
-                  IF XMAX XMIN == THEN 1 ELSE XMAX XMIN - K / END
+                  IF XMAX XMIN == THEN
+                    1
+                  ELSE
+                    XMAX XMIN - K0 / \->NUM \-> H0
+                    \<<
+                      H0 LOG FLOOR ALOG \-> E
+                      \<<
+                        H0 E / CEIL E *
+                      \>>
+                    \>>
+                  END
                 ELSE
                   HWANT
                 END
                 \->NUM \-> H
                 \<<
-                  IF SWANT 0 == THEN XMIN ELSE SWANT END \-> START
+                  IF SWANT 0 == THEN
+                    XMIN H / FLOOR H * \->NUM \-> SF
+                    \<<
+                      IF KWANT 0 == SF K0 H * + XMAX < NOT OR
+                      THEN SF ELSE XMIN END
+                    \>>
+                  ELSE
+                    SWANT
+                  END
+                  \->NUM \-> START
                   \<<
+                    IF KWANT 0 == THEN
+                      XMAX START - H / FLOOR 1 +
+                    ELSE
+                      K0
+                    END
+                    \->NUM \-> K
+                    \<<
                     {K} 0. CON \-> FREQ
                     \<<
                       1 N FOR i
@@ -334,6 +372,7 @@ DIR
                       \>>
                       { ACUM CUMFREQ } PURGE
                     \>>
+                    \>>
                   \>>
                 \>>
               \>>
@@ -348,16 +387,16 @@ DIR
     @ DFRECTABLA - tabla de frecuencias como MATRIZ.
     @ Interfaz: el calculo esta en DFRECTABLAC, que devuelve
     @ { K H START FREQ MAT }. La matriz queda en la pila.
-    @ K/Ancho/Inicio en 0 = automatico (Sturges para K). Se pueden fijar a
+    @ K/Ancho/Inicio en 0 = automatico, regla de catedra (ver DFRECTABLAC). Se pueden fijar a
     @ mano para reproducir ejercicios que eligen K arbitrariamente.
     @ En modo algebraico, EDIT sobre la matriz abre un editor de celdas
     @ tipo planilla; en RPN solo edita la matriz plana.
     "Tabla de Frecuencias"
     {
       { "Datos:" "Vector [x] o Lista {x}" }
-      { "K deseado (0=Sturges):" "0" 0 }
-      { "Ancho deseado (0=auto):" "0" 0 }
-      { "Inicio deseado (0=Min real):" "0" 0 }
+      { "K (0=auto):" "0" 0 }
+      { "Ancho (0=auto):" "0" 0 }
+      { "Inicio (0=auto):" "0" 0 }
     }
     { } { } { }
     INFORM
@@ -432,12 +471,12 @@ DIR
     @ punto de partida -- el profesor elige K a mano y arranca los
     @ intervalos en un entero comodo MENOR al minimo real (ej. 10 en vez
     @ de 12) para que el eje se lea mejor. Con 0 se calcula automatico.
-    "Histograma Sturges"
+    "Histograma"
     {
       { "Datos:" "Vector [x] o Lista {x}" }
-      { "K deseado (0=Sturges):" "0" 0 }
-      { "Ancho deseado (0=auto):" "0" 0 }
-      { "Inicio deseado (0=Min real):" "0" 0 }
+      { "K (0=auto):" "0" 0 }
+      { "Ancho (0=auto):" "0" 0 }
+      { "Inicio (0=auto):" "0" 0 }
     }
     { } { } { }
     INFORM
@@ -476,9 +515,13 @@ DIR
     @         WMIN/WMAX = extremos de los bigotes (el dato adyacente),
     @         OUTS = lista de valores atipicos.
     @
-    @ Cuartiles por INDICE (metodo simplificado), no por la interpolacion
-    @ Lp=(p/100)*(n+1) de la catedra: los dos metodos pueden dar valores
-    @ distintos. Para el metodo exacto de catedra esta DPCTIL.
+    @ Cuartiles por el metodo de la catedra, Lp=(p/100)*(n+1) interpolado
+    @ (diapositiva de Cicowiez, Unidades 1 y 2): los pide a DPCTILC con
+    @ p = 25, 50 y 75, asi que son por construccion los mismos que dan
+    @ DPCTIL y DCINCO. Hasta el 27/09/2026 los tomaba por INDICE,
+    @ x(CEIL(n/4)) y x(CEIL(3n/4)), sin interpolar: con { 1 4 3 5 6 }
+    @ dibujaba Q1 = 3 y Q3 = 5 donde la catedra da 2 y 5.5.
+    @ Necesita a DPCTILC cargado (en LAB.txt estan en el mismo DIR).
     @
     @ WMIN arranca en MAXV y no en MINV: si el minimo de los datos es un
     @ outlier, la comparacion "V < WMIN" tiene que poder disparar igual.
@@ -496,16 +539,11 @@ DIR
         \<<
           L N GET \-> MAXV
           \<<
-            IF N 2 MOD 0 == THEN
-              L N 2 / GET L N 2 / 1 + GET + 2 /
-            ELSE
-              L N 2 / CEIL GET
-            END
-            \-> Q2
+            L 50 DPCTILC 3 GET \-> Q2
             \<<
-              L N 4 / CEIL GET \-> Q1
+              L 25 DPCTILC 3 GET \-> Q1
               \<<
-                L N 3 * 4 / CEIL GET \-> Q3
+                L 75 DPCTILC 3 GET \-> Q3
                 \<<
                   Q3 Q1 - \-> IQR
                   \<<
@@ -659,6 +697,532 @@ DIR
           MSGBOX
           RES 2 GET RES 3 GET RES 4 GET RES 5 GET RES 6 GET 5 \->LIST
         \>>
+      \>>
+    END
+  \>>
+  DZLISTAC
+  \<<
+    @ DZLISTAC - nucleo de DZLISTA. Valor z de cada dato, y el z inverso.
+    @ Uso:  Datos Z0 DZLISTAC
+    @ Deja: n1 = { N XB S MAT ATIPS X0 }
+    @         MAT   = N filas x 2 columnas:  x | z,  z = (x - XB) / S
+    @         ATIPS = lista de los datos con |z| > 3 ({ } si no hay)
+    @         X0    = XB + Z0*S, el dato que tendria z = Z0
+    @ Si N < 2 o S = 0 deja un STRING con el motivo.
+    @
+    @ XB y S salen de DSTATSC (muestral, N-1) y cada z sale de DCOMPZC, con
+    @ su mismo umbral de atipico. Asi DZLISTA, DSTATS y DCOMPZ no pueden dar
+    @ numeros distintos para el mismo dato.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DZLISTA.
+    @ Un campo de INFORM que nunca se visito llega como NOVAL, no como 0:
+    @ todo lo que no sea un numero (real o entero exacto) cuenta como 0.
+    IF DUP TYPE 0 == OVER TYPE 28 == OR NOT THEN DROP 0 END
+    \-> D0 Z0
+    \<<
+      D0 IF DUP TYPE 6 == THEN EVAL END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> L
+      \<<
+        IF L SIZE 2 <
+        THEN
+          "HACEN FALTA 2 DATOS"
+        ELSE
+          L DSTATSC OBJ\-> DROP \-> N XB VARZ S CV
+          \<<
+            IF S 0 ==
+            THEN
+              "DESVIO 0: TODOS IGUALES"
+            ELSE
+              { } \-> ATIPS
+              \<<
+                1 N FOR i
+                  L i GET \->NUM \-> XI
+                  \<<
+                    XI XB S DCOMPZC OBJ\-> DROP \-> ZV AT
+                    \<<
+                      XI ZV
+                      IF AT 1 == THEN ATIPS XI + 'ATIPS' STO END
+                    \>>
+                  \>>
+                NEXT
+                N 2 2 \->LIST \->ARRY \-> MAT
+                \<<
+                  XB Z0 S * + \->NUM \-> X0
+                  \<<
+                    N XB S MAT ATIPS X0 6 \->LIST
+                  \>>
+                \>>
+              \>>
+            END
+          \>>
+        END
+      \>>
+    \>>
+  \>>
+  DZLISTA
+  \<<
+    @ DZLISTA - valor z de todas las observaciones, atipicos y z inverso.
+    @ Interfaz: el calculo esta en DZLISTAC.
+    @ La matriz x | z queda en la pila y en el global ZTABLA.
+    "Valor z de la lista"
+    {
+      { "Datos:" "Vector [x] o Lista {x}" }
+      { "z objetivo:" "Para x = media + z*s" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> D0 Z0
+      \<<
+        D0 Z0 DZLISTAC \-> RES
+        \<<
+          IF RES TYPE 2 ==
+          THEN
+            "ERROR:" 10 CHR + RES + MSGBOX
+          ELSE
+            RES OBJ\-> DROP \-> N XB S MAT ATIPS X0
+            \<<
+              MAT 'ZTABLA' STO
+              "Media: " XB \->STR + 10 CHR +
+              "s: " + S \->STR +
+              MSGBOX
+              IF ATIPS SIZE 0 ==
+              THEN
+                "Atipicos |z|>3:" 10 CHR +
+                "sin atipicos" +
+                MSGBOX
+              ELSE
+                "Atipicos |z|>3:" 10 CHR +
+                ATIPS \->STR +
+                MSGBOX
+              END
+              "Valor con z = " Z0 \->STR + ":" + 10 CHR +
+              X0 \->STR +
+              MSGBOX
+              "Ver tabla x | z:" 10 CHR +
+              "ZTABLA + EDIT" +
+              MSGBOX
+              MAT
+            \>>
+          END
+        \>>
+      \>>
+    END
+  \>>
+  DCINCOC
+  \<<
+    @ DCINCOC - nucleo de DCINCO. Resumen de cinco numeros, RIC, cercas,
+    @ atipicos y asimetria.
+    @ Uso:  Datos DCINCOC
+    @ Deja: n1 = { N MINV Q1 Q2 Q3 MAXV RIC LINF LSUP OUTS XB ASIM }
+    @         LINF/LSUP = cercas Q1-1.5*RIC y Q3+1.5*RIC
+    @         OUTS = lista de datos fuera de las cercas ({ } si no hay)
+    @         ASIM = 1 media > mediana (asimetria positiva)
+    @               -1 media < mediana (asimetria negativa)
+    @                0 iguales, con tolerancia 1E-9 (simetrica)
+    @
+    @ Cuartiles por el METODO DE CLASE, Lp=(p/100)(n+1) interpolado: los
+    @ pide a DPCTILC con p = 25, 50 y 75, asi que son por construccion los
+    @ mismos que da DPCTIL. OJO: NO son los de DBOXPLOT, que usa cuartiles
+    @ por indice (ver DBOXPLOTC). La media sale de DSTATSC.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DCINCO.
+    IF DUP TYPE 6 == THEN EVAL END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
+    SORT \-> L
+    \<<
+      L SIZE \-> N
+      \<<
+        L 25 DPCTILC 3 GET \-> Q1
+        \<<
+          L 50 DPCTILC 3 GET \-> Q2
+          \<<
+            L 75 DPCTILC 3 GET \-> Q3
+            \<<
+              Q3 Q1 - \->NUM \-> RIC
+              \<<
+                Q1 1.5 RIC * - \->NUM \-> LINF
+                \<<
+                  Q3 1.5 RIC * + \->NUM \-> LSUP
+                  \<<
+                    { } \-> OUTS
+                    \<<
+                      1 N FOR i
+                        L i GET \->NUM \-> V
+                        \<<
+                          IF V LINF < V LSUP > OR THEN OUTS V + 'OUTS' STO END
+                        \>>
+                      NEXT
+                      L DSTATSC 2 GET \-> XB
+                      \<<
+                        CASE
+                          XB Q2 - ABS 1E-9 < THEN 0 END
+                          XB Q2 > THEN 1 END
+                          -1
+                        END
+                        \-> ASIM
+                        \<<
+                          N L 1 GET \->NUM Q1 Q2 Q3 L N GET \->NUM RIC LINF LSUP
+                          OUTS XB ASIM 12 \->LIST
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DCINCO
+  \<<
+    @ DCINCO - resumen de cinco numeros, RIC, cercas, atipicos y asimetria.
+    @ Los numeros del box plot para escribir en la hoja: DBOXPLOT solo
+    @ grafica. Cuartiles por el metodo de clase (los mismos que DPCTIL).
+    @ Interfaz: el calculo esta en DCINCOC.
+    "Resumen de 5 numeros"
+    { { "Datos:" "Vector [x] o Lista {x}" } }
+    { } { } { }
+    INFORM
+    IF THEN
+      1 GET DCINCOC OBJ\-> DROP \-> N MINV Q1 Q2 Q3 MAXV RIC LINF LSUP OUTS XB ASIM
+      \<<
+        "Min: " MINV \->STR + 10 CHR +
+        "Q1: " + Q1 \->STR +
+        MSGBOX
+        "Mediana: " Q2 \->STR + 10 CHR +
+        "Q3: " + Q3 \->STR +
+        MSGBOX
+        "Max: " MAXV \->STR + 10 CHR +
+        "RIC: " + RIC \->STR +
+        MSGBOX
+        "Cerca inf: " LINF \->STR + 10 CHR +
+        "Cerca sup: " + LSUP \->STR +
+        MSGBOX
+        IF OUTS SIZE 0 ==
+        THEN
+          "Atipicos:" 10 CHR +
+          "ninguno" +
+          MSGBOX
+        ELSE
+          "Atipicos:" 10 CHR +
+          OUTS \->STR +
+          MSGBOX
+        END
+        "Media: " XB \->STR + 10 CHR +
+        "Mediana: " + Q2 \->STR +
+        MSGBOX
+        CASE
+          ASIM 1 == THEN "Asimetria positiva" 10 CHR + "(cola a la derecha)" + END
+          ASIM -1 == THEN "Asimetria negativa" 10 CHR + "(cola a la izq.)" + END
+          "Simetrica" 10 CHR + "(media = mediana)" +
+        END
+        MSGBOX
+      \>>
+    END
+  \>>
+  DPCTIL2C
+  \<<
+    @ DPCTIL2C - nucleo de DPCTIL2. Percentil por los dos metodos.
+    @ Uso:  Datos P DPCTIL2C        (P de 0 a 100)
+    @ Deja: n1 = { N LP VCL FUERA AI APOS VAND COINC VINC }
+    @   Clase (el del profesor): LP = (P/100)(N+1), VCL interpolado.
+    @     Lo calcula DPCTILC, asi que es IDENTICO a DPCTIL.
+    @     FUERA = -1 si LP < 1 (se devolvio el minimo),
+    @              1 si LP > N (se devolvio el maximo), 0 si no.
+    @   Anderson 2012 (castellano): AI = (P/100)*N.
+    @     AI no entero: se redondea hacia arriba, APOS = CEIL(AI), VAND = x(APOS).
+    @     AI entero: VAND = (x(AI) + x(AI+1))/2, APOS = AI. Si AI = N devuelve
+    @     x(N); si AI = 0 (P = 0) devuelve x(1).
+    @   COINC = 1 si los dos valores coinciden (tolerancia 1E-9), 0 si no.
+    @   Excel .INC (el del apunte de Excel de la practica, PERCENTIL.INC y
+    @     CUARTIL.INC): posicion 1 + (N-1)*P/100, interpolado. VINC.
+    @ Cual es cual (visto en el material de la catedra, 27/09/2026):
+    @   Clase = la diapositiva de Cicowiez = Anderson 2020 (ingles) =
+    @           PERCENTIL.EXC de Excel. Es el que toma el profesor.
+    @   "Anderson" de aca = Anderson 2012 (castellano), el indice i.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPCTIL2.
+    \-> D0 P
+    \<<
+      D0 IF DUP TYPE 6 == THEN EVAL END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
+      SORT \-> S
+      \<<
+        S P DPCTILC OBJ\-> DROP \-> N LP VCL
+        \<<
+          CASE
+            LP 1 < THEN -1 END
+            LP N > THEN 1 END
+            0
+          END
+          \-> FUERA
+          \<<
+            P 100. / N * \->NUM \-> AI
+            \<<
+              CASE
+                AI FP 0 \=/ THEN AI CEIL S AI CEIL GET END
+                AI 1 < THEN 1 S 1 GET END
+                AI N < NOT THEN AI S N GET END
+                AI S AI GET S AI 1 + GET + 2 /
+              END
+              \->NUM \-> APOS VAND
+              \<<
+                IF VCL VAND - ABS 1E-9 < THEN 1 ELSE 0 END \-> COINC
+                \<<
+                  P 100. / N 1 - * 1 + \->NUM \-> HI
+                  \<<
+                    CASE
+                      HI N < NOT THEN S N GET END
+                      S HI IP GET S HI IP 1 + GET S HI IP GET - HI FP * +
+                    END
+                    \->NUM \-> VINC
+                    \<<
+                      N LP VCL FUERA AI APOS VAND COINC VINC 9 \->LIST
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+  DPCTIL2
+  \<<
+    @ DPCTIL2 - percentil por tres metodos, para ver de donde sale una
+    @ diferencia en una opcion multiple:
+    @   Clase    Lp=(p/100)(n+1): el del profesor (diapositiva de Cicowiez),
+    @            el de Anderson 2020 y el PERCENTIL.EXC de Excel.
+    @   And.2012 i=(p/100)n: el de la edicion en castellano del libro.
+    @   Excel    PERCENTIL.INC / CUARTIL.INC: el del apunte de Excel.
+    @ Interfaz: el calculo esta en DPCTIL2C.
+    "Percentil: 3 metodos"
+    {
+      { "Datos:" "Vector [x] o Lista {x}" }
+      { "Percentil p (0-100):" "50" 0 }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DPCTIL2C OBJ\-> DROP \-> N LP VCL FUERA AI APOS VAND COINC VINC
+      \<<
+        "Clase Lp: " LP \->STR + 10 CHR +
+        "Valor: " + VCL \->STR +
+        MSGBOX
+        IF FUERA -1 == THEN "Lp < 1:" 10 CHR + "se usa el minimo" + MSGBOX END
+        IF FUERA 1 == THEN "Lp > n:" 10 CHR + "se usa el maximo" + MSGBOX END
+        IF AI FP 0 ==
+        THEN
+          "And.2012 i=" AI \->STR + " ent." + 10 CHR +
+          "Promedio: " + VAND \->STR +
+          MSGBOX
+        ELSE
+          "And.2012 i=" AI \->STR + 10 CHR +
+          "Pos " + APOS \->STR + ": " + VAND \->STR +
+          MSGBOX
+        END
+        "Excel .INC:" 10 CHR +
+        VINC \->STR +
+        MSGBOX
+        IF COINC 1 == VCL VINC - ABS 1E-9 < AND
+        THEN
+          "Los 3 coinciden" MSGBOX
+        ELSE
+          "Metodos difieren:" 10 CHR +
+          "usar el de clase" +
+          MSGBOX
+        END
+      \>>
+    END
+  \>>
+  DCHEBYC
+  \<<
+    @ DCHEBYC - nucleo de DCHEBY. Teorema de Chebyshev.
+    @ Uso:  K Media S A B N DCHEBYC
+    @         K = 0: k sale del intervalo [A,B], k = min((M-A)/S, (B-M)/S).
+    @         K > 0: se usa ese k y A y B se ignoran.
+    @         N = 0: no se calcula la cantidad de observaciones.
+    @ Deja: n1 = { K PROP PCT NOBS NCEIL ASIM }
+    @         PROP  = 1 - 1/k^2 (proporcion minima), PCT = PROP*100
+    @         NOBS  = PROP*N sin redondear, NCEIL = redondeado hacia arriba
+    @         ASIM  = 1 si el intervalo no es simetrico (se uso el k menor)
+    @ Si k <= 1, o S <= 0 con K = 0, deja un STRING con el motivo.
+    @
+    @ NCEIL redondea NOBS a 9 decimales ANTES del CEIL: 1-1/9 = .888888888889
+    @ y por 9 da 8.000000000001, que CEIL llevaria a 9.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DCHEBY.
+    \-> K0 U S A B N
+    \<<
+      IF K0 0 == S 0 > NOT AND
+      THEN
+        "S TIENE QUE SER > 0"
+      ELSE
+        IF K0 0 ==
+        THEN
+          U A - S / \->NUM B U - S / \->NUM
+          \-> KA KB
+          \<<
+            KA KB MIN
+            IF KA KB - ABS 1E-9 > THEN 1 ELSE 0 END
+          \>>
+        ELSE
+          K0 \->NUM 0
+        END
+        \-> K ASIM
+        \<<
+          IF K 1 > NOT
+          THEN
+            "CHEBYSHEV REQUIERE K > 1 (K = " K \->STR + ")" +
+          ELSE
+            1 K SQ INV - \->NUM \-> PROP
+            \<<
+              PROP N * \->NUM \-> NOBS
+              \<<
+                K PROP PROP 100 * \->NUM NOBS NOBS 9 RND CEIL ASIM 6 \->LIST
+              \>>
+            \>>
+          END
+        \>>
+      END
+    \>>
+  \>>
+  DCHEBY
+  \<<
+    @ DCHEBY - teorema de Chebyshev y regla empirica.
+    @ Interfaz: el calculo esta en DCHEBYC.
+    @ Pantalla 1: k, media, s, n. Si k = 0, pantalla 2 con el intervalo
+    @ [a, b] y k sale de ahi. Valores iniciales en 0: un campo numerico
+    @ que nunca se visita sin valor inicial llega como NOVAL.
+    "Chebyshev (1 de 2)"
+    {
+      { "k (0=desde [a,b]):" "Cantidad de desvios" 0 }
+      { "Media:" "Media de los datos" 0 }
+      { "s:" "Desvio estandar" 0 }
+      { "n (0=omitir):" "Cantidad de observaciones" 0 }
+    }
+    { } { 0 0 0 0 } { 0 0 0 0 }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> K0 U S N
+      \<<
+        IF K0 0 ==
+        THEN
+          "Chebyshev (2 de 2)"
+          {
+            { "Limite inferior a:" "Extremo izquierdo" 0 }
+            { "Limite superior b:" "Extremo derecho" 0 }
+          }
+          { } { 0 0 } { 0 0 }
+          INFORM
+          IF THEN OBJ\-> DROP 1 ELSE 0 0 0 END
+        ELSE
+          0 0 1
+        END
+        \-> A B SEGUIR
+        \<<
+          IF SEGUIR 1 ==
+          THEN
+            K0 U S A B N DCHEBYC \-> RES
+            \<<
+              IF RES TYPE 2 ==
+              THEN
+                "AVISO:" 10 CHR + RES + MSGBOX
+              ELSE
+                RES OBJ\-> DROP \-> K PROP PCT NOBS NCEIL ASIM
+                \<<
+                  IF ASIM 1 ==
+                  THEN
+                    "Intervalo no simetrico:" 10 CHR +
+                    "se usa el k menor" +
+                    MSGBOX
+                  END
+                  "k: " K \->STR + 10 CHR +
+                  "Al menos " + PCT \->STR + " %" +
+                  MSGBOX
+                  IF N 0 >
+                  THEN
+                    "Al menos " NCEIL \->STR + " obs." + 10 CHR +
+                    "(sin redondear: " + NOBS \->STR + ")" +
+                    MSGBOX
+                  END
+                  "Campana: k=1 68%" 10 CHR +
+                  "k=2 95%, k=3 99.7%" +
+                  MSGBOX
+                \>>
+              END
+            \>>
+          END
+        \>>
+      \>>
+    END
+  \>>
+  DPONDC
+  \<<
+    @ DPONDC - nucleo de DPOND. Media ponderada.
+    @ Uso:  DatosX Pesos DPONDC
+    @ Deja: n1 = { N SW SWX XP }
+    @         SW = suma de los pesos, SWX = suma de w*x, XP = SWX / SW
+    @ Si los largos difieren o la suma de pesos es 0, deja un STRING.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPOND.
+    \-> DX0 DW0
+    \<<
+      DX0 IF DUP TYPE 6 == THEN EVAL END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LX
+      \<<
+        DW0 IF DUP TYPE 6 == THEN EVAL END
+        IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LW
+        \<<
+          IF LX SIZE LW SIZE \=/
+          THEN
+            "X Y W DE DISTINTO LARGO"
+          ELSE
+            LX SIZE 0. 0. \-> N SW SWX
+            \<<
+              1 N FOR i
+                SW LW i GET + \->NUM 'SW' STO
+                SWX LW i GET LX i GET * + \->NUM 'SWX' STO
+              NEXT
+              IF SW 0 ==
+              THEN
+                "LA SUMA DE PESOS ES 0"
+              ELSE
+                N SW SWX SWX SW / \->NUM 4 \->LIST
+              END
+            \>>
+          END
+        \>>
+      \>>
+    \>>
+  \>>
+  DPOND
+  \<<
+    @ DPOND - media ponderada: suma(w*x) / suma(w).
+    @ Interfaz: el calculo esta en DPONDC.
+    "Media Ponderada"
+    {
+      { "Datos x:" "Vector [x] o Lista {x}" }
+      { "Pesos w:" "Mismo largo que x" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DPONDC \-> RES
+      \<<
+        IF RES TYPE 2 ==
+        THEN
+          "ERROR:" 10 CHR + RES + MSGBOX
+        ELSE
+          RES OBJ\-> DROP \-> N SW SWX XP
+          \<<
+            "Suma w: " SW \->STR + 10 CHR +
+            "Suma w*x: " + SWX \->STR +
+            MSGBOX
+            "Media ponderada:" 10 CHR +
+            XP \->STR +
+            MSGBOX
+          \>>
+        END
       \>>
     END
   \>>
@@ -881,6 +1445,197 @@ DIR
         "r: " R \->STR + 10 CHR +
         "R2: " + R2 \->STR +
         MSGBOX
+      \>>
+    END
+  \>>
+  DTABLA2C
+  \<<
+    @ DTABLA2C - nucleo de DTABLA2. Tabla de desvios, 1 o 2 variables.
+    @ Uso:  DatosX DatosY DTABLA2C     (DatosY = 0 para una variable)
+    @ Deja, con dos variables:
+    @   n1 = { N XB YB SSX SSY SXY VX VY SX SY COV R MAT }
+    @   MAT: N+1 filas x 7 columnas
+    @     x | y | x-xb | y-yb | (x-xb)^2 | (y-yb)^2 | (x-xb)(y-yb)
+    @   y la ultima fila son las SUMAS de cada columna.
+    @ Deja, con una variable:
+    @   n1 = { N XB SSX VX SX MAT }
+    @   MAT: N+1 filas x 3 columnas   x | x-xb | (x-xb)^2   + fila de sumas.
+    @ Si algo no cierra deja un STRING con el motivo (la interfaz lo
+    @ muestra): largos distintos o menos de 2 datos.
+    @
+    @ Todo muestral (divide por N-1), como DSTATS y DCOVCORR.
+    @ XB, YB, los desvios, la covarianza y r NO se calculan aca: salen de
+    @ DCOVCORRC (dos variables) o de DSTATSC (una). Asi la tabla y esos
+    @ programas no pueden dar numeros distintos. Las sumas de la tabla se
+    @ acumulan en el mismo orden que DCOVCORRC, asi que SSX/(N-1) da el
+    @ mismo numero que el que DCOVCORRC usa para el desvio.
+    @
+    @ Todo lo que entra a la matriz pasa por \->NUM: en modo exacto un
+    @ dato entero es ZINT y la matriz saldria simbolica (TYPE 29).
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DTABLA2.
+    \-> DX0 DY0
+    \<<
+      DX0 IF DUP TYPE 6 == THEN EVAL END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LX
+      \<<
+        DY0 IF DUP TYPE 6 == THEN EVAL END \-> DY1
+        \<<
+          IF DY1 TYPE 5 == DY1 TYPE 3 == OR DY1 TYPE 29 == OR
+          THEN
+            DY1 IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LY
+            \<<
+              CASE
+                LX SIZE LY SIZE \=/ THEN "X E Y DE DISTINTO LARGO" END
+                LX SIZE 2 < THEN "HACEN FALTA 2 DATOS" END
+                LX LY DCOVCORRC OBJ\-> DROP \-> N XB YB COV SDX SDY R B0 B1
+                \<<
+                  0. 0. 0. 0. 0. 0. 0. \-> TX TY TDX TDY TSX TSY TSXY
+                  \<<
+                    1 N FOR i
+                      LX i GET \->NUM \-> XI
+                      \<<
+                        LY i GET \->NUM \-> YI
+                        \<<
+                          XI XB - \-> DXI
+                          \<<
+                            YI YB - \-> DYI
+                            \<<
+                              XI YI DXI DYI DXI SQ DYI SQ DXI DYI *
+                              TX XI + 'TX' STO
+                              TY YI + 'TY' STO
+                              TDX DXI + 'TDX' STO
+                              TDY DYI + 'TDY' STO
+                              TSXY DXI DYI * + 'TSXY' STO
+                              TSX DXI SQ + 'TSX' STO
+                              TSY DYI SQ + 'TSY' STO
+                            \>>
+                          \>>
+                        \>>
+                      \>>
+                    NEXT
+                    TX TY TDX TDY TSX TSY TSXY
+                    N 1 + 7 2 \->LIST \->ARRY \-> MAT
+                    \<<
+                      TSX N 1 - / \->NUM \-> VX
+                      \<<
+                        TSY N 1 - / \->NUM \-> VY
+                        \<<
+                          N XB YB TSX TSY TSXY VX VY SDX SDY COV R MAT
+                          13 \->LIST
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              END
+            \>>
+          ELSE
+            IF LX SIZE 2 <
+            THEN
+              "HACEN FALTA 2 DATOS"
+            ELSE
+              LX DSTATSC OBJ\-> DROP \-> N XB VX SX CV
+              \<<
+                0. 0. 0. \-> TX TDX TSX
+                \<<
+                  1 N FOR i
+                    LX i GET \->NUM \-> XI
+                    \<<
+                      XI XB - \-> DXI
+                      \<<
+                        XI DXI DXI SQ
+                        TX XI + 'TX' STO
+                        TDX DXI + 'TDX' STO
+                        TSX DXI SQ + 'TSX' STO
+                      \>>
+                    \>>
+                  NEXT
+                  TX TDX TSX
+                  N 1 + 3 2 \->LIST \->ARRY \-> MAT
+                  \<<
+                    N XB TSX VX SX MAT 6 \->LIST
+                  \>>
+                \>>
+              \>>
+            END
+          END
+        \>>
+      \>>
+    \>>
+  \>>
+  DTABLA2
+  \<<
+    @ DTABLA2 - tabla de desvios para copiar en la hoja del examen.
+    @ Interfaz: el calculo esta en DTABLA2C. Con Datos Y en 0 (o vacio)
+    @ hace la tabla de una variable.
+    @ La matriz queda en la pila y en el global TABLA2. En modo algebraico,
+    @ EDIT sobre ella abre un editor de celdas tipo planilla.
+    @ Cajas de 2 lineas sin encabezado: MSGBOX no hace scroll.
+    "Tabla de Desvios"
+    {
+      { "Datos X:" "Vector [x] o Lista {x}" }
+      { "Datos Y (0=solo X):" "Lista {y}, o 0 para una variable" }
+    }
+    { } { } { }
+    INFORM
+    IF THEN
+      OBJ\-> DROP DTABLA2C \-> RES
+      \<<
+        IF RES TYPE 2 ==
+        THEN
+          "ERROR:" 10 CHR + RES + MSGBOX
+        ELSE
+          IF RES SIZE 13 ==
+          THEN
+            RES OBJ\-> DROP \-> N XB YB SSX SSY SXY VX VY SX SY COV R MAT
+            \<<
+              MAT 'TABLA2' STO
+              "xbar: " XB \->STR + 10 CHR +
+              "ybar: " + YB \->STR +
+              MSGBOX
+              "SSx: " SSX \->STR + 10 CHR +
+              "SSy: " + SSY \->STR +
+              MSGBOX
+              "Sxy: " SXY \->STR + 10 CHR +
+              "N: " + N \->STR +
+              MSGBOX
+              "s2x: " VX \->STR + 10 CHR +
+              "s2y: " + VY \->STR +
+              MSGBOX
+              "sx: " SX \->STR + 10 CHR +
+              "sy: " + SY \->STR +
+              MSGBOX
+              "sxy: " COV \->STR + 10 CHR +
+              "r: " + R \->STR +
+              MSGBOX
+              "Cols: x y dx dy" 10 CHR +
+              "dx2 dy2 dx*dy" +
+              MSGBOX
+              "Ver tabla:" 10 CHR +
+              "TABLA2 + EDIT" +
+              MSGBOX
+              MAT
+            \>>
+          ELSE
+            RES OBJ\-> DROP \-> N XB SSX VX SX MAT
+            \<<
+              MAT 'TABLA2' STO
+              "xbar: " XB \->STR + 10 CHR +
+              "N: " + N \->STR +
+              MSGBOX
+              "SSx: " SSX \->STR + 10 CHR +
+              "s2x: " + VX \->STR +
+              MSGBOX
+              "sx: " SX \->STR + 10 CHR +
+              "Cols: x dx dx2" +
+              MSGBOX
+              "Ver tabla:" 10 CHR +
+              "TABLA2 + EDIT" +
+              MSGBOX
+              MAT
+            \>>
+          END
+        END
       \>>
     END
   \>>
@@ -1487,6 +2242,220 @@ DIR
           "Clasif: Rango Normal"
         END +
         MSGBOX
+      \>>
+    END
+  \>>
+  DREALC
+  \<<
+    @ DREALC - nucleo de DREAL. Variacion real y variaciones sucesivas.
+    @ Uso:  Nominal% Inflacion% Sucesivas DREALC
+    @         Sucesivas: lista de variaciones en %, o 0 para omitir.
+    @ Deja: n1 = { REAL HAYL ACUM NIVEL }
+    @         REAL  = ((1+nom/100)/(1+inf/100) - 1)*100
+    @         HAYL  = 1 si vino una lista de sucesivas, 0 si no
+    @         ACUM  = (prod(1+vi/100) - 1)*100      (0 si HAYL = 0)
+    @         NIVEL = 100*prod(1+vi/100), el nivel final partiendo de 100
+    @ Las divisiones van por 100. (con punto): en modo exacto 30/100 daria
+    @ una fraccion y el resultado saldria simbolico.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DREAL.
+    \-> NOM INF0 SUC0
+    \<<
+      1. NOM \->NUM 100. / + 1. INF0 \->NUM 100. / + / 1. - 100. * \->NUM \-> REAL
+      \<<
+        SUC0 IF DUP TYPE 6 == THEN EVAL END
+        IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> SUC
+        \<<
+          IF SUC TYPE 5 ==
+          THEN
+            1. \-> F
+            \<<
+              IF SUC SIZE 0 >
+              THEN
+                1 SUC SIZE FOR i
+                  F 1. SUC i GET \->NUM 100. / + * \->NUM 'F' STO
+                NEXT
+              END
+              REAL 1 F 1. - 100. * \->NUM F 100. * \->NUM 4 \->LIST
+            \>>
+          ELSE
+            REAL 0 0. 100. 4 \->LIST
+          END
+        \>>
+      \>>
+    \>>
+  \>>
+  DREAL
+  \<<
+    @ DREAL - variacion real (deflactada) y variaciones sucesivas.
+    @ Interfaz: el calculo esta en DREALC.
+    @ La parte real se omite solo si nominal E inflacion son 0: un salario
+    @ congelado (nominal 0) con inflacion 40 % es un ejercicio valido, y
+    @ omitirlo por nominal = 0 daria silencio donde hay respuesta.
+    @ Valores iniciales en 0: un campo que nunca se visita sin valor
+    @ inicial llega como NOVAL.
+    "Variacion real"
+    {
+      { "Var. nominal %:" "0 y 0 = omitir la real" 0 }
+      { "Inflacion %:" "Variacion de precios en %" 0 }
+      { "Sucesivas %:" "Lista {v1 v2 ...} o 0 = omitir" }
+    }
+    { } { 0 0 0 } { 0 0 0 }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> NOM INF0 SUC0
+      \<<
+        NOM INF0 SUC0 DREALC OBJ\-> DROP \-> REAL HAYL ACUM NIVEL
+        \<<
+          IF NOM 0 \=/ INF0 0 \=/ OR
+          THEN
+            "Var. real: " REAL \->STR + " %" + 10 CHR +
+            IF REAL 0 > THEN "Poder de compra subio" ELSE
+              IF REAL 0 < THEN "Poder de compra cayo" ELSE "Poder de compra igual" END
+            END +
+            MSGBOX
+          END
+          IF HAYL 1 ==
+          THEN
+            "Acumulada: " ACUM \->STR + " %" + 10 CHR +
+            "Nivel final: " + NIVEL \->STR +
+            MSGBOX
+          END
+        \>>
+      \>>
+    END
+  \>>
+  DLOOPCC
+  \<<
+    @ DLOOPCC - nucleo de DLOOPC. Simula un bucle while de examen:
+    @     valor = inicial ; vueltas = 0
+    @     while valor <cond> limite:
+    @         valor = valor * (1 + tasa/100)     (modo 1, compuesto)
+    @         valor = valor + paso               (modo 2, aditivo)
+    @         vueltas = vueltas + 1
+    @ Uso:  Inicial Modo TasaOPaso Limite Cond DLOOPCC
+    @         Cond: 1 "<=", 2 "<", 3 ">=", 4 ">"
+    @ Deja: n1 = { K VFIN CORTE MAT }
+    @         K     = vueltas (el valor final del contador)
+    @         VFIN  = valor al salir del bucle
+    @         CORTE = 1 si se corto a las 500 vueltas con la condicion
+    @                 todavia verdadera (posible bucle infinito), 0 si no
+    @         MAT   = K filas x 3:  vuelta | valor al entrar | valor al salir
+    @                 ({ } si la condicion es falsa desde el inicio: 0 vueltas)
+    @ Si Modo o Cond no son validos deja un STRING con el motivo.
+    @
+    @ Todo pasa por \->NUM y la tasa se divide por 100. (con punto): en
+    @ modo exacto 10/100 daria la fraccion 1/10 y el valor se volveria
+    @ simbolico. Los contadores arrancan en 0. por lo mismo: un ZINT en la
+    @ matriz la volveria TYPE 29.
+    @ La condicion se evalua con < y > NOT, sin >= ni <= (CLAUDE.md 2.1).
+    @ Las filas se apilan en vez de concatenarse a una lista: con 500
+    @ vueltas, agregar a una lista que crece seria cuadratico.
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DLOOPC.
+    \-> V0 MODO T0 L0 COND
+    \<<
+      CASE
+        MODO 1 \=/ MODO 2 \=/ AND THEN "MODO: 1 O 2" END
+        COND 1 < COND 4 > OR THEN "CONDICION: 1 A 4" END
+        V0 \->NUM T0 \->NUM L0 \->NUM 0. 0. \-> V T LIM K OK
+        \<<
+          CASE
+            COND 1 == THEN V LIM > NOT END
+            COND 2 == THEN V LIM < END
+            COND 3 == THEN V LIM < NOT END
+            V LIM >
+          END
+          'OK' STO
+          WHILE OK K 500 < AND
+          REPEAT
+            IF MODO 1 == THEN V 1. T 100. / + * ELSE V T + END
+            \->NUM \-> VN
+            \<<
+              K 1. + V VN
+              VN 'V' STO
+              K 1. + 'K' STO
+            \>>
+            CASE
+              COND 1 == THEN V LIM > NOT END
+              COND 2 == THEN V LIM < END
+              COND 3 == THEN V LIM < NOT END
+              V LIM >
+            END
+            'OK' STO
+          END
+          IF K 0 > THEN K 3 2 \->LIST \->ARRY ELSE { } END \-> MAT
+          \<<
+            K V OK MAT 4 \->LIST
+          \>>
+        \>>
+      END
+    \>>
+  \>>
+  DLOOPC
+  \<<
+    @ DLOOPC - simulador de bucle while, para las preguntas de examen del
+    @ tipo "que imprime este while". Compuesto o aditivo.
+    @ Interfaz: el calculo esta en DLOOPCC (la C de mas es la del nucleo).
+    @ Dos pantallas de INFORM: con 5 campos en una, el ultimo queda
+    @ inalcanzable (CLAUDE.md 2.5).
+    @ Los campos traen valores iniciales (el ejemplo del examen intensivo:
+    @ 100, compuesto, 10 %, limite 200, <=): un campo numerico que nunca
+    @ se visita sin valor inicial llega como NOVAL.
+    @ La tabla queda en la pila y en el global LOOPT.
+    "While (1 de 2)"
+    {
+      { "Valor inicial:" "Valor antes del while" 0 }
+      { "Modo 1=comp 2=adit:" "1: v*(1+t/100)  2: v+paso" 0 }
+      { "Tasa % o paso:" "Tasa en % (modo 1) o paso (modo 2)" 0 }
+    }
+    { } { 100 1 10 } { 100 1 10 }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> V0 MODO T0
+      \<<
+        "While (2 de 2)"
+        {
+          { "Limite:" "Lado derecho de la condicion" 0 }
+          { "Cond 1<= 2< 3>= 4>:" "Sigue MIENTRAS valor cond limite" 0 }
+        }
+        { } { 200 1 } { 200 1 }
+        INFORM
+        IF THEN
+          OBJ\-> DROP \-> L0 COND
+          \<<
+            V0 MODO T0 L0 COND DLOOPCC \-> RES
+            \<<
+              IF RES TYPE 2 ==
+              THEN
+                "ERROR:" 10 CHR + RES + MSGBOX
+              ELSE
+                RES OBJ\-> DROP \-> K VFIN CORTE MAT
+                \<<
+                  IF CORTE 1 ==
+                  THEN
+                    "Corte a 500 vueltas:" 10 CHR +
+                    "posible bucle infinito" +
+                    MSGBOX
+                  END
+                  "Vueltas: " K \->STR + 10 CHR +
+                  "Valor final: " + VFIN \->STR +
+                  MSGBOX
+                  IF K 0 ==
+                  THEN
+                    "Condicion falsa" 10 CHR +
+                    "desde el inicio" +
+                    MSGBOX
+                  ELSE
+                    MAT 'LOOPT' STO
+                    "Cols: vuelta, entra," 10 CHR +
+                    "sale. Ver LOOPT EDIT" +
+                    MSGBOX
+                    MAT
+                  END
+                \>>
+              END
+            \>>
+          \>>
+        END
       \>>
     END
   \>>

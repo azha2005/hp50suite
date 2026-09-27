@@ -1,0 +1,40 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DREAL - variacion real (deflactada) y variaciones sucesivas.
+  @ Interfaz: el calculo esta en DREALC.
+  @ La parte real se omite solo si nominal E inflacion son 0: un salario
+  @ congelado (nominal 0) con inflacion 40 % es un ejercicio valido, y
+  @ omitirlo por nominal = 0 daria silencio donde hay respuesta.
+  @ Valores iniciales en 0: un campo que nunca se visita sin valor
+  @ inicial llega como NOVAL.
+  "Variacion real"
+  {
+    { "Var. nominal %:" "0 y 0 = omitir la real" 0 }
+    { "Inflacion %:" "Variacion de precios en %" 0 }
+    { "Sucesivas %:" "Lista {v1 v2 ...} o 0 = omitir" }
+  }
+  { } { 0 0 0 } { 0 0 0 }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> NOM INF0 SUC0
+    \<<
+      NOM INF0 SUC0 DREALC OBJ\-> DROP \-> REAL HAYL ACUM NIVEL
+      \<<
+        IF NOM 0 \=/ INF0 0 \=/ OR
+        THEN
+          "Var. real: " REAL \->STR + " %" + 10 CHR +
+          IF REAL 0 > THEN "Poder de compra subio" ELSE
+            IF REAL 0 < THEN "Poder de compra cayo" ELSE "Poder de compra igual" END
+          END +
+          MSGBOX
+        END
+        IF HAYL 1 ==
+        THEN
+          "Acumulada: " ACUM \->STR + " %" + 10 CHR +
+          "Nivel final: " + NIVEL \->STR +
+          MSGBOX
+        END
+      \>>
+    \>>
+  END
+\>>

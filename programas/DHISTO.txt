@@ -14,12 +14,12 @@
   @ punto de partida -- el profesor elige K a mano y arranca los
   @ intervalos en un entero comodo MENOR al minimo real (ej. 10 en vez
   @ de 12) para que el eje se lea mejor. Con 0 se calcula automatico.
-  "Histograma Sturges"
+  "Histograma"
   {
     { "Datos:" "Vector [x] o Lista {x}" }
-    { "K deseado (0=Sturges):" "0" 0 }
-    { "Ancho deseado (0=auto):" "0" 0 }
-    { "Inicio deseado (0=Min real):" "0" 0 }
+    { "K (0=auto):" "0" 0 }
+    { "Ancho (0=auto):" "0" 0 }
+    { "Inicio (0=auto):" "0" 0 }
   }
   { } { } { }
   INFORM

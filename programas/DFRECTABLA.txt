@@ -3,16 +3,16 @@
   @ DFRECTABLA - tabla de frecuencias como MATRIZ.
   @ Interfaz: el calculo esta en DFRECTABLAC, que devuelve
   @ { K H START FREQ MAT }. La matriz queda en la pila.
-  @ K/Ancho/Inicio en 0 = automatico (Sturges para K). Se pueden fijar a
+  @ K/Ancho/Inicio en 0 = automatico, regla de catedra (ver DFRECTABLAC). Se pueden fijar a
   @ mano para reproducir ejercicios que eligen K arbitrariamente.
   @ En modo algebraico, EDIT sobre la matriz abre un editor de celdas
   @ tipo planilla; en RPN solo edita la matriz plana.
   "Tabla de Frecuencias"
   {
     { "Datos:" "Vector [x] o Lista {x}" }
-    { "K deseado (0=Sturges):" "0" 0 }
-    { "Ancho deseado (0=auto):" "0" 0 }
-    { "Inicio deseado (0=Min real):" "0" 0 }
+    { "K (0=auto):" "0" 0 }
+    { "Ancho (0=auto):" "0" 0 }
+    { "Inicio (0=auto):" "0" 0 }
   }
   { } { } { }
   INFORM

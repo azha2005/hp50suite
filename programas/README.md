@@ -78,7 +78,9 @@ visibilidad. El razonamiento completo está en `../SUITE-MAT1.md` §3.
 | `DMKT`, `DMKTFISC`, `DCOMPFIRM` | Verificados con casos conocidos (CLAUDE.md §6) |
 | `DPIBPPA`, `DTCAMBIO`, `DVLRZ` | Verificados |
 | `DBOXPLOT` | Versión de coordenadas reales — **probar de nuevo**, se reescribió después de la última confirmación |
+| `DBOXPLOT` (cuartiles), `DFRECTABLA`/`DHISTO` (automático) (27/09/2026) | Pasaron a los métodos de la cátedra (CLAUDE.md §5). **Solo emulador**: las baterías viejas siguen en verde y hay casos nuevos en `casos-lab2.txt`. **Reemplazar las versiones cargadas en la calculadora** |
 | `DTROZOS` | Versión con extremos `"<"` / `"<="` — **sin confirmar** en hardware |
+| `DTABLA2`, `DZLISTA`, `DCINCO`, `DPCTIL2`, `DLOOPC`, `DCHEBY`, `DPOND`, `DREAL` (27/09/2026) | **Solo emulador.** Los 8 núcleos, 139 de 139 casos (`harness/casos-lab2.txt` del fork). Las interfaces compilan en la máquina pero no se corrieron: `INFORM` es interactivo. **Sin probar en hardware** |
 | `mat1/`: `TCHK`, `DINF`, `DASHO`, `DCONT`, `DESTFUN` | Corridos. Destaparon y arreglaron los dos bugs del infinito (`../SUITE-MAT1.md` §2) |
 | `mat1/`: los otros 13 | **Sin probar.** Pasan `verificar.ps1`, que chequea estructura, no semántica |
 
@@ -104,6 +106,9 @@ cualquiera de los de `mat1/`, correr `TCHK` en la calculadora (SUITE-MAT1 §2).
 
 - `DFRECTABLA` deja una **matriz** en la pila. Para verla como planilla: pasar a
   **modo algebraico** y hacer `EDIT` sobre ella.
+- `DTABLA2`, `DZLISTA` y `DLOOPC` también dejan una matriz, y además la guardan
+  en un global: `TABLA2`, `ZTABLA` y `LOOPT`. Se ven igual: modo algebraico,
+  el nombre y `EDIT`.
 - Los programas de estadística y economía usan `MSGBOX` encadenados (apretar OK
   para avanzar entre cajas).
 

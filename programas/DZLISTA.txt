@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DZLISTA - valor z de todas las observaciones, atipicos y z inverso.
+  @ Interfaz: el calculo esta en DZLISTAC.
+  @ La matriz x | z queda en la pila y en el global ZTABLA.
+  "Valor z de la lista"
+  {
+    { "Datos:" "Vector [x] o Lista {x}" }
+    { "z objetivo:" "Para x = media + z*s" 0 }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> D0 Z0
+    \<<
+      D0 Z0 DZLISTAC \-> RES
+      \<<
+        IF RES TYPE 2 ==
+        THEN
+          "ERROR:" 10 CHR + RES + MSGBOX
+        ELSE
+          RES OBJ\-> DROP \-> N XB S MAT ATIPS X0
+          \<<
+            MAT 'ZTABLA' STO
+            "Media: " XB \->STR + 10 CHR +
+            "s: " + S \->STR +
+            MSGBOX
+            IF ATIPS SIZE 0 ==
+            THEN
+              "Atipicos |z|>3:" 10 CHR +
+              "sin atipicos" +
+              MSGBOX
+            ELSE
+              "Atipicos |z|>3:" 10 CHR +
+              ATIPS \->STR +
+              MSGBOX
+            END
+            "Valor con z = " Z0 \->STR + ":" + 10 CHR +
+            X0 \->STR +
+            MSGBOX
+            "Ver tabla x | z:" 10 CHR +
+            "ZTABLA + EDIT" +
+            MSGBOX
+            MAT
+          \>>
+        END
+      \>>
+    \>>
+  END
+\>>

@@ -790,10 +790,11 @@ sed 's/$/\r/' archivo_lf.txt > SALIDA.txt   # conversion a CRLF
 | `DHISTO` | Histograma (barras) | Datos + K + Ancho + Inicio |
 | `DBOXPLOT` | Caja, bigotes, outliers, eje, puntos individuales | Datos |
 
-En `DFRECTABLA`/`DHISTO`, los campos K/Ancho/Inicio en `0` = automático (Sturges).
-Se pueden fijar a mano para reproducir ejercicios de cátedra que eligen K
-arbitrariamente (ej. el de horas trabajadas usa K=5, Ancho=5, Inicio=10 — la
-cátedra arranca en un entero cómodo *menor* al mínimo real).
+En `DFRECTABLA`/`DHISTO`, los campos K/Ancho/Inicio en `0` = automático, con la
+regla de la diapositiva de la cátedra (§5, "Métodos de la cátedra"): Sturges,
+ancho redondeado para arriba, inicio en un múltiplo del ancho. Con eso el de
+horas trabajadas sale solo con K=5, Ancho=5, Inicio=10, que es lo que la
+cátedra eligió "a mano". Lo que se fije a mano se respeta.
 
 ### Relación entre dos variables
 
@@ -980,6 +981,99 @@ Dos duplicaciones eliminadas en el camino, las dos del mismo tipo que la de
 
 `DTROZOS` quedó **sin partir**: no calcula ningún resultado, solo dibuja, así que
 no hay núcleo que probar. Coherente con la decisión de §7 de no invertirle más.
+
+### Parcial 1 de Lab de Datos: 8 programas más (27/09/2026)
+
+Pedidos para el parcial del 29/09, que es a mano y pide **los cálculos
+intermedios**: varios muestran el desarrollo, no solo el resultado. Fichas en
+`DICCIONARIO-LAB.md`.
+
+| Programa | Núcleo | Qué hace | Global |
+|---|---|---|---|
+| `DTABLA2` | `DTABLA2C` | Tabla de desvíos, 1 o 2 variables, con fila de sumas | `TABLA2` |
+| `DZLISTA` | `DZLISTAC` | z de cada dato, atípicos y z inverso | `ZTABLA` |
+| `DCINCO` | `DCINCOC` | Cinco números, RIC, cercas, atípicos, asimetría | — |
+| `DPCTIL2` | `DPCTIL2C` | Percentil por el método de clase y por el de Anderson | — |
+| `DLOOPC` | **`DLOOPCC`** | Simula un `while` compuesto o aditivo | `LOOPT` |
+| `DCHEBY` | `DCHEBYC` | Chebyshev, con k dado o sacado de [a, b] | — |
+| `DPOND` | `DPONDC` | Media ponderada | — |
+| `DREAL` | `DREALC` | Variación real y variaciones sucesivas | — |
+
+**139 de 139 casos en el emulador** (fork, `harness/casos-lab2.txt`), con
+todos los valores del enunciado de la tarea más bordes (0 vueltas, corte a las
+500, Lp fuera de rango, largos distintos, pila limpia). **No están probados en
+hardware**, y las interfaces solo se compilaron: la batería las carga (y así
+un error de sintaxis se vería), pero `INFORM` no se puede correr desde ahí.
+
+Coherencia **por construcción**, con los mismos casos que la verifican
+comparando contra el programa viejo en la misma corrida:
+
+- `DTABLA2C` saca x̄, ȳ, los desvíos, sxy y r de **`DCOVCORRC`** (o de
+  `DSTATSC` con una variable) y acumula las sumas en el mismo orden, así que
+  SSx/(n−1) es el mismo número que usa `DCOVCORR`. Igualdad con `==`, al bit.
+- `DCINCOC` y `DPCTIL2C` piden los percentiles a **`DPCTILC`**.
+- `DZLISTAC` usa `DSTATSC` para la media y s, y **`DCOMPZC`** para cada z.
+
+**Métodos de la cátedra, leídos del material del curso** (`Desktop\labo`:
+diapositivas de Cicowiez, transcripciones de clase, apunte de Excel, las dos
+ediciones del Anderson). Antes se suponían; ahora hay fuente:
+
+| Qué | Método de la cátedra | Fuente |
+|---|---|---|
+| Percentil | `Lp = (p/100)(n+1)`, interpolado: el de `DPCTIL` | Diapositiva Unidades 1 y 2, con `L70` de 12 precios del Big Mac = 5.4684 |
+| Histograma | Sturges redondeado; ancho = R/K **redondeado para arriba**; tabla que arranca en un número redondo, clases `[a, b)` | Diapositiva "¿Calcular el tamaño del intervalo?", ejemplo Big Mac: 6.49 → 6, 0.9067 → 1, clases 1.00–1.99 … 7.00–7.99 |
+
+Tres fuentes dicen otra cosa, y hay que saberlo para una opción múltiple:
+el **apunte de Excel** de la práctica usa `CUARTIL.INC` (posición
+`1 + (n−1)p`), el **Anderson 2012** en castellano usa el índice `i = np/100`, y
+el **Anderson 2020** usa `(n+1)` —el del profesor—, que es `PERCENTIL.EXC`.
+Con Y = `{1 4 3 5 6}` del examen intensivo, Q1 da 2 por el del profesor y 3
+por los otros dos. `DPCTIL2` muestra los tres. El 22/09 el docente dijo que la
+parte de estadística la toma él y que "no confundan el valor del percentil con
+la posición".
+
+Con eso se cambiaron dos programas viejos (27/09/2026):
+
+- **`DBOXPLOTC` pasó a pedir los cuartiles a `DPCTILC`.** Antes los tomaba por
+  índice, `x(⌈n/4⌉)`, y con `{1 4 3 5 6}` dibujaba Q1 = 3 y Q3 = 5 en vez de
+  2 y 5.5. Ahora el gráfico, `DCINCO` y `DPCTIL` no pueden diferir. Con
+  `HORAS` los dos métodos coinciden (15, 18, 22): por eso las 12 aserciones
+  de píxel de `casos-graf.txt` no cambiaron.
+- **`DFRECTABLAC` automático pasó a la regla de la diapositiva.** Antes el
+  ancho era R/K sin redondear y arrancaba en el mínimo. Ahora `BMHIST` da las 7
+  clases de la diapositiva (frecuencias 1, 11, 15, 9, 7, 1, 1) y `HORAS` da
+  K=5, Ancho=5, Inicio=10. El redondeo "a la precisión adecuada" se
+  implementó como **una cifra significativa para arriba**: es la lectura que
+  reproduce los dos ejemplos de cátedra (0.9067 → 1 y 4.2 → 5); con dos cifras
+  darían 0.91 y 4.2. Si K se fija a mano se respeta.
+
+Las cuatro baterías viejas que tocan estos programas se volvieron a correr sin
+cambiar un solo esperado: `casos-lab` 33/33, `casos-lab-datos` 25/25,
+`casos-graf` 33/33, `casos-graf-histo` 9/9. `casos-graf.txt` necesitó cargar
+`DPCTILC`, porque ahora `DBOXPLOTC` lo llama.
+
+La diapositiva trae un error de tipeo: da `L50` = 4.1119, pero la cuenta que
+muestra al lado, 4.091 + 0.5·(4.300 − 4.091), da **4.1955**. `DPCTIL` da 4.1955.
+
+Cuatro detalles del camino:
+
+- **`DLOOPC` tiene el núcleo `DLOOPCC`**, con doble C: el nombre del programa
+  lo fijó la tarea y ya terminaba en C.
+- **Las instrucciones de la tarea repetían la regla vieja de `FOR`** ("inicio >
+  fin no ejecuta ninguna vuelta"), que §2.7 ya corrigió: ejecuta una vez. El
+  único `FOR` que podía quedar vacío (`DREALC` con lista vacía) va envuelto en
+  `IF`, y hay un caso que lo prueba (`re-vacia`).
+- **Un campo numérico de `INFORM` sin visitar llega como `NOVAL`, no con el
+  texto del segundo elemento.** Ese texto es la **ayuda** de la línea de abajo,
+  no un default; el valor inicial va en el 5º argumento de `INFORM`. Es lo que
+  dice el manual y explicaría la "inconsistencia conocida" de `DPIBPPA`
+  (`programas/README.md`), pero **no está medido acá**. Los programas nuevos no
+  dependen de la respuesta: los formularios todo-numéricos traen valores
+  iniciales (`DLOOPC` viene cargado con el ejemplo del examen), y `DZLISTAC`
+  toma como 0 cualquier z objetivo que no sea un número.
+- `DCHEBYC` redondea N a 9 decimales **antes** del `CEIL`: `(1 − 1/9)·9` da
+  8.000000000001 y un `CEIL` directo decía 9 observaciones. Hay un caso
+  (`ch-ceil`) que lo prueba.
 
 ---
 

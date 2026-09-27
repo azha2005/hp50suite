@@ -1,0 +1,66 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCINCOC - nucleo de DCINCO. Resumen de cinco numeros, RIC, cercas,
+  @ atipicos y asimetria.
+  @ Uso:  Datos DCINCOC
+  @ Deja: n1 = { N MINV Q1 Q2 Q3 MAXV RIC LINF LSUP OUTS XB ASIM }
+  @         LINF/LSUP = cercas Q1-1.5*RIC y Q3+1.5*RIC
+  @         OUTS = lista de datos fuera de las cercas ({ } si no hay)
+  @         ASIM = 1 media > mediana (asimetria positiva)
+  @               -1 media < mediana (asimetria negativa)
+  @                0 iguales, con tolerancia 1E-9 (simetrica)
+  @
+  @ Cuartiles por el METODO DE CLASE, Lp=(p/100)(n+1) interpolado: los
+  @ pide a DPCTILC con p = 25, 50 y 75, asi que son por construccion los
+  @ mismos que da DPCTIL. OJO: NO son los de DBOXPLOT, que usa cuartiles
+  @ por indice (ver DBOXPLOTC). La media sale de DSTATSC.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DCINCO.
+  IF DUP TYPE 6 == THEN EVAL END
+  IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
+  SORT \-> L
+  \<<
+    L SIZE \-> N
+    \<<
+      L 25 DPCTILC 3 GET \-> Q1
+      \<<
+        L 50 DPCTILC 3 GET \-> Q2
+        \<<
+          L 75 DPCTILC 3 GET \-> Q3
+          \<<
+            Q3 Q1 - \->NUM \-> RIC
+            \<<
+              Q1 1.5 RIC * - \->NUM \-> LINF
+              \<<
+                Q3 1.5 RIC * + \->NUM \-> LSUP
+                \<<
+                  { } \-> OUTS
+                  \<<
+                    1 N FOR i
+                      L i GET \->NUM \-> V
+                      \<<
+                        IF V LINF < V LSUP > OR THEN OUTS V + 'OUTS' STO END
+                      \>>
+                    NEXT
+                    L DSTATSC 2 GET \-> XB
+                    \<<
+                      CASE
+                        XB Q2 - ABS 1E-9 < THEN 0 END
+                        XB Q2 > THEN 1 END
+                        -1
+                      END
+                      \-> ASIM
+                      \<<
+                        N L 1 GET \->NUM Q1 Q2 Q3 L N GET \->NUM RIC LINF LSUP
+                        OUTS XB ASIM 12 \->LIST
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

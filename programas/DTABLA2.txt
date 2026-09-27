@@ -1,0 +1,76 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DTABLA2 - tabla de desvios para copiar en la hoja del examen.
+  @ Interfaz: el calculo esta en DTABLA2C. Con Datos Y en 0 (o vacio)
+  @ hace la tabla de una variable.
+  @ La matriz queda en la pila y en el global TABLA2. En modo algebraico,
+  @ EDIT sobre ella abre un editor de celdas tipo planilla.
+  @ Cajas de 2 lineas sin encabezado: MSGBOX no hace scroll.
+  "Tabla de Desvios"
+  {
+    { "Datos X:" "Vector [x] o Lista {x}" }
+    { "Datos Y (0=solo X):" "Lista {y}, o 0 para una variable" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DTABLA2C \-> RES
+    \<<
+      IF RES TYPE 2 ==
+      THEN
+        "ERROR:" 10 CHR + RES + MSGBOX
+      ELSE
+        IF RES SIZE 13 ==
+        THEN
+          RES OBJ\-> DROP \-> N XB YB SSX SSY SXY VX VY SX SY COV R MAT
+          \<<
+            MAT 'TABLA2' STO
+            "xbar: " XB \->STR + 10 CHR +
+            "ybar: " + YB \->STR +
+            MSGBOX
+            "SSx: " SSX \->STR + 10 CHR +
+            "SSy: " + SSY \->STR +
+            MSGBOX
+            "Sxy: " SXY \->STR + 10 CHR +
+            "N: " + N \->STR +
+            MSGBOX
+            "s2x: " VX \->STR + 10 CHR +
+            "s2y: " + VY \->STR +
+            MSGBOX
+            "sx: " SX \->STR + 10 CHR +
+            "sy: " + SY \->STR +
+            MSGBOX
+            "sxy: " COV \->STR + 10 CHR +
+            "r: " + R \->STR +
+            MSGBOX
+            "Cols: x y dx dy" 10 CHR +
+            "dx2 dy2 dx*dy" +
+            MSGBOX
+            "Ver tabla:" 10 CHR +
+            "TABLA2 + EDIT" +
+            MSGBOX
+            MAT
+          \>>
+        ELSE
+          RES OBJ\-> DROP \-> N XB SSX VX SX MAT
+          \<<
+            MAT 'TABLA2' STO
+            "xbar: " XB \->STR + 10 CHR +
+            "N: " + N \->STR +
+            MSGBOX
+            "SSx: " SSX \->STR + 10 CHR +
+            "s2x: " + VX \->STR +
+            MSGBOX
+            "sx: " SX \->STR + 10 CHR +
+            "Cols: x dx dx2" +
+            MSGBOX
+            "Ver tabla:" 10 CHR +
+            "TABLA2 + EDIT" +
+            MSGBOX
+            MAT
+          \>>
+        END
+      END
+    \>>
+  END
+\>>

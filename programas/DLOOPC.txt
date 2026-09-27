@@ -1,0 +1,69 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DLOOPC - simulador de bucle while, para las preguntas de examen del
+  @ tipo "que imprime este while". Compuesto o aditivo.
+  @ Interfaz: el calculo esta en DLOOPCC (la C de mas es la del nucleo).
+  @ Dos pantallas de INFORM: con 5 campos en una, el ultimo queda
+  @ inalcanzable (CLAUDE.md 2.5).
+  @ Los campos traen valores iniciales (el ejemplo del examen intensivo:
+  @ 100, compuesto, 10 %, limite 200, <=): un campo numerico que nunca
+  @ se visita sin valor inicial llega como NOVAL.
+  @ La tabla queda en la pila y en el global LOOPT.
+  "While (1 de 2)"
+  {
+    { "Valor inicial:" "Valor antes del while" 0 }
+    { "Modo 1=comp 2=adit:" "1: v*(1+t/100)  2: v+paso" 0 }
+    { "Tasa % o paso:" "Tasa en % (modo 1) o paso (modo 2)" 0 }
+  }
+  { } { 100 1 10 } { 100 1 10 }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> V0 MODO T0
+    \<<
+      "While (2 de 2)"
+      {
+        { "Limite:" "Lado derecho de la condicion" 0 }
+        { "Cond 1<= 2< 3>= 4>:" "Sigue MIENTRAS valor cond limite" 0 }
+      }
+      { } { 200 1 } { 200 1 }
+      INFORM
+      IF THEN
+        OBJ\-> DROP \-> L0 COND
+        \<<
+          V0 MODO T0 L0 COND DLOOPCC \-> RES
+          \<<
+            IF RES TYPE 2 ==
+            THEN
+              "ERROR:" 10 CHR + RES + MSGBOX
+            ELSE
+              RES OBJ\-> DROP \-> K VFIN CORTE MAT
+              \<<
+                IF CORTE 1 ==
+                THEN
+                  "Corte a 500 vueltas:" 10 CHR +
+                  "posible bucle infinito" +
+                  MSGBOX
+                END
+                "Vueltas: " K \->STR + 10 CHR +
+                "Valor final: " + VFIN \->STR +
+                MSGBOX
+                IF K 0 ==
+                THEN
+                  "Condicion falsa" 10 CHR +
+                  "desde el inicio" +
+                  MSGBOX
+                ELSE
+                  MAT 'LOOPT' STO
+                  "Cols: vuelta, entra," 10 CHR +
+                  "sale. Ver LOOPT EDIT" +
+                  MSGBOX
+                  MAT
+                END
+              \>>
+            END
+          \>>
+        \>>
+      END
+    \>>
+  END
+\>>

@@ -1,0 +1,38 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPONDC - nucleo de DPOND. Media ponderada.
+  @ Uso:  DatosX Pesos DPONDC
+  @ Deja: n1 = { N SW SWX XP }
+  @         SW = suma de los pesos, SWX = suma de w*x, XP = SWX / SW
+  @ Si los largos difieren o la suma de pesos es 0, deja un STRING.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPOND.
+  \-> DX0 DW0
+  \<<
+    DX0 IF DUP TYPE 6 == THEN EVAL END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LX
+    \<<
+      DW0 IF DUP TYPE 6 == THEN EVAL END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LW
+      \<<
+        IF LX SIZE LW SIZE \=/
+        THEN
+          "X Y W DE DISTINTO LARGO"
+        ELSE
+          LX SIZE 0. 0. \-> N SW SWX
+          \<<
+            1 N FOR i
+              SW LW i GET + \->NUM 'SW' STO
+              SWX LW i GET LX i GET * + \->NUM 'SWX' STO
+            NEXT
+            IF SW 0 ==
+            THEN
+              "LA SUMA DE PESOS ES 0"
+            ELSE
+              N SW SWX SWX SW / \->NUM 4 \->LIST
+            END
+          \>>
+        END
+      \>>
+    \>>
+  \>>
+\>>

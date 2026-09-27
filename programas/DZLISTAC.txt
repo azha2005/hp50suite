@@ -1,0 +1,58 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DZLISTAC - nucleo de DZLISTA. Valor z de cada dato, y el z inverso.
+  @ Uso:  Datos Z0 DZLISTAC
+  @ Deja: n1 = { N XB S MAT ATIPS X0 }
+  @         MAT   = N filas x 2 columnas:  x | z,  z = (x - XB) / S
+  @         ATIPS = lista de los datos con |z| > 3 ({ } si no hay)
+  @         X0    = XB + Z0*S, el dato que tendria z = Z0
+  @ Si N < 2 o S = 0 deja un STRING con el motivo.
+  @
+  @ XB y S salen de DSTATSC (muestral, N-1) y cada z sale de DCOMPZC, con
+  @ su mismo umbral de atipico. Asi DZLISTA, DSTATS y DCOMPZ no pueden dar
+  @ numeros distintos para el mismo dato.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DZLISTA.
+  @ Un campo de INFORM que nunca se visito llega como NOVAL, no como 0:
+  @ todo lo que no sea un numero (real o entero exacto) cuenta como 0.
+  IF DUP TYPE 0 == OVER TYPE 28 == OR NOT THEN DROP 0 END
+  \-> D0 Z0
+  \<<
+    D0 IF DUP TYPE 6 == THEN EVAL END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> L
+    \<<
+      IF L SIZE 2 <
+      THEN
+        "HACEN FALTA 2 DATOS"
+      ELSE
+        L DSTATSC OBJ\-> DROP \-> N XB VARZ S CV
+        \<<
+          IF S 0 ==
+          THEN
+            "DESVIO 0: TODOS IGUALES"
+          ELSE
+            { } \-> ATIPS
+            \<<
+              1 N FOR i
+                L i GET \->NUM \-> XI
+                \<<
+                  XI XB S DCOMPZC OBJ\-> DROP \-> ZV AT
+                  \<<
+                    XI ZV
+                    IF AT 1 == THEN ATIPS XI + 'ATIPS' STO END
+                  \>>
+                \>>
+              NEXT
+              N 2 2 \->LIST \->ARRY \-> MAT
+              \<<
+                XB Z0 S * + \->NUM \-> X0
+                \<<
+                  N XB S MAT ATIPS X0 6 \->LIST
+                \>>
+              \>>
+            \>>
+          END
+        \>>
+      END
+    \>>
+  \>>
+\>>

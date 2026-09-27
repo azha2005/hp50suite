@@ -1,0 +1,39 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DREALC - nucleo de DREAL. Variacion real y variaciones sucesivas.
+  @ Uso:  Nominal% Inflacion% Sucesivas DREALC
+  @         Sucesivas: lista de variaciones en %, o 0 para omitir.
+  @ Deja: n1 = { REAL HAYL ACUM NIVEL }
+  @         REAL  = ((1+nom/100)/(1+inf/100) - 1)*100
+  @         HAYL  = 1 si vino una lista de sucesivas, 0 si no
+  @         ACUM  = (prod(1+vi/100) - 1)*100      (0 si HAYL = 0)
+  @         NIVEL = 100*prod(1+vi/100), el nivel final partiendo de 100
+  @ Las divisiones van por 100. (con punto): en modo exacto 30/100 daria
+  @ una fraccion y el resultado saldria simbolico.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DREAL.
+  \-> NOM INF0 SUC0
+  \<<
+    1. NOM \->NUM 100. / + 1. INF0 \->NUM 100. / + / 1. - 100. * \->NUM \-> REAL
+    \<<
+      SUC0 IF DUP TYPE 6 == THEN EVAL END
+      IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> SUC
+      \<<
+        IF SUC TYPE 5 ==
+        THEN
+          1. \-> F
+          \<<
+            IF SUC SIZE 0 >
+            THEN
+              1 SUC SIZE FOR i
+                F 1. SUC i GET \->NUM 100. / + * \->NUM 'F' STO
+              NEXT
+            END
+            REAL 1 F 1. - 100. * \->NUM F 100. * \->NUM 4 \->LIST
+          \>>
+        ELSE
+          REAL 0 0. 100. 4 \->LIST
+        END
+      \>>
+    \>>
+  \>>
+\>>

@@ -1,0 +1,115 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DTABLA2C - nucleo de DTABLA2. Tabla de desvios, 1 o 2 variables.
+  @ Uso:  DatosX DatosY DTABLA2C     (DatosY = 0 para una variable)
+  @ Deja, con dos variables:
+  @   n1 = { N XB YB SSX SSY SXY VX VY SX SY COV R MAT }
+  @   MAT: N+1 filas x 7 columnas
+  @     x | y | x-xb | y-yb | (x-xb)^2 | (y-yb)^2 | (x-xb)(y-yb)
+  @   y la ultima fila son las SUMAS de cada columna.
+  @ Deja, con una variable:
+  @   n1 = { N XB SSX VX SX MAT }
+  @   MAT: N+1 filas x 3 columnas   x | x-xb | (x-xb)^2   + fila de sumas.
+  @ Si algo no cierra deja un STRING con el motivo (la interfaz lo
+  @ muestra): largos distintos o menos de 2 datos.
+  @
+  @ Todo muestral (divide por N-1), como DSTATS y DCOVCORR.
+  @ XB, YB, los desvios, la covarianza y r NO se calculan aca: salen de
+  @ DCOVCORRC (dos variables) o de DSTATSC (una). Asi la tabla y esos
+  @ programas no pueden dar numeros distintos. Las sumas de la tabla se
+  @ acumulan en el mismo orden que DCOVCORRC, asi que SSX/(N-1) da el
+  @ mismo numero que el que DCOVCORRC usa para el desvio.
+  @
+  @ Todo lo que entra a la matriz pasa por \->NUM: en modo exacto un
+  @ dato entero es ZINT y la matriz saldria simbolica (TYPE 29).
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DTABLA2.
+  \-> DX0 DY0
+  \<<
+    DX0 IF DUP TYPE 6 == THEN EVAL END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LX
+    \<<
+      DY0 IF DUP TYPE 6 == THEN EVAL END \-> DY1
+      \<<
+        IF DY1 TYPE 5 == DY1 TYPE 3 == OR DY1 TYPE 29 == OR
+        THEN
+          DY1 IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END \-> LY
+          \<<
+            CASE
+              LX SIZE LY SIZE \=/ THEN "X E Y DE DISTINTO LARGO" END
+              LX SIZE 2 < THEN "HACEN FALTA 2 DATOS" END
+              LX LY DCOVCORRC OBJ\-> DROP \-> N XB YB COV SDX SDY R B0 B1
+              \<<
+                0. 0. 0. 0. 0. 0. 0. \-> TX TY TDX TDY TSX TSY TSXY
+                \<<
+                  1 N FOR i
+                    LX i GET \->NUM \-> XI
+                    \<<
+                      LY i GET \->NUM \-> YI
+                      \<<
+                        XI XB - \-> DXI
+                        \<<
+                          YI YB - \-> DYI
+                          \<<
+                            XI YI DXI DYI DXI SQ DYI SQ DXI DYI *
+                            TX XI + 'TX' STO
+                            TY YI + 'TY' STO
+                            TDX DXI + 'TDX' STO
+                            TDY DYI + 'TDY' STO
+                            TSXY DXI DYI * + 'TSXY' STO
+                            TSX DXI SQ + 'TSX' STO
+                            TSY DYI SQ + 'TSY' STO
+                          \>>
+                        \>>
+                      \>>
+                    \>>
+                  NEXT
+                  TX TY TDX TDY TSX TSY TSXY
+                  N 1 + 7 2 \->LIST \->ARRY \-> MAT
+                  \<<
+                    TSX N 1 - / \->NUM \-> VX
+                    \<<
+                      TSY N 1 - / \->NUM \-> VY
+                      \<<
+                        N XB YB TSX TSY TSXY VX VY SDX SDY COV R MAT
+                        13 \->LIST
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            END
+          \>>
+        ELSE
+          IF LX SIZE 2 <
+          THEN
+            "HACEN FALTA 2 DATOS"
+          ELSE
+            LX DSTATSC OBJ\-> DROP \-> N XB VX SX CV
+            \<<
+              0. 0. 0. \-> TX TDX TSX
+              \<<
+                1 N FOR i
+                  LX i GET \->NUM \-> XI
+                  \<<
+                    XI XB - \-> DXI
+                    \<<
+                      XI DXI DXI SQ
+                      TX XI + 'TX' STO
+                      TDX DXI + 'TDX' STO
+                      TSX DXI SQ + 'TSX' STO
+                    \>>
+                  \>>
+                NEXT
+                TX TDX TSX
+                N 1 + 3 2 \->LIST \->ARRY \-> MAT
+                \<<
+                  N XB TSX VX SX MAT 6 \->LIST
+                \>>
+              \>>
+            \>>
+          END
+        END
+      \>>
+    \>>
+  \>>
+\>>

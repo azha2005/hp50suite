@@ -1,0 +1,47 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCINCO - resumen de cinco numeros, RIC, cercas, atipicos y asimetria.
+  @ Los numeros del box plot para escribir en la hoja: DBOXPLOT solo
+  @ grafica. Cuartiles por el metodo de clase (los mismos que DPCTIL).
+  @ Interfaz: el calculo esta en DCINCOC.
+  "Resumen de 5 numeros"
+  { { "Datos:" "Vector [x] o Lista {x}" } }
+  { } { } { }
+  INFORM
+  IF THEN
+    1 GET DCINCOC OBJ\-> DROP \-> N MINV Q1 Q2 Q3 MAXV RIC LINF LSUP OUTS XB ASIM
+    \<<
+      "Min: " MINV \->STR + 10 CHR +
+      "Q1: " + Q1 \->STR +
+      MSGBOX
+      "Mediana: " Q2 \->STR + 10 CHR +
+      "Q3: " + Q3 \->STR +
+      MSGBOX
+      "Max: " MAXV \->STR + 10 CHR +
+      "RIC: " + RIC \->STR +
+      MSGBOX
+      "Cerca inf: " LINF \->STR + 10 CHR +
+      "Cerca sup: " + LSUP \->STR +
+      MSGBOX
+      IF OUTS SIZE 0 ==
+      THEN
+        "Atipicos:" 10 CHR +
+        "ninguno" +
+        MSGBOX
+      ELSE
+        "Atipicos:" 10 CHR +
+        OUTS \->STR +
+        MSGBOX
+      END
+      "Media: " XB \->STR + 10 CHR +
+      "Mediana: " + Q2 \->STR +
+      MSGBOX
+      CASE
+        ASIM 1 == THEN "Asimetria positiva" 10 CHR + "(cola a la derecha)" + END
+        ASIM -1 == THEN "Asimetria negativa" 10 CHR + "(cola a la izq.)" + END
+        "Simetrica" 10 CHR + "(media = mediana)" +
+      END
+      MSGBOX
+    \>>
+  END
+\>>

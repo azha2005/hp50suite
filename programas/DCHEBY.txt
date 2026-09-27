@@ -1,0 +1,70 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCHEBY - teorema de Chebyshev y regla empirica.
+  @ Interfaz: el calculo esta en DCHEBYC.
+  @ Pantalla 1: k, media, s, n. Si k = 0, pantalla 2 con el intervalo
+  @ [a, b] y k sale de ahi. Valores iniciales en 0: un campo numerico
+  @ que nunca se visita sin valor inicial llega como NOVAL.
+  "Chebyshev (1 de 2)"
+  {
+    { "k (0=desde [a,b]):" "Cantidad de desvios" 0 }
+    { "Media:" "Media de los datos" 0 }
+    { "s:" "Desvio estandar" 0 }
+    { "n (0=omitir):" "Cantidad de observaciones" 0 }
+  }
+  { } { 0 0 0 0 } { 0 0 0 0 }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> K0 U S N
+    \<<
+      IF K0 0 ==
+      THEN
+        "Chebyshev (2 de 2)"
+        {
+          { "Limite inferior a:" "Extremo izquierdo" 0 }
+          { "Limite superior b:" "Extremo derecho" 0 }
+        }
+        { } { 0 0 } { 0 0 }
+        INFORM
+        IF THEN OBJ\-> DROP 1 ELSE 0 0 0 END
+      ELSE
+        0 0 1
+      END
+      \-> A B SEGUIR
+      \<<
+        IF SEGUIR 1 ==
+        THEN
+          K0 U S A B N DCHEBYC \-> RES
+          \<<
+            IF RES TYPE 2 ==
+            THEN
+              "AVISO:" 10 CHR + RES + MSGBOX
+            ELSE
+              RES OBJ\-> DROP \-> K PROP PCT NOBS NCEIL ASIM
+              \<<
+                IF ASIM 1 ==
+                THEN
+                  "Intervalo no simetrico:" 10 CHR +
+                  "se usa el k menor" +
+                  MSGBOX
+                END
+                "k: " K \->STR + 10 CHR +
+                "Al menos " + PCT \->STR + " %" +
+                MSGBOX
+                IF N 0 >
+                THEN
+                  "Al menos " NCEIL \->STR + " obs." + 10 CHR +
+                  "(sin redondear: " + NOBS \->STR + ")" +
+                  MSGBOX
+                END
+                "Campana: k=1 68%" 10 CHR +
+                "k=2 95%, k=3 99.7%" +
+                MSGBOX
+              \>>
+            END
+          \>>
+        END
+      \>>
+    \>>
+  END
+\>>

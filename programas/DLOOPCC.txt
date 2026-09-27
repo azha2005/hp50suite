@@ -1,0 +1,66 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DLOOPCC - nucleo de DLOOPC. Simula un bucle while de examen:
+  @     valor = inicial ; vueltas = 0
+  @     while valor <cond> limite:
+  @         valor = valor * (1 + tasa/100)     (modo 1, compuesto)
+  @         valor = valor + paso               (modo 2, aditivo)
+  @         vueltas = vueltas + 1
+  @ Uso:  Inicial Modo TasaOPaso Limite Cond DLOOPCC
+  @         Cond: 1 "<=", 2 "<", 3 ">=", 4 ">"
+  @ Deja: n1 = { K VFIN CORTE MAT }
+  @         K     = vueltas (el valor final del contador)
+  @         VFIN  = valor al salir del bucle
+  @         CORTE = 1 si se corto a las 500 vueltas con la condicion
+  @                 todavia verdadera (posible bucle infinito), 0 si no
+  @         MAT   = K filas x 3:  vuelta | valor al entrar | valor al salir
+  @                 ({ } si la condicion es falsa desde el inicio: 0 vueltas)
+  @ Si Modo o Cond no son validos deja un STRING con el motivo.
+  @
+  @ Todo pasa por \->NUM y la tasa se divide por 100. (con punto): en
+  @ modo exacto 10/100 daria la fraccion 1/10 y el valor se volveria
+  @ simbolico. Los contadores arrancan en 0. por lo mismo: un ZINT en la
+  @ matriz la volveria TYPE 29.
+  @ La condicion se evalua con < y > NOT, sin >= ni <= (CLAUDE.md 2.1).
+  @ Las filas se apilan en vez de concatenarse a una lista: con 500
+  @ vueltas, agregar a una lista que crece seria cuadratico.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DLOOPC.
+  \-> V0 MODO T0 L0 COND
+  \<<
+    CASE
+      MODO 1 \=/ MODO 2 \=/ AND THEN "MODO: 1 O 2" END
+      COND 1 < COND 4 > OR THEN "CONDICION: 1 A 4" END
+      V0 \->NUM T0 \->NUM L0 \->NUM 0. 0. \-> V T LIM K OK
+      \<<
+        CASE
+          COND 1 == THEN V LIM > NOT END
+          COND 2 == THEN V LIM < END
+          COND 3 == THEN V LIM < NOT END
+          V LIM >
+        END
+        'OK' STO
+        WHILE OK K 500 < AND
+        REPEAT
+          IF MODO 1 == THEN V 1. T 100. / + * ELSE V T + END
+          \->NUM \-> VN
+          \<<
+            K 1. + V VN
+            VN 'V' STO
+            K 1. + 'K' STO
+          \>>
+          CASE
+            COND 1 == THEN V LIM > NOT END
+            COND 2 == THEN V LIM < END
+            COND 3 == THEN V LIM < NOT END
+            V LIM >
+          END
+          'OK' STO
+        END
+        IF K 0 > THEN K 3 2 \->LIST \->ARRY ELSE { } END \-> MAT
+        \<<
+          K V OK MAT 4 \->LIST
+        \>>
+      \>>
+    END
+  \>>
+\>>

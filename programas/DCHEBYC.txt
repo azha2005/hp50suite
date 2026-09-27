@@ -1,0 +1,51 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCHEBYC - nucleo de DCHEBY. Teorema de Chebyshev.
+  @ Uso:  K Media S A B N DCHEBYC
+  @         K = 0: k sale del intervalo [A,B], k = min((M-A)/S, (B-M)/S).
+  @         K > 0: se usa ese k y A y B se ignoran.
+  @         N = 0: no se calcula la cantidad de observaciones.
+  @ Deja: n1 = { K PROP PCT NOBS NCEIL ASIM }
+  @         PROP  = 1 - 1/k^2 (proporcion minima), PCT = PROP*100
+  @         NOBS  = PROP*N sin redondear, NCEIL = redondeado hacia arriba
+  @         ASIM  = 1 si el intervalo no es simetrico (se uso el k menor)
+  @ Si k <= 1, o S <= 0 con K = 0, deja un STRING con el motivo.
+  @
+  @ NCEIL redondea NOBS a 9 decimales ANTES del CEIL: 1-1/9 = .888888888889
+  @ y por 9 da 8.000000000001, que CEIL llevaria a 9.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DCHEBY.
+  \-> K0 U S A B N
+  \<<
+    IF K0 0 == S 0 > NOT AND
+    THEN
+      "S TIENE QUE SER > 0"
+    ELSE
+      IF K0 0 ==
+      THEN
+        U A - S / \->NUM B U - S / \->NUM
+        \-> KA KB
+        \<<
+          KA KB MIN
+          IF KA KB - ABS 1E-9 > THEN 1 ELSE 0 END
+        \>>
+      ELSE
+        K0 \->NUM 0
+      END
+      \-> K ASIM
+      \<<
+        IF K 1 > NOT
+        THEN
+          "CHEBYSHEV REQUIERE K > 1 (K = " K \->STR + ")" +
+        ELSE
+          1 K SQ INV - \->NUM \-> PROP
+          \<<
+            PROP N * \->NUM \-> NOBS
+            \<<
+              K PROP PROP 100 * \->NUM NOBS NOBS 9 RND CEIL ASIM 6 \->LIST
+            \>>
+          \>>
+        END
+      \>>
+    END
+  \>>
+\>>

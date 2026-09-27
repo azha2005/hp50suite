@@ -1,0 +1,31 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPOND - media ponderada: suma(w*x) / suma(w).
+  @ Interfaz: el calculo esta en DPONDC.
+  "Media Ponderada"
+  {
+    { "Datos x:" "Vector [x] o Lista {x}" }
+    { "Pesos w:" "Mismo largo que x" }
+  }
+  { } { } { }
+  INFORM
+  IF THEN
+    OBJ\-> DROP DPONDC \-> RES
+    \<<
+      IF RES TYPE 2 ==
+      THEN
+        "ERROR:" 10 CHR + RES + MSGBOX
+      ELSE
+        RES OBJ\-> DROP \-> N SW SWX XP
+        \<<
+          "Suma w: " SW \->STR + 10 CHR +
+          "Suma w*x: " + SWX \->STR +
+          MSGBOX
+          "Media ponderada:" 10 CHR +
+          XP \->STR +
+          MSGBOX
+        \>>
+      END
+    \>>
+  END
+\>>

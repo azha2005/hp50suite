@@ -7,9 +7,13 @@
   @         WMIN/WMAX = extremos de los bigotes (el dato adyacente),
   @         OUTS = lista de valores atipicos.
   @
-  @ Cuartiles por INDICE (metodo simplificado), no por la interpolacion
-  @ Lp=(p/100)*(n+1) de la catedra: los dos metodos pueden dar valores
-  @ distintos. Para el metodo exacto de catedra esta DPCTIL.
+  @ Cuartiles por el metodo de la catedra, Lp=(p/100)*(n+1) interpolado
+  @ (diapositiva de Cicowiez, Unidades 1 y 2): los pide a DPCTILC con
+  @ p = 25, 50 y 75, asi que son por construccion los mismos que dan
+  @ DPCTIL y DCINCO. Hasta el 27/09/2026 los tomaba por INDICE,
+  @ x(CEIL(n/4)) y x(CEIL(3n/4)), sin interpolar: con { 1 4 3 5 6 }
+  @ dibujaba Q1 = 3 y Q3 = 5 donde la catedra da 2 y 5.5.
+  @ Necesita a DPCTILC cargado (en LAB.txt estan en el mismo DIR).
   @
   @ WMIN arranca en MAXV y no en MINV: si el minimo de los datos es un
   @ outlier, la comparacion "V < WMIN" tiene que poder disparar igual.
@@ -27,16 +31,11 @@
       \<<
         L N GET \-> MAXV
         \<<
-          IF N 2 MOD 0 == THEN
-            L N 2 / GET L N 2 / 1 + GET + 2 /
-          ELSE
-            L N 2 / CEIL GET
-          END
-          \-> Q2
+          L 50 DPCTILC 3 GET \-> Q2
           \<<
-            L N 4 / CEIL GET \-> Q1
+            L 25 DPCTILC 3 GET \-> Q1
             \<<
-              L N 3 * 4 / CEIL GET \-> Q3
+              L 75 DPCTILC 3 GET \-> Q3
               \<<
                 Q3 Q1 - \-> IQR
                 \<<

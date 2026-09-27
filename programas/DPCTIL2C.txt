@@ -1,0 +1,67 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DPCTIL2C - nucleo de DPCTIL2. Percentil por los dos metodos.
+  @ Uso:  Datos P DPCTIL2C        (P de 0 a 100)
+  @ Deja: n1 = { N LP VCL FUERA AI APOS VAND COINC VINC }
+  @   Clase (el del profesor): LP = (P/100)(N+1), VCL interpolado.
+  @     Lo calcula DPCTILC, asi que es IDENTICO a DPCTIL.
+  @     FUERA = -1 si LP < 1 (se devolvio el minimo),
+  @              1 si LP > N (se devolvio el maximo), 0 si no.
+  @   Anderson 2012 (castellano): AI = (P/100)*N.
+  @     AI no entero: se redondea hacia arriba, APOS = CEIL(AI), VAND = x(APOS).
+  @     AI entero: VAND = (x(AI) + x(AI+1))/2, APOS = AI. Si AI = N devuelve
+  @     x(N); si AI = 0 (P = 0) devuelve x(1).
+  @   COINC = 1 si los dos valores coinciden (tolerancia 1E-9), 0 si no.
+  @   Excel .INC (el del apunte de Excel de la practica, PERCENTIL.INC y
+  @     CUARTIL.INC): posicion 1 + (N-1)*P/100, interpolado. VINC.
+  @ Cual es cual (visto en el material de la catedra, 27/09/2026):
+  @   Clase = la diapositiva de Cicowiez = Anderson 2020 (ingles) =
+  @           PERCENTIL.EXC de Excel. Es el que toma el profesor.
+  @   "Anderson" de aca = Anderson 2012 (castellano), el indice i.
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DPCTIL2.
+  \-> D0 P
+  \<<
+    D0 IF DUP TYPE 6 == THEN EVAL END
+    IF DUP TYPE 3 == OVER TYPE 29 == OR THEN OBJ\-> 1 GET \->LIST END
+    SORT \-> S
+    \<<
+      S P DPCTILC OBJ\-> DROP \-> N LP VCL
+      \<<
+        CASE
+          LP 1 < THEN -1 END
+          LP N > THEN 1 END
+          0
+        END
+        \-> FUERA
+        \<<
+          P 100. / N * \->NUM \-> AI
+          \<<
+            CASE
+              AI FP 0 \=/ THEN AI CEIL S AI CEIL GET END
+              AI 1 < THEN 1 S 1 GET END
+              AI N < NOT THEN AI S N GET END
+              AI S AI GET S AI 1 + GET + 2 /
+            END
+            \->NUM \-> APOS VAND
+            \<<
+              IF VCL VAND - ABS 1E-9 < THEN 1 ELSE 0 END \-> COINC
+              \<<
+                P 100. / N 1 - * 1 + \->NUM \-> HI
+                \<<
+                  CASE
+                    HI N < NOT THEN S N GET END
+                    S HI IP GET S HI IP 1 + GET S HI IP GET - HI FP * +
+                  END
+                  \->NUM \-> VINC
+                  \<<
+                    N LP VCL FUERA AI APOS VAND COINC VINC 9 \->LIST
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>
