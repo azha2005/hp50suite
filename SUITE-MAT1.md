@@ -57,7 +57,7 @@ generada para transferir (ver §3).
 | `LAGR` | Final | — | INFORM + `LAGRC` | **1 de 1**: arma bien el lagrangiano |
 | `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | **5 de 5**: 7 y 8 casos, y los accesores devuelven lo que dicen |
 | `DDOM` | Parcial 1 | — | INFORM + `DDOMC` | **51 de 51**. Dominio por definición, sin simplificar, natural o con el dominio dado en el enunciado (§1.1) |
-| `DINEC` | Parcial 1 | — | INFORM + `DINECC` | **25 de 25** + 5 de control. Inecuaciones por tabla de signos |
+| `DINEC` | Parcial 1 | — | INFORM + `DINECC` | **25 de 25** + 5 de control + 12 de dobles (`1<X<2`, 02/10/2026). Inecuaciones por tabla de signos |
 | `DINV` | Parcial 1 | — | INFORM + `DINVC` | **44 de 44**. Inversa sobre un dominio dado, con la imagen B. Desde el 02/10/2026 ve la esquina del módulo (antes daba una inversa falsa de \|2X−4\| sobre R) |
 | `DCONTK` | Parcial 1 | — | INFORM + `DCONTKC` | **21 de 21**. El k que hace continua una función a trozos |
 | `DPAR` | Parcial 1 | — | INFORM + `DPARC` | **22 de 22**. Paridad concreta y la abstracta "F par, G impar" |

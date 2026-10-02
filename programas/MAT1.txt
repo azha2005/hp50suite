@@ -2045,14 +2045,82 @@ END
 \<<
 DEPTH \-> D0
 \<<
-Q0 DRELC
+Q0 IF DUP TYPE 2 == THEN STR\-> END \-> Q
+\<<
+IF Q TYPE 9 ==
+THEN
+Q OBJ\-> \-> F
+\<<
+\-> N
+\<<
+IF N 2 ==
+THEN
+\-> L B
+\<<
+F \->STR NUM \-> OP
+\<<
+IF L TYPE 9 == OP 60 == OP 62 == OR OP 137 == OR OP 138 == OR AND
+THEN
+L OBJ\-> \-> F1
+\<<
+\-> N1
+\<<
+IF N1 2 ==
+THEN
+\-> A M
+\<<
+F1 \->STR NUM \-> OP1
+\<<
+IF OP1 60 == OP1 62 == OR OP1 137 == OR OP1 138 == OR
+THEN
+M \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+B \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+\-> MS BS
+\<< "'(" MS + ")" + OP CHR + "(" + BS + ")'" + STR\-> L 2 \->LIST \>>
+ELSE { }
+END
+\>>
+\>>
+ELSE N1 DROPN { }
+END
+\>>
+\>>
+ELSE { }
+END
+\>>
+\>>
+ELSE N DROPN { }
+END
+\>>
+\>>
+ELSE { }
+END
+\-> DB
+\<<
+IF DB SIZE 2 ==
+THEN
+DB 2 GET DRELC DB 1 GET DRELC
+\-> R1 R2
+\<<
+IF R1 SIZE 0 == R2 SIZE 0 == OR
+THEN "" { } "No es una inecuacion" "" 4 \->LIST
+ELSE
+R1 1 GET R1 2 GET 2 \->LIST R2 1 GET R2 2 GET 2 \->LIST 2 \->LIST
+R1 3 GET DCONDC + R2 3 GET DCONDC + DINTC
+END
+\>>
+ELSE
+Q DRELC
 IF DUP SIZE 0 ==
 THEN DROP "" { } "No es una inecuacion" "" 4 \->LIST
 ELSE
 OBJ\-> DROP \-> G2 C G
 \<< G2 C 2 \->LIST 1 \->LIST G DCONDC + DINTC \>>
 END
-\-> R \<< DEPTH D0 - DROPN R \>>
+END
+\>>
+\>>
+\-> R0 \<< DEPTH D0 - DROPN R0 \>>
 \>>
 \>>
 \>>

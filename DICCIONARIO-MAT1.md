@@ -64,11 +64,13 @@ programa que se vaya a usar.
   (avisa en una caja). Para el dominio usar `DDOM`, y para los ceros `DCERO`.
 
 ### DINEC — Inecuaciones
-- **Pide:** la inecuación entera, ej. `'X^2-X-2>0'`.
+- **Pide:** la inecuación entera, ej. `'X^2-X-2>0'`. También **dobles**:
+  `'1<X<2'`, `'-3<2*X+1\<=5'`.
 - **Da:** la solución en intervalos, por tabla de signos.
 - **Ejemplos:** `'ABS(6*X-3)\>=9'` → `(-∞, -1] U [2, +∞)` ·
   `'X^2-2*X-3\>=0'` → `(-∞, -1] U [3, +∞)` · `'ABS(1/2-2*X)>1'` →
-  `(-∞, -1/4) U (3/4, +∞)`
+  `(-∞, -1/4) U (3/4, +∞)` · `'-3<2*X+1\<=5'` → `(-2, 2]` · `'5>X^2>1'` →
+  `(-√5, -1) U (1, √5)`
 - `≥` se escribe `\>=` en la PC; en la calculadora, con su tecla.
 
 ### DINV — Función inversa
@@ -154,6 +156,7 @@ programa que se vaya a usar.
 
 ### LHOP — Un paso de L'Hôpital
 - **Pide:** numerador f(X), denominador g(X), el punto: `'X=0'` o `'X=INF'`.
+  **Con `'X=INF'` necesita el `INF` guardado** (ver al final).
 - **Da:** f'/g' y el límite.
 - **Ejemplos:** `'SIN(X)'`, `'X'`, `'X=0'` → `COS(X)`, límite 1 ·
   `'LN(X)'`, `'X'`, `'X=INF'` → `1/X`, límite 0
@@ -241,7 +244,7 @@ programa que se vaya a usar.
 ## Utilidad
 
 ### INF — El infinito que usan DASHO y DESTFUN
-- Se hace **una vez**, parado **adentro de la carpeta de `MAT1`**: poner el ∞
+- Lo usan `DASHO`, `DESTFUN` y `LHOP` en infinito. Se hace **una vez**, parado **adentro de la carpeta de `MAT1`**: poner el ∞
   **del teclado** en la pila, escribir `'INF'` y apretar `STO`.
 - Tiene que ser el ∞ del teclado: el archivo de texto no puede llevar ese
   carácter, por eso no viene cargado.

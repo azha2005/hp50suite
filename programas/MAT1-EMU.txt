@@ -2761,6 +2761,7 @@
     @ DINECC - nucleo de DINEC. Resuelve una inecuacion en X por tabla
     @ de signos (DINTC), respetando el dominio de las dos ramas.
     @ Uso:  'L op R' DINECC      op: > < >= <= = <>
+    @       'a op M op b' DINECC  doble, ej '1<X<2' o '-3<2*X+1<=5'
     @ Deja: n1 = { TXT PES MSG TXT2 }
     @         TXT = conjunto solucion en intervalos
     @         PES = puntos criticos exactos, ordenados (los que se
@@ -2771,18 +2772,95 @@
     @ DRELC pasa la inecuacion a una condicion sobre G = L-R. Ademas se
     @ agregan las condiciones de dominio de L-R (DCONDC): en
     @ (X+1)/(X-2) >= 0 el 2 queda afuera aunque no sea un cero.
+    @
+    @ Doble (02/10/2026): la calculadora lee '1<X<2' como '(1<X)<2', o sea
+    @ una relacion cuyo primer argumento es OTRA relacion. Antes eso daba
+    @ "NO CONFIABLE: R" (medido, casos-dinec-doble.txt). Ahora se separa
+    @ en 'a op1 M' (el primer argumento tal cual) y 'M op b' (armado como
+    @ texto con el caracter de la funcion, como DCONTFC arma los laterales),
+    @ y DINTC resuelve las dos condiciones juntas, mas el dominio de las dos.
+    @ Solo con < > <= >=: '1<X=2' no es una doble y sigue el camino comun.
     \-> Q0
     \<<
       DEPTH \-> D0
       \<<
-        Q0 DRELC
-        IF DUP SIZE 0 ==
-        THEN DROP "" { } "No es una inecuacion" "" 4 \->LIST
-        ELSE
-          OBJ\-> DROP \-> G2 C G
-          \<< G2 C 2 \->LIST 1 \->LIST G DCONDC + DINTC \>>
-        END
-        \-> R \<< DEPTH D0 - DROPN R \>>
+        Q0 IF DUP TYPE 2 == THEN STR\-> END \-> Q
+        \<<
+          @ DB = { 'M op b' 'a op1 M' } si es doble, { } si no.
+          IF Q TYPE 9 ==
+          THEN
+            Q OBJ\-> \-> F
+            \<<
+              \-> N
+              \<<
+                IF N 2 ==
+                THEN
+                  \-> L B
+                  \<<
+                    F \->STR NUM \-> OP
+                    \<<
+                      IF L TYPE 9 == OP 60 == OP 62 == OR OP 137 == OR OP 138 == OR AND
+                      THEN
+                        L OBJ\-> \-> F1
+                        \<<
+                          \-> N1
+                          \<<
+                            IF N1 2 ==
+                            THEN
+                              \-> A M
+                              \<<
+                                F1 \->STR NUM \-> OP1
+                                \<<
+                                  IF OP1 60 == OP1 62 == OR OP1 137 == OR OP1 138 == OR
+                                  THEN
+                                    M \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                    B \->STR IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                    \-> MS BS
+                                    \<< "'(" MS + ")" + OP CHR + "(" + BS + ")'" + STR\-> L 2 \->LIST \>>
+                                  ELSE { }
+                                  END
+                                \>>
+                              \>>
+                            ELSE N1 DROPN { }
+                            END
+                          \>>
+                        \>>
+                      ELSE { }
+                      END
+                    \>>
+                  \>>
+                ELSE N DROPN { }
+                END
+              \>>
+            \>>
+          ELSE { }
+          END
+          \-> DB
+          \<<
+            IF DB SIZE 2 ==
+            THEN
+              DB 2 GET DRELC DB 1 GET DRELC
+              \-> R1 R2
+              \<<
+                IF R1 SIZE 0 == R2 SIZE 0 == OR
+                THEN "" { } "No es una inecuacion" "" 4 \->LIST
+                ELSE
+                  R1 1 GET R1 2 GET 2 \->LIST R2 1 GET R2 2 GET 2 \->LIST 2 \->LIST
+                  R1 3 GET DCONDC + R2 3 GET DCONDC + DINTC
+                END
+              \>>
+            ELSE
+              Q DRELC
+              IF DUP SIZE 0 ==
+              THEN DROP "" { } "No es una inecuacion" "" 4 \->LIST
+              ELSE
+                OBJ\-> DROP \-> G2 C G
+                \<< G2 C 2 \->LIST 1 \->LIST G DCONDC + DINTC \>>
+              END
+            END
+          \>>
+        \>>
+        \-> R0 \<< DEPTH D0 - DROPN R0 \>>
       \>>
     \>>
   \>>
