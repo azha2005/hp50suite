@@ -1,0 +1,63 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCERO - ceros de una funcion QUE PERTENECEN AL DOMINIO. El
+  @ ejercicio tipico de parcial: ceros de f/g o de g o f, descartando
+  @ los que caen fuera del dominio.
+  @
+  @ Este objeto es SOLO la interfaz. La matematica esta en DCEROC, que
+  @ toma 'H' de la pila y devuelve { CZ ZD TD MSG }.
+  @
+  @ Operacion: 0 = f sola, 1 = f/g, 2 = fog = f(g(X)), 3 = gof = g(f(X)).
+  @ H se arma SIN simplificar, a proposito: F G / y SUBST de 'X', sin
+  @ EVAL ni SIMPLIFY. DOPFUNC compone con SUBST EVAL SIMPLIFY, y eso
+  @ cancela (X^2-9)/(X-3) a X+3 y borra el 3 del dominio (el bug de
+  @ domain49). Aca el dominio sale de la expresion escrita.
+  @
+  @ Los campos traen valores iniciales (el ejemplo de la cancelacion):
+  @ un campo nunca visitado sin valor inicial llega como NOVAL.
+  @
+  @ Deja en la pila: n2 = H, la expresion analizada; n1 = CZ, los ceros.
+  "Ceros en el dominio"
+  {
+    { "f(X):" "Sin simplificar, ej '(X^2-9)'" }
+    { "g(X):" "Solo para oper. 1, 2 y 3" }
+    { "Oper. 0=f 1=f/g 2=fog 3=gof:" "0 = ceros de f sola" 0 }
+  }
+  { } { 'X^2-9' 'X-3' 1 } { 'X^2-9' 'X-3' 1 }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F0 G0 OP
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END
+      G0 IF DUP TYPE 2 == THEN STR\-> END
+      \-> F G
+      \<<
+        CASE
+          OP 1 == THEN F G / "(f/g)(X)" END
+          OP 2 == THEN F 'X' G = SUBST "(fog)(X)" END
+          OP 3 == THEN G 'X' F = SUBST "(gof)(X)" END
+          F "f(X)"
+        END
+        \-> H NOM
+        \<<
+          H DCEROC OBJ\-> DROP \-> CZ ZD TD MSG
+          \<<
+            NOM " =" + 10 CHR + H \->STR + MSGBOX
+            "Dom =" 10 CHR + TD + MSGBOX
+            "Ceros en el dominio:" 10 CHR + CZ \->STR + MSGBOX
+            @ Los descartados son lo que la catedra pide ver escrito:
+            @ anulan el numerador pero no estan en el dominio.
+            IF ZD SIZE
+            THEN
+              "Descartados, fuera del" 10 CHR +
+              "dominio: " + ZD \->STR +
+              MSGBOX
+            END
+            IF MSG SIZE THEN MSG MSGBOX END
+            H CZ
+          \>>
+        \>>
+      \>>
+    \>>
+  END
+\>>

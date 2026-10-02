@@ -2853,6 +2853,9 @@
     @    lista, CLAUDE.md 2.19) estrictamente adentro de (A,B). Un cero
     @    cuenta solo si f da la vuelta ahi: f(z-h)-f(z) y f(z+h)-f(z) con
     @    el mismo signo. Asi X^3 en 0 no se toma como no inyectiva.
+    @    Tambien son candidatos los ceros del argumento de cada ABS( (la
+    @    esquina del modulo no es un cero de f'), y si nada aparece, un
+    @    sondeo de 39 puntos busca un cambio de sentido (ver abajo).
     @  - Sentido: signo de f(XI+h)-f(XI) en un punto interior XI.
     @  - Extremo finito de la imagen: f en el extremo del dominio. Si f esta
     @    definida ahi (real finito: TYPE, caracter 159, '?' y magnitud;
@@ -2908,8 +2911,38 @@
                         \-> V0 \<< DEPTH D1 - DROPN V0 \>>
                       \>>
                       IF DUP TYPE 5 == NOT THEN 1 \->LIST END
-                      { } { }
-                      \-> ZL ZX ZN
+                      @ Esquinas del modulo (medido, casos-dinv-abs.txt): con
+                      @ 'ABS(2*X-4)' f' da '2*SIGN(2*X-4)', ZEROS de eso da
+                      @ ERROR, y la esquina en 2 no es un cero de f'. DINVC
+                      @ decia OK sobre todo R y daba una inversa falsa. Se suman
+                      @ como candidatos los ceros del argumento de cada ABS( de
+                      @ F, sacado del texto con parentesis balanceados. El test
+                      @ de vuelta de abajo decide igual que con los ceros de f'.
+                      F \->STR 0 0 0
+                      \-> S Q K J
+                      \<<
+                        WHILE S "ABS(" POS DUP 'Q' STO 0 >
+                        REPEAT
+                          Q 4 + 'Q' STO 1 'K' STO Q 'J' STO
+                          WHILE K 0 > J S SIZE > NOT AND
+                          REPEAT
+                            S J J SUB
+                            IF DUP "(" == THEN K 1 + 'K' STO END
+                            IF ")" == THEN K 1 - 'K' STO END
+                            J 1 + 'J' STO
+                          END
+                          DEPTH \-> D1
+                          \<<
+                            IFERR "'" S Q J 2 - SUB + "'" + STR\-> 'X' ZEROS THEN { } END
+                            \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                          \>>
+                          IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                          +
+                          S Q S SIZE SUB 'S' STO
+                        END
+                      \>>
+                      { } { } 0
+                      \-> ZL ZX ZN AP
                       \<<
                         @ ZX: los puntos de vuelta exactos, ZN: los mismos en real.
                         IF ZL SIZE 0 >
@@ -2953,6 +2986,109 @@
                             \>>
                           NEXT
                         END
+                        @ Red de control, como el sondeo de DINTC: si ni f' ni los
+                        @ ABS( dieron un punto de vuelta, se recorre el dominio en
+                        @ 39 puntos (con un extremo infinito, 20 unidades) y se
+                        @ mira si f cambia de sentido. Un cambio puede ser una
+                        @ vuelta o un POLO ((2X+1)/(X-3) salta de -oo a +oo y es
+                        @ inyectiva). Se refina el extremo en 5 pasadas de 21
+                        @ puntos: si es una vuelta, f converge; si es un polo, |f|
+                        @ se dispara al acercarse y se descarta. El punto queda
+                        @ aproximado y el mensaje lo dice.
+                        IF ZN SIZE 0 ==
+                        THEN
+                          IF AI -1 == THEN IF BI 0 == THEN BN 20 - ELSE XI 20 - END ELSE AN END
+                          IF BI 1 == THEN IF AI 0 == THEN AN 20 + ELSE XI 20 + END ELSE BN END
+                          \-> LO HI
+                          \<<
+                            HI LO - 40 / \->NUM 0 0 0 0 0
+                            \-> S YP XP SP N FD
+                            \<<
+                              1 39 FOR k
+                                IF FD NOT
+                                THEN
+                                  LO S k * + \->NUM
+                                  \-> XK
+                                  \<<
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR F 'X' XK = SUBST \->NUM THEN "ERR" END
+                                      \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                    \>>
+                                    IF DUP TYPE 0 == THEN DUP ABS 1.E400 < ELSE 0 END
+                                    IF
+                                    THEN
+                                      \-> YK
+                                      \<<
+                                        IF N 0 >
+                                        THEN
+                                          YK YP -
+                                          IF DUP ABS 1.E-9 >
+                                          THEN
+                                            SIGN
+                                            IF DUP SP * 0 <
+                                            THEN
+                                              @ Cambio de sentido con el extremo en XP.
+                                              @ SP > 0: venia subiendo, es un maximo.
+                                              SP 0 > XP S YP
+                                              \-> MX Z D Y1
+                                              \<<
+                                                Y1
+                                                1 5 FOR it
+                                                  Z
+                                                  \-> ZB
+                                                  \<<
+                                                    0 20 FOR j
+                                                      Z D - D 10 / j * + \->NUM
+                                                      \-> XJ
+                                                      \<<
+                                                        DEPTH \-> D1
+                                                        \<<
+                                                          IFERR F 'X' XJ = SUBST \->NUM THEN "ERR" END
+                                                          \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                                        \>>
+                                                        IF DUP TYPE 0 == THEN DUP ABS 1.E400 < ELSE 0 END
+                                                        IF
+                                                        THEN
+                                                          \-> YJ
+                                                          \<<
+                                                            @ Pila: YB (el mejor hasta ahora). 3 PICK y 4 PICK lo alcanzan.
+                                                            IF MX YJ 3 PICK > AND MX NOT YJ 4 PICK < AND OR
+                                                            THEN DROP YJ XJ 'ZB' STO
+                                                            END
+                                                          \>>
+                                                        ELSE DROP
+                                                        END
+                                                      \>>
+                                                    NEXT
+                                                    ZB 'Z' STO D 10 / 'D' STO
+                                                  \>>
+                                                NEXT
+                                                @ En la pila: el f del extremo refinado.
+                                                IF ABS Y1 ABS 100 * 100 + <
+                                                THEN
+                                                  ZX Z 4 RND 1 \->LIST + 'ZX' STO
+                                                  ZN Z 4 RND 1 \->LIST + 'ZN' STO
+                                                  1 'AP' STO 1 'FD' STO
+                                                END
+                                              \>>
+                                            END
+                                            'SP' STO
+                                          ELSE DROP
+                                          END
+                                        END
+                                        YK 'YP' STO XK 'XP' STO N 1 + 'N' STO
+                                      \>>
+                                    ELSE
+                                      @ Punto fuera del dominio: corta la racha.
+                                      DROP 0 'N' STO 0 'SP' STO
+                                    END
+                                  \>>
+                                END
+                              NEXT
+                            \>>
+                          \>>
+                        END
                         IF ZN SIZE 0 >
                         THEN
                           @ NO inyectiva: los puntos ordenados, en su forma exacta.
@@ -2975,6 +3111,7 @@
                               1 ZT SIZE FOR k ZT k GET + "] [" + ZT k GET + "," + NEXT
                               "+inf)" +
                             END
+                            IF AP THEN " (aprox., por sondeo)" + END
                             \-> MS
                             \<< "-" "-" "-" 0 0 MS \>>
                           \>>
@@ -3680,4 +3817,489 @@
     END
   \>>
   'DPAR' STO
+  \<<
+    @ DASVTC - nucleo de DASVT. Asintotas verticales de f(X), SIN que el
+    @ usuario pase el candidato: los busca solo.
+    @ Uso:  'f(X)' DASVTC
+    @ Deja: n1 = { AV CAND MSG }
+    @         AV   = los candidatos que SI son asintota, exactos como los
+    @                da DDOMC (ej { -3 } o { '-\v/2' '\v/2' })
+    @         CAND = todos los candidatos probados (los PES de DDOMC)
+    @         MSG  = "" o avisos: los de DDOMC, y los de cada candidato
+    @                que no se pudo decidir o donde las dos pruebas no
+    @                coinciden
+    @
+    @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DASVT.
+    @
+    @ Candidatos: los puntos criticos de DDOMC (ceros de denominadores,
+    @ bordes de LN y de raices). DDOMC no simplifica, asi que el 3 de
+    @ (X-3)/(X^2-9) entra como candidato y se descarta despues por el
+    @ limite, que es lo que la catedra quiere ver: evitable, no asintota.
+    @ Un polo que DCONDC no ve (una funcion que no reconoce) no se busca.
+    @
+    @ Quien decide: DCONTFC, veredicto K=4 (algun lateral infinito).
+    @ Usa los laterales del CAS 'X=a-0' / 'X=a+0', e ignora el lado que
+    @ queda fuera del dominio (ahi el sondeo da complejo, CLAUDE.md 2.14).
+    @ Por que no DASVC solo: sondea en a +/- 1e-6 con umbral 1e5, y eso
+    @ no alcanza para una singularidad lenta. LN(X) en 0+1e-6 da -13.8, y
+    @ 1/\v/(X-1) en 1+1e-6 da 1000: DASVC diria SIN ASINTOTA en los dos.
+    @ Y al reves: 1000000*(X-3)/(X^2-9) en 3 da 166667, y DASVC diria
+    @ ASINTOTA donde el limite es finito.
+    @
+    @ Para que sirve DASVC aca: de control, y de respaldo.
+    @  - Si DCONTFC fallo entero (K=-1), decide el sondeo, con aviso.
+    @  - Si el sondeo no se pudo evaluar (HAY=-1) y el CAS no vio
+    @    asintota, se avisa.
+    @  - Si el sondeo da un valor grande pero el CAS da limite finito, se
+    @    avisa: no se agrega, pero no se calla.
+    @ "Grande" exige un valor REAL de magnitud > 1e5. Un complejo no
+    @ cuenta aunque su modulo sea enorme: es el lado de afuera del
+    @ dominio (borde cerrado, ej \v/(X-1) en 1), y el HAY de DASVC mira
+    @ ABS sin mirar el TYPE. Con \v/(X-1) no muerde (modulo 1e-3), pero
+    @ asi no depende de eso.
+    @
+    @ Cada llamada lleva su IFERR con guardian de profundidad (CLAUDE.md
+    @ 2.11), y el FOR va envuelto en IF porque CAND puede venir vacio
+    @ (f polinomio) y el FOR corre una vez igual (CLAUDE.md 2.7).
+    \-> F0
+    \<<
+      DEPTH \-> D0
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+        \<<
+          DEPTH \-> D1
+          \<<
+            IFERR F 0 DDOMC THEN "ERR" END
+            \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+          \>>
+          \-> DR
+          \<<
+            IF DR TYPE 5 ==
+            THEN DR 3 GET DR 4 GET
+            ELSE { } "No se pudo calcular el dominio. "
+            END
+            { }
+            \-> PES MSG AV
+            \<<
+              IF PES SIZE 0 >
+              THEN
+                1 PES SIZE
+                FOR I
+                  PES I GET \-> A
+                  \<<
+                    @ a como texto sin tildes, para los avisos
+                    A \->STR
+                    IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                    \-> AS
+                    \<<
+                      @ El CAS: A exacto, asi el lateral se arma con el
+                      @ valor exacto (ej 'X=\v/2-0').
+                      DEPTH \-> D1
+                      \<<
+                        IFERR F A DCONTFC 4 GET THEN -1 END
+                        \-> K0 \<< DEPTH D1 - DROPN K0 \>>
+                      \>>
+                      @ El sondeo: DASVC necesita un numero.
+                      DEPTH \-> D1
+                      \<<
+                        IFERR F A \->NUM DASVC THEN { 0 0 -1 } END
+                        \-> S0 \<< DEPTH D1 - DROPN S0 \>>
+                      \>>
+                      OBJ\-> DROP
+                      \-> K VI VD HAY
+                      \<<
+                        0
+                        IF VI TYPE 0 == THEN VI ABS 100000 > OR END
+                        IF VD TYPE 0 == THEN VD ABS 100000 > OR END
+                        \-> G
+                        \<<
+                          CASE
+                            K 4 ==
+                            THEN AV A + 'AV' STO
+                            END
+                            K -1 ==
+                            THEN
+                              IF G
+                              THEN
+                                AV A + 'AV' STO
+                                MSG "X=" + AS + ": decidido solo por sondeo. " + 'MSG' STO
+                              ELSE
+                                MSG "X=" + AS + ": no se pudo decidir. " + 'MSG' STO
+                              END
+                            END
+                            IF HAY -1 ==
+                            THEN
+                              MSG "X=" + AS + ": el sondeo no se pudo evaluar. " + 'MSG' STO
+                            END
+                            IF G
+                            THEN
+                              MSG "X=" + AS + ": valores grandes, pero limite finito. " + 'MSG' STO
+                            END
+                          END
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                NEXT
+              END
+              AV PES MSG 3 \->LIST
+            \>>
+          \>>
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+    \>>
+  \>>
+  'DASVTC' STO
+  \<<
+    @ DASVT - asintotas verticales de f(X), buscando los candidatos solo.
+    @ Este objeto es SOLO la interfaz: el calculo esta en DASVTC, que toma
+    @ 'f(X)' de la pila y devuelve { AV CAND MSG }.
+    @ Los candidatos salen del dominio (DDOMC): ceros de denominadores y
+    @ bordes de LN y raices. Cada uno se decide por limites laterales.
+    @ Para mirar UN punto con los dos valores sondeados, esta DASV.
+    @ Escribir f SIN SIMPLIFICAR: (X-3)/(X^2-9) muestra que el 3 es
+    @ candidato y NO es asintota (discontinuidad evitable).
+    @ Deja en la pila: n1 = la lista de asintotas, exactas.
+    "Asintotas verticales"
+    {
+      { "f(X), ej '1/(X^2-9)':" "'1/(X^2-9)'" }
+    }
+    { } { '1/(X^2-9)' } { '1/(X^2-9)' }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0
+      \<<
+        F0 DASVTC OBJ\-> DROP \-> AV CAND MSG
+        \<<
+          @ Las listas como texto: X=-3, X=3
+          ""
+          IF AV SIZE 0 >
+          THEN
+            1 AV SIZE
+            FOR I
+              IF I 1 > THEN ", " + END
+              "X=" + AV I GET \->STR
+              IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+              +
+            NEXT
+          END
+          ""
+          IF CAND SIZE 0 >
+          THEN
+            1 CAND SIZE
+            FOR I
+              IF I 1 > THEN ", " + END
+              CAND I GET \->STR
+              IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+              +
+            NEXT
+          END
+          \-> TAV TC
+          \<<
+            IF CAND SIZE 0 ==
+            THEN "Sin candidatos:" 10 CHR + "f no tiene polos" +
+            ELSE "Candidatos:" 10 CHR + TC +
+            END
+            MSGBOX
+            IF AV SIZE 0 ==
+            THEN "SIN ASINTOTAS" 10 CHR + "verticales" +
+            ELSE "Asintota vertical:" 10 CHR + TAV +
+            END
+            MSGBOX
+            IF MSG SIZE THEN MSG MSGBOX END
+            AV
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  'DASVT' STO
+  \<<
+    @ DCEROC - nucleo de DCERO. Ceros de H(X) QUE PERTENECEN AL DOMINIO,
+    @ sacados de la expresion TAL COMO SE ESCRIBIO (sin SIMPLIFY).
+    @ Uso:  'H(X)' DCEROC        (H puede llegar como string)
+    @ Deja: n1 = { CZ ZD TD MSG }
+    @         CZ  = ceros reales dentro del dominio, exactos y ordenados
+    @         ZD  = candidatos que se DESCARTARON por caer fuera del
+    @               dominio, exactos y ordenados. Es lo que la catedra
+    @               quiere ver: en (X^2-9)/(X-3) el numerador se anula en
+    @               3 y en -3, pero 3 no esta en el dominio.
+    @         TD  = el dominio como texto (DDOMC), ej "R - {3}"
+    @         MSG = "" o avisos: el CAS no resuelve, periodica, el
+    @               dominio (avisos de DDOMC), o "NO CONFIABLE" si el
+    @               control falla
+    @
+    @ Como:
+    @  1. Candidatos. ZEROS sobre H sola no alcanza: el CAS simplifica
+    @     por dentro y (X^2-9)/(X-3) le da -3, sin el 3 que hay que
+    @     descartar. Por eso se recorre el arbol desde arriba (OBJ\->,
+    @     CLAUDE.md 2.20, igual que DCONDC) y se buscan los ceros de cada
+    @     FACTOR: de un cociente el numerador, de un producto los dos
+    @     factores, de un NEG o una raiz su argumento (\v/g = 0 <=> g = 0).
+    @     Lo demas (una suma, un LN, una potencia) es un factor entero y va
+    @     a ZEROS tal cual. Si hubo que descomponer, H misma tambien va a
+    @     ZEROS, pero sin avisar si falla: los factores ya la cubren.
+    @  2. ZEROS con una sola raiz no da lista (2.19): se normaliza. Las
+    @     raices complejas se ignoran, decidido por TYPE tras \->NUM
+    @     (2.14). Repetidos (|a-b| < 1E-9) se cuentan una vez.
+    @  3. Cada candidato se prueba contra las condiciones de dominio del
+    @     arbol sin simplificar (DCONDC + DSATC): adentro va a CZ, afuera
+    @     a ZD.
+    @  4. Control, como el sondeo de DINTC: H evaluada en cada cero
+    @     aceptado tiene que dar |H| < 1E-9. Si no, "NO CONFIABLE".
+    @
+    @ Modo Complex apagado adentro (-103 CF, RCLF/STOF, 2.20): con el
+    @ prendido ZEROS devuelve basura compleja sin error.
+    \-> H0
+    \<<
+      RCLF \-> FL
+      \<<
+        -103 CF
+        DEPTH \-> D0
+        \<<
+          H0 IF DUP TYPE 2 == THEN STR\-> END \-> H
+          \<<
+            H DCONDC \-> CL
+            \<<
+              { } 0 { } { } "" \-> LV FD PE PN MSG
+              \<<
+                @ ---- 1. factores: la pila es la pila de trabajo, con
+                @ { } como centinela abajo (el recorrido de DCONDC). FD = 1
+                @ si se descompuso algo.
+                { } H
+                DO
+                  CASE
+                    DUP TYPE 9 ==
+                    THEN
+                      DUP OBJ\-> \->STR \-> N FS
+                      \<<
+                        @ En la pila: H' y sus N argumentos arriba.
+                        CASE
+                          FS "/" ==
+                          THEN DROP SWAP DROP 1 'FD' STO
+                          END
+                          FS "*" ==
+                          THEN ROT DROP 1 'FD' STO
+                          END
+                          FS "NEG" == FS "-" == N 1 == AND OR FS 131 CHR == OR
+                          THEN SWAP DROP 1 'FD' STO
+                          END
+                          N DROPN 1 \->LIST LV SWAP + 'LV' STO
+                        END
+                      \>>
+                    END
+                    DUP TYPE 6 ==
+                    THEN 1 \->LIST LV SWAP + 'LV' STO
+                    END
+                    @ Un numero suelto no tiene ceros: se descarta.
+                    DROP
+                  END
+                UNTIL DUP TYPE 5 ==
+                END
+                DROP
+                @ Lista de { G SIL }: SIL = 1 no avisa si ZEROS falla.
+                { }
+                IF FD THEN H 1 2 \->LIST 1 \->LIST + END
+                IF LV SIZE 0 >
+                THEN
+                  1 LV SIZE
+                  FOR I
+                    LV I GET 0 2 \->LIST 1 \->LIST +
+                  NEXT
+                END
+                \-> TL
+                \<<
+                  @ ---- 2. candidatos: ZEROS de cada uno ----
+                  IF TL SIZE 0 >
+                  THEN
+                    1 TL SIZE
+                    FOR I
+                      TL I GET OBJ\-> DROP \-> G SIL
+                      \<<
+                        DEPTH \-> D1
+                        \<<
+                          IFERR G 'X' ZEROS THEN "ERR" END
+                          \-> Z0 \<< DEPTH D1 - DROPN Z0 \>>
+                        \>>
+                        \-> Z
+                        \<<
+                          IF Z TYPE 2 ==
+                          THEN
+                            IF SIL NOT
+                            THEN MSG "El CAS no resuelve " + G \->STR + "=0. " + 'MSG' STO
+                            END
+                          ELSE
+                            Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                            \-> ZL
+                            \<<
+                              IF ZL SIZE 0 >
+                              THEN
+                                1 ZL SIZE
+                                FOR J
+                                  ZL J GET \-> Z1
+                                  \<<
+                                    DEPTH \-> D1
+                                    \<<
+                                      IFERR Z1 \->NUM THEN "ERR" END
+                                      \-> N0 \<< DEPTH D1 - DROPN N0 \>>
+                                    \>>
+                                    \-> ZN
+                                    \<<
+                                      IF ZN TYPE 0 ==
+                                      THEN
+                                        0 \-> DUPL
+                                        \<<
+                                          IF PN SIZE 0 >
+                                          THEN
+                                            1 PN SIZE
+                                            FOR K
+                                              IF PN K GET ZN - ABS .000000001 <
+                                              THEN 1 'DUPL' STO
+                                              END
+                                            NEXT
+                                          END
+                                          IF DUPL NOT
+                                          THEN PE Z1 + 'PE' STO PN ZN + 'PN' STO
+                                          END
+                                        \>>
+                                      ELSE
+                                        @ Un complejo es una raiz no real: se
+                                        @ ignora. Un n1 es una familia periodica.
+                                        IF Z1 \->STR "n1" POS SIL NOT AND
+                                        THEN MSG "Periodica: no soportado. " + 'MSG' STO
+                                        END
+                                      END
+                                    \>>
+                                  \>>
+                                NEXT
+                              END
+                            \>>
+                          END
+                        \>>
+                      \>>
+                    NEXT
+                  END
+                  @ ---- 3. ordenar y separar: dentro o fuera del dominio ----
+                  PN SORT \-> PS
+                  \<<
+                    { } { } \-> CZ ZD
+                    \<<
+                      IF PS SIZE 0 >
+                      THEN
+                        1 PS SIZE
+                        FOR K
+                          PE PN PS K GET POS GET \-> Z1
+                          \<<
+                            IF CL Z1 DSATC
+                            THEN
+                              CZ Z1 + 'CZ' STO
+                              @ ---- 4. control: H(Z1) tiene que dar 0 ----
+                              DEPTH \-> D1
+                              \<<
+                                IFERR H 'X' Z1 = SUBST EVAL \->NUM THEN "ERR" END
+                                \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                              \>>
+                              \-> V
+                              \<<
+                                IF V TYPE 0 ==
+                                THEN V ABS .000000001 <
+                                ELSE 0
+                                END
+                                IF NOT
+                                THEN
+                                  Z1 \->STR
+                                  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                  MSG "NO CONFIABLE: H(" + SWAP + ") no da 0. " + 'MSG' STO
+                                END
+                              \>>
+                            ELSE ZD Z1 + 'ZD' STO
+                            END
+                          \>>
+                        NEXT
+                      END
+                      @ ---- el dominio, como texto (DDOMC, dominio natural) ----
+                      H 0 DDOMC DUP 1 GET SWAP 4 GET \-> TD DMSG
+                      \<<
+                        IF DMSG SIZE
+                        THEN MSG "Dominio: " + DMSG + 'MSG' STO
+                        END
+                        CZ ZD TD MSG 4 \->LIST
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+          \-> R \<< DEPTH D0 - DROPN R \>>
+        \>>
+        FL STOF
+      \>>
+    \>>
+  \>>
+  'DCEROC' STO
+  \<<
+    @ DCERO - ceros de una funcion QUE PERTENECEN AL DOMINIO. El
+    @ ejercicio tipico de parcial: ceros de f/g o de g o f, descartando
+    @ los que caen fuera del dominio.
+    @
+    @ Este objeto es SOLO la interfaz. La matematica esta en DCEROC, que
+    @ toma 'H' de la pila y devuelve { CZ ZD TD MSG }.
+    @
+    @ Operacion: 0 = f sola, 1 = f/g, 2 = fog = f(g(X)), 3 = gof = g(f(X)).
+    @ H se arma SIN simplificar, a proposito: F G / y SUBST de 'X', sin
+    @ EVAL ni SIMPLIFY. DOPFUNC compone con SUBST EVAL SIMPLIFY, y eso
+    @ cancela (X^2-9)/(X-3) a X+3 y borra el 3 del dominio (el bug de
+    @ domain49). Aca el dominio sale de la expresion escrita.
+    @
+    @ Los campos traen valores iniciales (el ejemplo de la cancelacion):
+    @ un campo nunca visitado sin valor inicial llega como NOVAL.
+    @
+    @ Deja en la pila: n2 = H, la expresion analizada; n1 = CZ, los ceros.
+    "Ceros en el dominio"
+    {
+      { "f(X):" "Sin simplificar, ej '(X^2-9)'" }
+      { "g(X):" "Solo para oper. 1, 2 y 3" }
+      { "Oper. 0=f 1=f/g 2=fog 3=gof:" "0 = ceros de f sola" 0 }
+    }
+    { } { 'X^2-9' 'X-3' 1 } { 'X^2-9' 'X-3' 1 }
+    INFORM
+    IF THEN
+      OBJ\-> DROP \-> F0 G0 OP
+      \<<
+        F0 IF DUP TYPE 2 == THEN STR\-> END
+        G0 IF DUP TYPE 2 == THEN STR\-> END
+        \-> F G
+        \<<
+          CASE
+            OP 1 == THEN F G / "(f/g)(X)" END
+            OP 2 == THEN F 'X' G = SUBST "(fog)(X)" END
+            OP 3 == THEN G 'X' F = SUBST "(gof)(X)" END
+            F "f(X)"
+          END
+          \-> H NOM
+          \<<
+            H DCEROC OBJ\-> DROP \-> CZ ZD TD MSG
+            \<<
+              NOM " =" + 10 CHR + H \->STR + MSGBOX
+              "Dom =" 10 CHR + TD + MSGBOX
+              "Ceros en el dominio:" 10 CHR + CZ \->STR + MSGBOX
+              @ Los descartados son lo que la catedra pide ver escrito:
+              @ anulan el numerador pero no estan en el dominio.
+              IF ZD SIZE
+              THEN
+                "Descartados, fuera del" 10 CHR +
+                "dominio: " + ZD \->STR +
+                MSGBOX
+              END
+              IF MSG SIZE THEN MSG MSGBOX END
+              H CZ
+            \>>
+          \>>
+        \>>
+      \>>
+    END
+  \>>
+  'DCERO' STO
 \>>

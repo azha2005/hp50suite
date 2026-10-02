@@ -466,6 +466,24 @@ infinito **sin signo**, que es por qué `DCONT` informaba `lim izq +∞` para `1
 cuando el límite lateral verdadero es −∞. **Resuelto:** `DCONT` pasó a
 laterales y ahora da −∞.
 
+**⚠️ Corrección (medido el 02/10/2026): los laterales TAMBIÉN abren el diálogo.**
+`'1/(X^2-9)'` con `'X=3-0'` y con `'X=3+0'`: cada `LIMIT` pregunta una vez. Lo de
+arriba ("no tienen ese problema") nunca se había medido: el harness contesta
+ENTER cada 4 s y el diálogo pasaba sin verse. Lo que sí vale: **la respuesta
+es correcta contestando YES o NO** (`-\oo` y `+\oo` con signo). En la interfaz,
+`DASVT` con `1/(X^2-9)` muestra 4 diálogos (2 candidatos × 2 lados) y termina
+en `X=-3, X=3` con cualquiera de las dos respuestas. Lo mismo pasa desde
+siempre en `DCONT`/`DCONTF` en un polo. **En el parcial: apretar OK.**
+
+Otros datos de la misma medición: `SUBST EVAL` en el polo da `'\oo'` **sin**
+preguntar; `\->NUM` da `ERROR`; `-120 SF` **no** evita el diálogo. Y el prólogo
+de las baterías (`\oo 'INF' STO`, de `armar-mat1.py`) abre **su propio**
+diálogo, así que para ver si un programa pregunta hay que sacar esa línea.
+Método: correr con `-EnterCadaMs` igual a `-EsperaMs` (un solo ENTER al final)
+y mirar la LCD: si el resultado aparece **duplicado**, ese ENTER cayó sobre un
+programa terminado y no hubo diálogo; si aparece una vez, el ENTER contestó uno.
+Que el resultado llegue no prueba nada.
+
 ### 2.13 Matrices como salida tipo tabla
 
 `{ K 6 } \->ARRY` construye una matriz de K filas × 6 columnas a partir de K*6
@@ -827,7 +845,7 @@ cada extremo como `"<"` / `"<="` / vacío (sin límite) + su valor.
 
 ### Matemática I (suite aparte)
 
-55 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
+59 objetos en `programas/mat1/`, empaquetados en `programas/MAT1.txt`.
 
 Parcial 1 (cubierto entero), ya con `INFORM`/`MSGBOX` como el resto de la suite:
 
@@ -880,6 +898,20 @@ recopilado (fork, `MEGATXT_TODOS_LOS_PARCIALES_MATE_1.txt`). Detalle en
 | `DINV` | Inversa sobre un dominio dado, con la imagen B y el aviso de no inyectiva | 26 |
 | `DCONTK` | El k que hace continua una función a trozos | 21 |
 | `DPAR` | Paridad; también la abstracta "F par, G impar" con representantes | 22 |
+| `DASVT` | Asíntotas verticales **buscando los candidatos solo** (los puntos críticos de `DDOMC`); decide `DCONTFC` por laterales, `DASVC` queda de control | 25 |
+| `DCERO` | Ceros de f, f/g, f∘g o g∘f **que están en el dominio**, sin simplificar, con los descartados a la vista | 39 |
+
+Dos agregados del 02/10/2026, más un arreglo:
+
+- **`DINV` daba una inversa falsa con módulo.** `'ABS(2*X-4)'` sobre R decía
+  `OK`, con f⁻¹ = −(X−4)/2 e imagen (−∞, +∞): f' es `2*SIGN(2*X-4)`, `ZEROS` de
+  eso da `ERROR`, y la esquina no es un cero de f'. Ahora también son
+  candidatos los ceros del argumento de cada `ABS(`, y si nada aparece, un
+  sondeo de 39 puntos busca un cambio de sentido (con refinamiento que descarta
+  polos: `(2X+1)/(X-3)` sigue dando `OK`). 18 casos nuevos + los 26 de antes
+  (`casos-dinv-abs.txt`, `casos-dinv-todo.txt`).
+- `DCERO` arma f/g y las composiciones **sin `SIMPLIFY`** (al revés que
+  `DOPFUN`), así `(X^2-9)/(X-3)` da el cero −3 y muestra el 3 como descartado.
 
 `DDOM` y `DINEC` comparten un motor de cuatro objetos (`DCONDC`, `DSATC`,
 `DINTC`, `DRELC`). Los dos muestran el resultado de dos maneras cuando se

@@ -1,0 +1,64 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DASVT - asintotas verticales de f(X), buscando los candidatos solo.
+  @ Este objeto es SOLO la interfaz: el calculo esta en DASVTC, que toma
+  @ 'f(X)' de la pila y devuelve { AV CAND MSG }.
+  @ Los candidatos salen del dominio (DDOMC): ceros de denominadores y
+  @ bordes de LN y raices. Cada uno se decide por limites laterales.
+  @ Para mirar UN punto con los dos valores sondeados, esta DASV.
+  @ Escribir f SIN SIMPLIFICAR: (X-3)/(X^2-9) muestra que el 3 es
+  @ candidato y NO es asintota (discontinuidad evitable).
+  @ Deja en la pila: n1 = la lista de asintotas, exactas.
+  "Asintotas verticales"
+  {
+    { "f(X), ej '1/(X^2-9)':" "'1/(X^2-9)'" }
+  }
+  { } { '1/(X^2-9)' } { '1/(X^2-9)' }
+  INFORM
+  IF THEN
+    OBJ\-> DROP \-> F0
+    \<<
+      F0 DASVTC OBJ\-> DROP \-> AV CAND MSG
+      \<<
+        @ Las listas como texto: X=-3, X=3
+        ""
+        IF AV SIZE 0 >
+        THEN
+          1 AV SIZE
+          FOR I
+            IF I 1 > THEN ", " + END
+            "X=" + AV I GET \->STR
+            IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+            +
+          NEXT
+        END
+        ""
+        IF CAND SIZE 0 >
+        THEN
+          1 CAND SIZE
+          FOR I
+            IF I 1 > THEN ", " + END
+            CAND I GET \->STR
+            IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+            +
+          NEXT
+        END
+        \-> TAV TC
+        \<<
+          IF CAND SIZE 0 ==
+          THEN "Sin candidatos:" 10 CHR + "f no tiene polos" +
+          ELSE "Candidatos:" 10 CHR + TC +
+          END
+          MSGBOX
+          IF AV SIZE 0 ==
+          THEN "SIN ASINTOTAS" 10 CHR + "verticales" +
+          ELSE "Asintota vertical:" 10 CHR + TAV +
+          END
+          MSGBOX
+          IF MSG SIZE THEN MSG MSGBOX END
+          AV
+        \>>
+      \>>
+    \>>
+  END
+\>>

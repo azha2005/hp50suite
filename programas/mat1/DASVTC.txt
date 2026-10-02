@@ -1,0 +1,134 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DASVTC - nucleo de DASVT. Asintotas verticales de f(X), SIN que el
+  @ usuario pase el candidato: los busca solo.
+  @ Uso:  'f(X)' DASVTC
+  @ Deja: n1 = { AV CAND MSG }
+  @         AV   = los candidatos que SI son asintota, exactos como los
+  @                da DDOMC (ej { -3 } o { '-\v/2' '\v/2' })
+  @         CAND = todos los candidatos probados (los PES de DDOMC)
+  @         MSG  = "" o avisos: los de DDOMC, y los de cada candidato
+  @                que no se pudo decidir o donde las dos pruebas no
+  @                coinciden
+  @
+  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DASVT.
+  @
+  @ Candidatos: los puntos criticos de DDOMC (ceros de denominadores,
+  @ bordes de LN y de raices). DDOMC no simplifica, asi que el 3 de
+  @ (X-3)/(X^2-9) entra como candidato y se descarta despues por el
+  @ limite, que es lo que la catedra quiere ver: evitable, no asintota.
+  @ Un polo que DCONDC no ve (una funcion que no reconoce) no se busca.
+  @
+  @ Quien decide: DCONTFC, veredicto K=4 (algun lateral infinito).
+  @ Usa los laterales del CAS 'X=a-0' / 'X=a+0', e ignora el lado que
+  @ queda fuera del dominio (ahi el sondeo da complejo, CLAUDE.md 2.14).
+  @ Por que no DASVC solo: sondea en a +/- 1e-6 con umbral 1e5, y eso
+  @ no alcanza para una singularidad lenta. LN(X) en 0+1e-6 da -13.8, y
+  @ 1/\v/(X-1) en 1+1e-6 da 1000: DASVC diria SIN ASINTOTA en los dos.
+  @ Y al reves: 1000000*(X-3)/(X^2-9) en 3 da 166667, y DASVC diria
+  @ ASINTOTA donde el limite es finito.
+  @
+  @ Para que sirve DASVC aca: de control, y de respaldo.
+  @  - Si DCONTFC fallo entero (K=-1), decide el sondeo, con aviso.
+  @  - Si el sondeo no se pudo evaluar (HAY=-1) y el CAS no vio
+  @    asintota, se avisa.
+  @  - Si el sondeo da un valor grande pero el CAS da limite finito, se
+  @    avisa: no se agrega, pero no se calla.
+  @ "Grande" exige un valor REAL de magnitud > 1e5. Un complejo no
+  @ cuenta aunque su modulo sea enorme: es el lado de afuera del
+  @ dominio (borde cerrado, ej \v/(X-1) en 1), y el HAY de DASVC mira
+  @ ABS sin mirar el TYPE. Con \v/(X-1) no muerde (modulo 1e-3), pero
+  @ asi no depende de eso.
+  @
+  @ Cada llamada lleva su IFERR con guardian de profundidad (CLAUDE.md
+  @ 2.11), y el FOR va envuelto en IF porque CAND puede venir vacio
+  @ (f polinomio) y el FOR corre una vez igual (CLAUDE.md 2.7).
+  \-> F0
+  \<<
+    DEPTH \-> D0
+    \<<
+      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      \<<
+        DEPTH \-> D1
+        \<<
+          IFERR F 0 DDOMC THEN "ERR" END
+          \-> R0 \<< DEPTH D1 - DROPN R0 \>>
+        \>>
+        \-> DR
+        \<<
+          IF DR TYPE 5 ==
+          THEN DR 3 GET DR 4 GET
+          ELSE { } "No se pudo calcular el dominio. "
+          END
+          { }
+          \-> PES MSG AV
+          \<<
+            IF PES SIZE 0 >
+            THEN
+              1 PES SIZE
+              FOR I
+                PES I GET \-> A
+                \<<
+                  @ a como texto sin tildes, para los avisos
+                  A \->STR
+                  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                  \-> AS
+                  \<<
+                    @ El CAS: A exacto, asi el lateral se arma con el
+                    @ valor exacto (ej 'X=\v/2-0').
+                    DEPTH \-> D1
+                    \<<
+                      IFERR F A DCONTFC 4 GET THEN -1 END
+                      \-> K0 \<< DEPTH D1 - DROPN K0 \>>
+                    \>>
+                    @ El sondeo: DASVC necesita un numero.
+                    DEPTH \-> D1
+                    \<<
+                      IFERR F A \->NUM DASVC THEN { 0 0 -1 } END
+                      \-> S0 \<< DEPTH D1 - DROPN S0 \>>
+                    \>>
+                    OBJ\-> DROP
+                    \-> K VI VD HAY
+                    \<<
+                      0
+                      IF VI TYPE 0 == THEN VI ABS 100000 > OR END
+                      IF VD TYPE 0 == THEN VD ABS 100000 > OR END
+                      \-> G
+                      \<<
+                        CASE
+                          K 4 ==
+                          THEN AV A + 'AV' STO
+                          END
+                          K -1 ==
+                          THEN
+                            IF G
+                            THEN
+                              AV A + 'AV' STO
+                              MSG "X=" + AS + ": decidido solo por sondeo. " + 'MSG' STO
+                            ELSE
+                              MSG "X=" + AS + ": no se pudo decidir. " + 'MSG' STO
+                            END
+                          END
+                          IF HAY -1 ==
+                          THEN
+                            MSG "X=" + AS + ": el sondeo no se pudo evaluar. " + 'MSG' STO
+                          END
+                          IF G
+                          THEN
+                            MSG "X=" + AS + ": valores grandes, pero limite finito. " + 'MSG' STO
+                          END
+                        END
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              NEXT
+            END
+            AV PES MSG 3 \->LIST
+          \>>
+        \>>
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

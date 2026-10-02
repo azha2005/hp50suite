@@ -1,0 +1,224 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ DCEROC - nucleo de DCERO. Ceros de H(X) QUE PERTENECEN AL DOMINIO,
+  @ sacados de la expresion TAL COMO SE ESCRIBIO (sin SIMPLIFY).
+  @ Uso:  'H(X)' DCEROC        (H puede llegar como string)
+  @ Deja: n1 = { CZ ZD TD MSG }
+  @         CZ  = ceros reales dentro del dominio, exactos y ordenados
+  @         ZD  = candidatos que se DESCARTARON por caer fuera del
+  @               dominio, exactos y ordenados. Es lo que la catedra
+  @               quiere ver: en (X^2-9)/(X-3) el numerador se anula en
+  @               3 y en -3, pero 3 no esta en el dominio.
+  @         TD  = el dominio como texto (DDOMC), ej "R - {3}"
+  @         MSG = "" o avisos: el CAS no resuelve, periodica, el
+  @               dominio (avisos de DDOMC), o "NO CONFIABLE" si el
+  @               control falla
+  @
+  @ Como:
+  @  1. Candidatos. ZEROS sobre H sola no alcanza: el CAS simplifica
+  @     por dentro y (X^2-9)/(X-3) le da -3, sin el 3 que hay que
+  @     descartar. Por eso se recorre el arbol desde arriba (OBJ\->,
+  @     CLAUDE.md 2.20, igual que DCONDC) y se buscan los ceros de cada
+  @     FACTOR: de un cociente el numerador, de un producto los dos
+  @     factores, de un NEG o una raiz su argumento (\v/g = 0 <=> g = 0).
+  @     Lo demas (una suma, un LN, una potencia) es un factor entero y va
+  @     a ZEROS tal cual. Si hubo que descomponer, H misma tambien va a
+  @     ZEROS, pero sin avisar si falla: los factores ya la cubren.
+  @  2. ZEROS con una sola raiz no da lista (2.19): se normaliza. Las
+  @     raices complejas se ignoran, decidido por TYPE tras \->NUM
+  @     (2.14). Repetidos (|a-b| < 1E-9) se cuentan una vez.
+  @  3. Cada candidato se prueba contra las condiciones de dominio del
+  @     arbol sin simplificar (DCONDC + DSATC): adentro va a CZ, afuera
+  @     a ZD.
+  @  4. Control, como el sondeo de DINTC: H evaluada en cada cero
+  @     aceptado tiene que dar |H| < 1E-9. Si no, "NO CONFIABLE".
+  @
+  @ Modo Complex apagado adentro (-103 CF, RCLF/STOF, 2.20): con el
+  @ prendido ZEROS devuelve basura compleja sin error.
+  \-> H0
+  \<<
+    RCLF \-> FL
+    \<<
+      -103 CF
+      DEPTH \-> D0
+      \<<
+        H0 IF DUP TYPE 2 == THEN STR\-> END \-> H
+        \<<
+          H DCONDC \-> CL
+          \<<
+            { } 0 { } { } "" \-> LV FD PE PN MSG
+            \<<
+              @ ---- 1. factores: la pila es la pila de trabajo, con
+              @ { } como centinela abajo (el recorrido de DCONDC). FD = 1
+              @ si se descompuso algo.
+              { } H
+              DO
+                CASE
+                  DUP TYPE 9 ==
+                  THEN
+                    DUP OBJ\-> \->STR \-> N FS
+                    \<<
+                      @ En la pila: H' y sus N argumentos arriba.
+                      CASE
+                        FS "/" ==
+                        THEN DROP SWAP DROP 1 'FD' STO
+                        END
+                        FS "*" ==
+                        THEN ROT DROP 1 'FD' STO
+                        END
+                        FS "NEG" == FS "-" == N 1 == AND OR FS 131 CHR == OR
+                        THEN SWAP DROP 1 'FD' STO
+                        END
+                        N DROPN 1 \->LIST LV SWAP + 'LV' STO
+                      END
+                    \>>
+                  END
+                  DUP TYPE 6 ==
+                  THEN 1 \->LIST LV SWAP + 'LV' STO
+                  END
+                  @ Un numero suelto no tiene ceros: se descarta.
+                  DROP
+                END
+              UNTIL DUP TYPE 5 ==
+              END
+              DROP
+              @ Lista de { G SIL }: SIL = 1 no avisa si ZEROS falla.
+              { }
+              IF FD THEN H 1 2 \->LIST 1 \->LIST + END
+              IF LV SIZE 0 >
+              THEN
+                1 LV SIZE
+                FOR I
+                  LV I GET 0 2 \->LIST 1 \->LIST +
+                NEXT
+              END
+              \-> TL
+              \<<
+                @ ---- 2. candidatos: ZEROS de cada uno ----
+                IF TL SIZE 0 >
+                THEN
+                  1 TL SIZE
+                  FOR I
+                    TL I GET OBJ\-> DROP \-> G SIL
+                    \<<
+                      DEPTH \-> D1
+                      \<<
+                        IFERR G 'X' ZEROS THEN "ERR" END
+                        \-> Z0 \<< DEPTH D1 - DROPN Z0 \>>
+                      \>>
+                      \-> Z
+                      \<<
+                        IF Z TYPE 2 ==
+                        THEN
+                          IF SIL NOT
+                          THEN MSG "El CAS no resuelve " + G \->STR + "=0. " + 'MSG' STO
+                          END
+                        ELSE
+                          Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                          \-> ZL
+                          \<<
+                            IF ZL SIZE 0 >
+                            THEN
+                              1 ZL SIZE
+                              FOR J
+                                ZL J GET \-> Z1
+                                \<<
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR Z1 \->NUM THEN "ERR" END
+                                    \-> N0 \<< DEPTH D1 - DROPN N0 \>>
+                                  \>>
+                                  \-> ZN
+                                  \<<
+                                    IF ZN TYPE 0 ==
+                                    THEN
+                                      0 \-> DUPL
+                                      \<<
+                                        IF PN SIZE 0 >
+                                        THEN
+                                          1 PN SIZE
+                                          FOR K
+                                            IF PN K GET ZN - ABS .000000001 <
+                                            THEN 1 'DUPL' STO
+                                            END
+                                          NEXT
+                                        END
+                                        IF DUPL NOT
+                                        THEN PE Z1 + 'PE' STO PN ZN + 'PN' STO
+                                        END
+                                      \>>
+                                    ELSE
+                                      @ Un complejo es una raiz no real: se
+                                      @ ignora. Un n1 es una familia periodica.
+                                      IF Z1 \->STR "n1" POS SIL NOT AND
+                                      THEN MSG "Periodica: no soportado. " + 'MSG' STO
+                                      END
+                                    END
+                                  \>>
+                                \>>
+                              NEXT
+                            END
+                          \>>
+                        END
+                      \>>
+                    \>>
+                  NEXT
+                END
+                @ ---- 3. ordenar y separar: dentro o fuera del dominio ----
+                PN SORT \-> PS
+                \<<
+                  { } { } \-> CZ ZD
+                  \<<
+                    IF PS SIZE 0 >
+                    THEN
+                      1 PS SIZE
+                      FOR K
+                        PE PN PS K GET POS GET \-> Z1
+                        \<<
+                          IF CL Z1 DSATC
+                          THEN
+                            CZ Z1 + 'CZ' STO
+                            @ ---- 4. control: H(Z1) tiene que dar 0 ----
+                            DEPTH \-> D1
+                            \<<
+                              IFERR H 'X' Z1 = SUBST EVAL \->NUM THEN "ERR" END
+                              \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                            \>>
+                            \-> V
+                            \<<
+                              IF V TYPE 0 ==
+                              THEN V ABS .000000001 <
+                              ELSE 0
+                              END
+                              IF NOT
+                              THEN
+                                Z1 \->STR
+                                IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+                                MSG "NO CONFIABLE: H(" + SWAP + ") no da 0. " + 'MSG' STO
+                              END
+                            \>>
+                          ELSE ZD Z1 + 'ZD' STO
+                          END
+                        \>>
+                      NEXT
+                    END
+                    @ ---- el dominio, como texto (DDOMC, dominio natural) ----
+                    H 0 DDOMC DUP 1 GET SWAP 4 GET \-> TD DMSG
+                    \<<
+                      IF DMSG SIZE
+                      THEN MSG "Dominio: " + DMSG + 'MSG' STO
+                      END
+                      CZ ZD TD MSG 4 \->LIST
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          \>>
+        \>>
+        \-> R \<< DEPTH D0 - DROPN R \>>
+      \>>
+      FL STOF
+    \>>
+  \>>
+\>>

@@ -58,9 +58,11 @@ generada para transferir (ver §3).
 | `TDSEP` `TD` `TEFUN` `TF` | pruebas | — | pila | **5 de 5**: 7 y 8 casos, y los accesores devuelven lo que dicen |
 | `DDOM` | Parcial 1 | — | INFORM + `DDOMC` | **51 de 51**. Dominio por definición, sin simplificar, natural o con el dominio dado en el enunciado (§1.1) |
 | `DINEC` | Parcial 1 | — | INFORM + `DINECC` | **25 de 25** + 5 de control. Inecuaciones por tabla de signos |
-| `DINV` | Parcial 1 | — | INFORM + `DINVC` | **26 de 26**. Inversa sobre un dominio dado, con la imagen B |
+| `DINV` | Parcial 1 | — | INFORM + `DINVC` | **44 de 44**. Inversa sobre un dominio dado, con la imagen B. Desde el 02/10/2026 ve la esquina del módulo (antes daba una inversa falsa de \|2X−4\| sobre R) |
 | `DCONTK` | Parcial 1 | — | INFORM + `DCONTKC` | **21 de 21**. El k que hace continua una función a trozos |
 | `DPAR` | Parcial 1 | — | INFORM + `DPARC` | **22 de 22**. Paridad concreta y la abstracta "F par, G impar" |
+| `DASVT` | Parcial 1 | TP 8 | INFORM + `DASVTC` | **25 de 25**. Asíntotas verticales **buscando los candidatos solo** (02/10/2026) |
+| `DCERO` | Parcial 1 | TP 4 | INFORM + `DCEROC` | **39 de 39**. Ceros de f, f/g, f∘g o g∘f **dentro del dominio**, sin simplificar (02/10/2026) |
 | `DCONDC` `DSATC` `DINTC` `DRELC` | motor | — | pila | lo usan `DDOMC` y `DINECC`; probados por dentro de esos dos |
 
 Parcial 1 está cubierto entero y ya en el estilo de la suite. `LHOP`, `DSEP`,
@@ -501,6 +503,8 @@ visitado no rompe nada.
 | `DESTFUN` | f(X), candidato vert., probar sí/no | f'; críticos; f''; inflexión; +∞; −∞; vertical | n4..n1 = f', ceros f', f'', ceros f'' |
 | `DVFG` | F, G, H, puntos | cuántas difieren; veredicto | n1 = lista de diferencias |
 | `DDOMP` | F(X), puntos | cuántos entran; aviso | n1 = lista (valor o `"FUERA"`) |
+| `DASVT` | f(X) | candidatos; asíntotas; avisos si hay | n1 = lista de asíntotas (exactas) |
+| `DCERO` | f(X), g(X), operación | la expresión armada; dominio; ceros; descartados; avisos | n2 = H, n1 = lista de ceros |
 
 `DOPFUN` cubre el TP 4 entero. El campo operación es `0` = todas, `1` a `4` las
 aritméticas, `5` = fog, `6` = gof; con `0` son siete cajas seguidas, así que para
@@ -513,7 +517,7 @@ que recibe la composición escrita sin simplificar.
 `DESTFUN` es el estudio completo, y llega hasta donde llegue el CAS: cada bloque
 va en su propio `IFERR`, así que si uno falla los demás se calculan igual. La
 asíntota vertical es opcional porque el candidato lo tiene que poner el usuario
-— no se deducen solos. Tampoco calcula dominio ni imagen (§4).
+— no se deducen solos (para eso está `DASVT`, que sí los busca). Tampoco calcula dominio ni imagen (§4).
 
 `DCONT` distingue los tres casos de la guía: esencial (algún límite infinito),
 salto finito, y límites iguales. Ese último caso no se puede cerrar solo con los
@@ -532,6 +536,27 @@ pila `a 0 -` se reduce a `a`); lo medido está en el comentario de `DCONTFC`.
 `DTANOR` corrige el signo: la pendiente de la normal es `-1/f'(x0)`. La
 afirmación del punto 3c de la teoría de la guía es falsa por el signo. Si
 `f'(x0) = 0`, la normal sale como `X = x0` en vez de explotar.
+
+`DASVT` saca los candidatos del dominio (`DDOMC`: ceros de denominadores y
+bordes de `LN` y raíces) y decide cada uno con **límites laterales** (`DCONTFC`).
+`DASVC` queda de control: si el sondeo numérico y el CAS no coinciden, avisa.
+Escribir f **sin simplificar**: `(X-3)/(X^2-9)` da candidatos −3 y 3, y solo −3
+es asíntota (el 3 es evitable). **Abre el diálogo "Unsigned inf. Solve?"**
+una vez por lado de cada polo (`CLAUDE.md` §2.12): apretar OK. La respuesta
+es correcta contestando YES o NO; medido en el emulador.
+
+`DCERO` es el par de `DOPFUN` para los ceros. Operación `0` = f sola, `1` = f/g,
+`2` = f∘g, `3` = g∘f. **Arma la expresión sin `SIMPLIFY`** (al revés que
+`DOPFUN`), así que el dominio sale de lo escrito: con f = `X^2-9` y g = `X-3`
+(el ejemplo que trae cargado) muestra `R - {3}`, el cero −3, y el 3 en una
+caja aparte como **descartado por estar fuera del dominio**, que es lo que la
+cátedra pide ver escrito. Si un cero no hace 0 a la expresión, lo marca
+`NO CONFIABLE`.
+
+`DINV` (§1.1) avisa `NO INYECTIVA: partir en x=...` y propone los tramos
+cuando el dominio dado no sirve, también con módulo: `ABS(2*X-4)` sobre
+-INF, INF parte en 2. Si la vuelta solo la encuentra el sondeo de control, el
+punto sale aproximado y el mensaje lo dice.
 
 ### Parcial 2 y final — todavía por pila
 
@@ -787,6 +812,33 @@ Dos trampas medidas antes de escribirlo (`harness/casos-lateral.txt`):
 | `'1/X'` | `0` | f(a−) ≈ `-1000000`, f(a+) ≈ `1000000` → **HAY ASINTOTA** |
 | `'X^2'` | `0` | los dos ≈ `0` → **SIN ASINTOTA** |
 | `'1/(X-2)'` | `2` | ± un millón → **HAY ASINTOTA** |
+
+### DASVT
+
+| f(X) | Debe dar |
+|---|---|
+| `'1/(X^2-9)'` | candidatos −3, 3 → asíntotas **X=−3, X=3** (4 diálogos: OK) |
+| `'(X-3)/(X^2-9)'` | candidatos −3, 3 → asíntota solo **X=−3** |
+| `'LN(X-2)/(X-5)'` | asíntotas **X=2, X=5** |
+| `'/(X-1)'` | candidato 1 → **sin asíntotas** |
+| `'X^2+1'` | sin candidatos |
+
+### DCERO
+
+| f, g, operación | Debe dar |
+|---|---|
+| `'X^2-9'`, `'X-3'`, 1 (f/g) | dominio `R - {3}`; ceros { −3 }; descartado { 3 } |
+| `'LN(X)'`, `'X-1'`, 1 (f/g) | ceros { }; descartado { 1 } |
+| `'/X'`, `'X^2-4'`, 3 (g∘f) | dominio `[0, +∞)`; ceros { 4 } |
+| `'X^2-2*X+1'`, —, 0 | ceros { 1 } (raíz doble, no se rompe) |
+
+### DINV con módulo
+
+| f, A, B | Debe dar |
+|---|---|
+| `'ABS(2*X-4)'`, `-INF`, `INF` | `NO INYECTIVA: partir en x=2` |
+| `'ABS(2*X-4)'`, `2`, `INF` | `OK`, f⁻¹(6) = 5 |
+| `'(2*X+1)/(X-3)'`, `0`, `4.9` | `OK` (el polo no es una vuelta) |
 
 ### DDEF
 

@@ -28,6 +28,9 @@
   @    lista, CLAUDE.md 2.19) estrictamente adentro de (A,B). Un cero
   @    cuenta solo si f da la vuelta ahi: f(z-h)-f(z) y f(z+h)-f(z) con
   @    el mismo signo. Asi X^3 en 0 no se toma como no inyectiva.
+  @    Tambien son candidatos los ceros del argumento de cada ABS( (la
+  @    esquina del modulo no es un cero de f'), y si nada aparece, un
+  @    sondeo de 39 puntos busca un cambio de sentido (ver abajo).
   @  - Sentido: signo de f(XI+h)-f(XI) en un punto interior XI.
   @  - Extremo finito de la imagen: f en el extremo del dominio. Si f esta
   @    definida ahi (real finito: TYPE, caracter 159, '?' y magnitud;
@@ -83,8 +86,38 @@
                       \-> V0 \<< DEPTH D1 - DROPN V0 \>>
                     \>>
                     IF DUP TYPE 5 == NOT THEN 1 \->LIST END
-                    { } { }
-                    \-> ZL ZX ZN
+                    @ Esquinas del modulo (medido, casos-dinv-abs.txt): con
+                    @ 'ABS(2*X-4)' f' da '2*SIGN(2*X-4)', ZEROS de eso da
+                    @ ERROR, y la esquina en 2 no es un cero de f'. DINVC
+                    @ decia OK sobre todo R y daba una inversa falsa. Se suman
+                    @ como candidatos los ceros del argumento de cada ABS( de
+                    @ F, sacado del texto con parentesis balanceados. El test
+                    @ de vuelta de abajo decide igual que con los ceros de f'.
+                    F \->STR 0 0 0
+                    \-> S Q K J
+                    \<<
+                      WHILE S "ABS(" POS DUP 'Q' STO 0 >
+                      REPEAT
+                        Q 4 + 'Q' STO 1 'K' STO Q 'J' STO
+                        WHILE K 0 > J S SIZE > NOT AND
+                        REPEAT
+                          S J J SUB
+                          IF DUP "(" == THEN K 1 + 'K' STO END
+                          IF ")" == THEN K 1 - 'K' STO END
+                          J 1 + 'J' STO
+                        END
+                        DEPTH \-> D1
+                        \<<
+                          IFERR "'" S Q J 2 - SUB + "'" + STR\-> 'X' ZEROS THEN { } END
+                          \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                        \>>
+                        IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+                        +
+                        S Q S SIZE SUB 'S' STO
+                      END
+                    \>>
+                    { } { } 0
+                    \-> ZL ZX ZN AP
                     \<<
                       @ ZX: los puntos de vuelta exactos, ZN: los mismos en real.
                       IF ZL SIZE 0 >
@@ -128,6 +161,109 @@
                           \>>
                         NEXT
                       END
+                      @ Red de control, como el sondeo de DINTC: si ni f' ni los
+                      @ ABS( dieron un punto de vuelta, se recorre el dominio en
+                      @ 39 puntos (con un extremo infinito, 20 unidades) y se
+                      @ mira si f cambia de sentido. Un cambio puede ser una
+                      @ vuelta o un POLO ((2X+1)/(X-3) salta de -oo a +oo y es
+                      @ inyectiva). Se refina el extremo en 5 pasadas de 21
+                      @ puntos: si es una vuelta, f converge; si es un polo, |f|
+                      @ se dispara al acercarse y se descarta. El punto queda
+                      @ aproximado y el mensaje lo dice.
+                      IF ZN SIZE 0 ==
+                      THEN
+                        IF AI -1 == THEN IF BI 0 == THEN BN 20 - ELSE XI 20 - END ELSE AN END
+                        IF BI 1 == THEN IF AI 0 == THEN AN 20 + ELSE XI 20 + END ELSE BN END
+                        \-> LO HI
+                        \<<
+                          HI LO - 40 / \->NUM 0 0 0 0 0
+                          \-> S YP XP SP N FD
+                          \<<
+                            1 39 FOR k
+                              IF FD NOT
+                              THEN
+                                LO S k * + \->NUM
+                                \-> XK
+                                \<<
+                                  DEPTH \-> D1
+                                  \<<
+                                    IFERR F 'X' XK = SUBST \->NUM THEN "ERR" END
+                                    \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                  \>>
+                                  IF DUP TYPE 0 == THEN DUP ABS 1.E400 < ELSE 0 END
+                                  IF
+                                  THEN
+                                    \-> YK
+                                    \<<
+                                      IF N 0 >
+                                      THEN
+                                        YK YP -
+                                        IF DUP ABS 1.E-9 >
+                                        THEN
+                                          SIGN
+                                          IF DUP SP * 0 <
+                                          THEN
+                                            @ Cambio de sentido con el extremo en XP.
+                                            @ SP > 0: venia subiendo, es un maximo.
+                                            SP 0 > XP S YP
+                                            \-> MX Z D Y1
+                                            \<<
+                                              Y1
+                                              1 5 FOR it
+                                                Z
+                                                \-> ZB
+                                                \<<
+                                                  0 20 FOR j
+                                                    Z D - D 10 / j * + \->NUM
+                                                    \-> XJ
+                                                    \<<
+                                                      DEPTH \-> D1
+                                                      \<<
+                                                        IFERR F 'X' XJ = SUBST \->NUM THEN "ERR" END
+                                                        \-> V0 \<< DEPTH D1 - DROPN V0 \>>
+                                                      \>>
+                                                      IF DUP TYPE 0 == THEN DUP ABS 1.E400 < ELSE 0 END
+                                                      IF
+                                                      THEN
+                                                        \-> YJ
+                                                        \<<
+                                                          @ Pila: YB (el mejor hasta ahora). 3 PICK y 4 PICK lo alcanzan.
+                                                          IF MX YJ 3 PICK > AND MX NOT YJ 4 PICK < AND OR
+                                                          THEN DROP YJ XJ 'ZB' STO
+                                                          END
+                                                        \>>
+                                                      ELSE DROP
+                                                      END
+                                                    \>>
+                                                  NEXT
+                                                  ZB 'Z' STO D 10 / 'D' STO
+                                                \>>
+                                              NEXT
+                                              @ En la pila: el f del extremo refinado.
+                                              IF ABS Y1 ABS 100 * 100 + <
+                                              THEN
+                                                ZX Z 4 RND 1 \->LIST + 'ZX' STO
+                                                ZN Z 4 RND 1 \->LIST + 'ZN' STO
+                                                1 'AP' STO 1 'FD' STO
+                                              END
+                                            \>>
+                                          END
+                                          'SP' STO
+                                        ELSE DROP
+                                        END
+                                      END
+                                      YK 'YP' STO XK 'XP' STO N 1 + 'N' STO
+                                    \>>
+                                  ELSE
+                                    @ Punto fuera del dominio: corta la racha.
+                                    DROP 0 'N' STO 0 'SP' STO
+                                  END
+                                \>>
+                              END
+                            NEXT
+                          \>>
+                        \>>
+                      END
                       IF ZN SIZE 0 >
                       THEN
                         @ NO inyectiva: los puntos ordenados, en su forma exacta.
@@ -150,6 +286,7 @@
                             1 ZT SIZE FOR k ZT k GET + "] [" + ZT k GET + "," + NEXT
                             "+inf)" +
                           END
+                          IF AP THEN " (aprox., por sondeo)" + END
                           \-> MS
                           \<< "-" "-" "-" 0 0 MS \>>
                         \>>
