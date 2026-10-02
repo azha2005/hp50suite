@@ -488,8 +488,11 @@ por `a-crlf.ps1`.
 ### Parcial 1 — campos de `INFORM`, salida por `MSGBOX`
 
 Las expresiones se tipean **con comillas simples** (`'X^2+3'`), como en el resto
-de la suite. Cada campo trae un default de ejemplo, así que un campo nunca
-visitado no rompe nada.
+de la suite. **El ejemplo de cada campo es solo la ayuda de la línea de abajo,
+no un valor cargado**: un campo sin tocar llega como `NOVAL` y el programa corta
+con `Bad Argument Type` (medido el 02/10/2026 con `DTANOR`, foto en el fork,
+`harness/pantallas/vacio--*`). Acá decía que traía un default y no era cierto.
+`DASVT` y `DCERO` sí traen valores iniciales (5º argumento de `INFORM`).
 
 | Programa | Campos | Cajas | Además deja en la pila |
 |---|---|---|---|
@@ -820,7 +823,7 @@ Dos trampas medidas antes de escribirlo (`harness/casos-lateral.txt`):
 | `'1/(X^2-9)'` | candidatos −3, 3 → asíntotas **X=−3, X=3** (4 diálogos: OK) |
 | `'(X-3)/(X^2-9)'` | candidatos −3, 3 → asíntota solo **X=−3** |
 | `'LN(X-2)/(X-5)'` | asíntotas **X=2, X=5** |
-| `'/(X-1)'` | candidato 1 → **sin asíntotas** |
+| `'\v/(X-1)'` | candidato 1 → **sin asíntotas** |
 | `'X^2+1'` | sin candidatos |
 
 ### DCERO
@@ -829,7 +832,7 @@ Dos trampas medidas antes de escribirlo (`harness/casos-lateral.txt`):
 |---|---|
 | `'X^2-9'`, `'X-3'`, 1 (f/g) | dominio `R - {3}`; ceros { −3 }; descartado { 3 } |
 | `'LN(X)'`, `'X-1'`, 1 (f/g) | ceros { }; descartado { 1 } |
-| `'/X'`, `'X^2-4'`, 3 (g∘f) | dominio `[0, +∞)`; ceros { 4 } |
+| `'\v/X'`, `'X^2-4'`, 3 (g∘f) | dominio `[0, +∞)`; ceros { 4 } |
 | `'X^2-2*X+1'`, —, 0 | ceros { 1 } (raíz doble, no se rompe) |
 
 ### DINV con módulo

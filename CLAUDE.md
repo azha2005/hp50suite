@@ -566,7 +566,7 @@ El estado `Default 50g.E49` del emulador lo tiene **prendido**. Con −103
 prendido, `'ABS(6*X-3)-9' 'X' ZEROS` da `'(3*EXP(i*x1)+1)/2'` (basura compleja,
 sin error) y `'Y=2^X+1' 'X' SOLVE` trae `2*i*n1*π`. Con `-103 CF`: `{ -1 2 }` y
 `'X=LN(Y-1)/LN(2)'`. Los núcleos nuevos lo apagan adentro de `RCLF` … `STOF`.
-Aun apagado, `/` y `LN` de un negativo con `\->NUM` dan complejo: sigue
+Aun apagado, `\v/` y `LN` de un negativo con `\->NUM` dan complejo: sigue
 valiendo §2.14.
 
 **`OBJ\->` sobre un algebraico deja argumentos, cantidad y función**, y así se
@@ -948,6 +948,8 @@ corre código ARM ni toca el teclado, la SD o la memoria real. Un verde acá es
 evidencia fuerte, no es la máquina.
 
 Documentación propia en `SUITE-MAT1.md`, que se subordina a este archivo.
+Para **usar** los programas (qué pide y qué da cada uno, con ejemplos
+verificados): `DICCIONARIO-MAT1.md`, el par de `DICCIONARIO-LAB.md`.
 
 ### Utilidad
 
@@ -1099,7 +1101,8 @@ Cuatro detalles del camino:
   texto del segundo elemento.** Ese texto es la **ayuda** de la línea de abajo,
   no un default; el valor inicial va en el 5º argumento de `INFORM`. Es lo que
   dice el manual y explicaría la "inconsistencia conocida" de `DPIBPPA`
-  (`programas/README.md`), pero **no está medido acá**. Los programas nuevos no
+  (`programas/README.md`). **Medido el 02/10/2026** con `DTANOR`: OK sin tocar
+  nada da `NOVAL` en la pila y `DERVX Error: Bad Argument Type`. Los programas nuevos no
   dependen de la respuesta: los formularios todo-numéricos traen valores
   iniciales (`DLOOPC` viene cargado con el ejemplo del examen), y `DZLISTAC`
   toma como 0 cualquier z objetivo que no sea un número.
