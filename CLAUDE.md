@@ -41,6 +41,20 @@ lo intuitivo).
 **Después de cada transferencia:** confirmar el ícono del objeto en `VAR`
 (programa / directorio / lista / string) antes de asumir que cargó bien.
 
+### ⚠️ El tamaño importa: la 50g necesita el texto Y el objeto en RAM
+
+Al recibir un `.txt`, la calculadora tiene en memoria el texto entero **y** el
+objeto que compila con él. `MAT1.txt` con comentarios pesaba 171 KB y la 50g
+respondió **`Syntax Error` seguido de `Insufficient Memory`** (02/10/2026): la RAM
+libre de usuario ronda los 230 KB. Por eso `armar-mat1.ps1` y `armar-lab.ps1`
+**sacan las líneas de comentario `@` y la sangría** al empaquetar: 171 → 52 KB
+y 95 → 36 KB. Los fuentes sueltos conservan todo. Es seguro porque ningún
+string ocupa dos líneas, ningún `@` va adentro de un string y ninguna línea de
+comentario tiene código después de un segundo `@` (el comentario de UserRPL
+termina en el fin de línea **o en el siguiente `@`**). Probado: el paquete
+compacto compila como `DIR` en el emulador y 12 ejemplos del diccionario dan
+igual (fork, `harness/casos-paquete.txt`).
+
 ### Estructura del archivo
 
 ```

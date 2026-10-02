@@ -47,7 +47,14 @@ foreach ($nombre in $orden) {
     $cuerpo = [System.IO.File]::ReadAllText($ruta) -split "`r?`n" | Select-Object -Skip 1
     $lineas.Add("  $nombre")
     foreach ($l in $cuerpo) {
-        if ($l.Trim().Length -gt 0) { $lineas.Add("  $l") }
+        # Sin comentarios ni sangria: el compilador los tira igual, y la 50g
+        # tiene que tener en RAM el texto entero MAS el objeto compilado.
+        # Con comentarios MAT1.txt pesaba 171 KB y la 50g respondio Syntax
+        # Error + Insufficient Memory (02/10/2026); sin ellos, 52 KB.
+        # Seguro porque ningun string ocupa dos lineas y ningun @ va
+        # adentro de un string (chequeado al armar este cambio).
+        $t = $l.Trim()
+        if ($t.Length -gt 0 -and -not $t.StartsWith("@")) { $lineas.Add($t) }
     }
 }
 $lineas.Add('END')
