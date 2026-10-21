@@ -1,0 +1,68 @@
+# Los objetos de mat1 que no tienen formulario propio: los nucleos de los
+# cuatro que se acaban de convertir a INFORM, y los datos/accesores de prueba.
+#     nombre | expresion UserRPL | esperado
+# Predicciones propias, calculadas a mano antes de correr.
+
+USAR: LHOPC DSEPC DSEPIC LAGRC TDSEP TEFUN TD TF TCHK
+
+# ---------- Canario del modo ----------
+# Si la maquina esta en modo APROXIMADO, STR\-> compila los literales como
+# reales y RISCH directamente falla: la corrida entera sale mal y en silencio.
+# compilar.py ahora fuerza -105 CF antes de compilar el fuente, y este caso
+# lo verifica. TYPE 28 = entero exacto.
+modo-exacto     | "1" STR\-> TYPE                             | 28.
+
+# ---------- LHOPC: 'f' 'g' 'X=a' -> { L0 Q L1 } ----------
+# 0/0 clasico: SIN(X)/X en 0 -> 1. El cociente de derivadas es COS(X)/1.
+lhop-seno       | 'SIN(X)' 'X' 'X=0' LHOPC                   | { 1 COS(X) 1 }
+# oo/oo: LN(X)/X en +oo -> 0. El infinito entra por el global INF.
+lhop-inf-q      | 'LN(X)' 'X' 'X=INF' LHOPC 2 GET            | 1/X
+lhop-inf-lim    | 'LN(X)' 'X' 'X=INF' LHOPC 3 GET            | 0
+
+# ---------- DSEPC: 'M(Y)' 'N(X)' -> { FY GX SOL } ----------
+# dy/dx = x/y: integral de Y dY = Y^2/2, integral de X dX = X^2/2.
+dsep-fy         | 'Y' 'X' DSEPC 1 GET                        | Y^2/2
+dsep-sol        | 'Y' 'X' DSEPC 3 GET                        | Y^2/2=X^2/2+C
+dsep-exp        | 'Y' 'EXP(X)' DSEPC 3 GET                   | Y^2/2=EXP(X)+C
+
+# ---------- DSEPIC: 'M(Y)' 'N(X)' X0 Y0 -> { FY GX K SOL } ----------
+# Mismo caso con y(0)=1: K = F(1) - G(0) = 1/2 - 0 = 1/2.
+dsepi-k         | 'Y' 'X' 0 1 DSEPIC 3 GET                   | 1/2
+dsepi-sol       | 'Y' 'X' 0 1 DSEPIC 4 GET                   | Y^2/2=X^2/2+1/2
+
+# ---------- LAGRC: 'f(X,Y)' 'g(X,Y)' c -> { LG SOL } ----------
+# Maximizar X*Y con X+Y=10: el lagrangiano es X*Y - LM*(X+Y-10).
+lagr-lagrangiano| 'X*Y' 'X+Y' 10 LAGRC 1 GET                 | X*Y-(X+Y-10)*LM
+
+# ---------- El guardian de profundidad (AGENTS.md 2.11) ----------
+# Un nucleo tiene que dejar EXACTAMENTE un objeto, aunque algo falle por
+# dentro. IFERR no limpia la pila, asi que sin el guardian los argumentos
+# del comando que fallo quedan apilados. En DSEP ese era el caso PEOR de
+# la suite: el `=` final armaba la ecuacion con la basura y devolvia una
+# respuesta equivocada SIN avisar.
+# Caso normal: entra 2, sale 1, la pila vuelve a donde estaba.
+guard-ok        | DEPTH 'DD' STO 'Y' 'X' DSEPC DROP DEPTH DD -        | 0.
+# Caso con fallo real: EXP(Y^2) no tiene primitiva elemental, asi que
+# RISCH revienta adentro del IFERR. La pila tiene que quedar igual de limpia.
+guard-falla     | DEPTH 'DD' STO 'EXP(Y^2)' 'X' DSEPC DROP DEPTH DD - | 0.
+# Y el resultado dice que no pudo, en vez de devolver una ecuacion inventada.
+# RISCH **no tira error** con EXP(Y^2): devuelve 'INT(EXP(Yttt^2),Yttt,Y)'
+# sin evaluar, TYPE 9, asi que el IFERR nunca salta. Medido en
+# casos-risch.txt. Los nucleos ahora lo detectan buscando "INT(" en el
+# string, porque una integral sin resolver no es una respuesta.
+guard-avisa     | 'EXP(Y^2)' 'X' DSEPC 1 GET                 | NO INTEGRA M(Y)
+guard-avisa-sepi| 'EXP(Y^2)' 'X' 0 1 DSEPIC 1 GET            | NO INTEGRA M(Y)
+guard-avisa-nx  | 'Y' 'EXP(X^2)' DSEPC 2 GET                 | NO INTEGRA N(X)
+# Lo mismo en DSEPIC, que tenia el mismo riesgo.
+guard-sepi      | DEPTH 'DD' STO 'EXP(Y^2)' 'X' 0 1 DSEPIC DROP DEPTH DD - | 0.
+guard-limpiar   | IFERR { DD } PURGE THEN 0 END 1            | 1
+
+# ---------- Datos y accesores ----------
+tdsep-tamano    | TDSEP SIZE                                 | 7
+tefun-tamano    | TEFUN SIZE                                 | 8
+td-caso1        | 1 TD DROP DROP                             | Y
+tf-caso3        | 3 TF DROP                                  | (X^2+1)/X
+tf-nota         | 1 TF SWAP DROP                             | evitable en X=1, limite 2
+
+# ---------- TCHK: el autotest de cimientos ----------
+tchk-los-cuatro | TCHK 4 \->LIST                             | { 'X=2' '1/3*X^3' 0 '2*X' }

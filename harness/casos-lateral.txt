@@ -1,0 +1,39 @@
+# Sondeo ANTES de escribir DCONTFC (regla de AGENTS.md 3.1): que hace la
+# maquina con los limites laterales y con f(a) fuera del dominio.
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# Los ESPERADO son lo que DCONTFC necesitaria que pase; si difieren, el
+# programa se escribe alrededor de lo que de verdad pasa.
+
+# ---------- La notacion lateral 'X=a-0' / 'X=a+0' ----------
+# Salto: si el CAS ignora el -0/+0, los dos dan lo mismo (o '?').
+lat-abs-izq   | 'ABS(X)/X' 'X=0-0' LIMIT                     | -1
+lat-abs-der   | 'ABS(X)/X' 'X=0+0' LIMIT                     | 1
+# Polo simple: con signo, y sin abrir "Unsigned inf" si el lateral anda.
+lat-inv-izq   | '1/X' 'X=0-0' LIMIT                          | '-\oo'
+lat-inv-der   | '1/X' 'X=0+0' LIMIT                          | '+\oo'
+# Borde del dominio.
+lat-raiz-izq  | '\v/X' 'X=0-0' LIMIT                         | ?
+lat-raiz-der  | '\v/X' 'X=0+0' LIMIT                         | 0
+# Evitable: los dos laterales iguales.
+lat-evit-izq  | '(X^2-1)/(X-1)' 'X=1-0' LIMIT                | 2
+# Oscilante: no existe.
+lat-osc       | 'SIN(1/X)' 'X=0+0' LIMIT                     | ?
+
+# ---------- Armada como texto, que es como la armaria el programa ----------
+lat-str       | 'ABS(X)/X' "'X=0-0'" STR\-> LIMIT            | -1
+lat-str-neg   | 'ABS(X+1)/(X+1)' "'X=-1+0'" STR\-> LIMIT     | 1
+lat-str-eq    | "'X=0-0'" STR\->                             | 'X=0-0'
+# Y armada con numeros de la pila: 0 0 - se reduce a 0?
+lat-pila      | 'X' 0 0 - =                                  | 'X=0-0'
+
+# ---------- f(a) fuera del dominio ----------
+fa-00         | '(X^2-1)/(X-1)' 'X=1' SUBST EVAL             | ?
+fa-00-num     | '(X^2-1)/(X-1)' 'X=1' SUBST EVAL \->NUM      | ?
+fa-10         | '1/X' 'X=0' SUBST EVAL                       | ?
+fa-10-num     | '1/X' 'X=0' SUBST EVAL \->NUM                | 9.99999999999E499
+fa-raiz-neg   | '\v/X' 'X=-1' SUBST EVAL \->NUM TYPE          | 1.
+fa-ok         | 'X^2+1' 'X=2' SUBST EVAL                     | 5
+
+# ---------- a como texto ----------
+str-ent       | 1 \->STR                                     | "1"
+str-neg       | -1 \->STR                                    | "-1"

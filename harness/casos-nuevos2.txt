@@ -1,0 +1,37 @@
+# Segunda tanda: cerrar lo que la primera dejo abierto.
+#   nombre | expresion UserRPL | esperado
+
+# ---------- Coeficientes sin LCOEF: pelar con HORNER por 0 ----------
+# P 0 HORNER deja cociente, 0 y el termino independiente. Repitiendo,
+# salen todos los coeficientes de abajo hacia arriba.
+pelar-1         | 'X^3+2*X^2-X-2' 0 HORNER DROP SWAP DROP        | -2
+pelar-2         | 'X^3+2*X^2-X-2' 0 HORNER DROP DROP 0 HORNER DROP SWAP DROP | -1
+pelar-cociente  | 'X^3+2*X^2-X-2' 0 HORNER DROP DROP             | X^2+2*X
+grado-1         | 'X^3+2*X^2-X-2' DEGREE                         | 3
+grado-cte       | '5' DEGREE                                     | 0
+grado-noplin    | IFERR 'SIN(X)' DEGREE THEN "NO ES POLINOMIO" END | NO ES POLINOMIO
+
+# ---------- Filtrar raices reales por TIPO (regla 2.14) ----------
+raiz-real-tipo  | '\v/2' \->NUM TYPE                             | 0.
+raiz-cpx-tipo   | 'X^2+1' 'X' ZEROS 1 GET \->NUM TYPE            | 1.
+zeros-vacio     | 'X^2+1' 'X' ZEROS SIZE                         | 2.
+zeros-doble     | 'X^2-2*X+1' 'X' ZEROS                          | { 1 }
+
+# ---------- Weierstrass: la sustitucion completa ----------
+# Integral de 1/(1+SIN(X)): con t=tan(x/2) queda 2/(1+t)^2, primitiva -2/(1+t).
+wsus-paso1      | '1/(1+SIN(X))' 'X' '2*ATAN(T)' = SUBST TEXPAND SIMPLIFY | (T^2+1)/(T+1)^2
+wsus-paso2      | '1/(1+SIN(X))' 'X' '2*ATAN(T)' = SUBST TEXPAND SIMPLIFY '2/(1+T^2)' * SIMPLIFY | 2/(T+1)^2
+wsus-paso3      | '2/(T+1)^2' 'T' RISCH SIMPLIFY                 | -2/(T+1)
+wsus-vuelta     | '-2/(T+1)' 'T' 'TAN(X/2)' = SUBST             | -2/(TAN(X/2)+1)
+wsus-coseno     | '1/(2+COS(X))' 'X' '2*ATAN(T)' = SUBST TEXPAND SIMPLIFY | (T^2+1)/(T^2+3)
+
+# ---------- Weierstrass extremos: evaluar candidatos ----------
+# f(X)=X^3-3X en [-2,3]: criticos -1 y 1, extremos -2 y 3.
+wei-critico     | 'X^3-3*X' DERVX 'X' ZEROS                      | { 1 -1 }
+wei-eval        | 'X^3-3*X' 'X' -1 = SUBST EVAL \->NUM           | 2.
+wei-dentro      | -1 -2 \>= -1 3 < AND                           | 1.
+wei-discont     | IFERR '1/X' 'X' 0 = SUBST EVAL \->NUM THEN "NO CONTINUA" END | NO CONTINUA
+
+# ---------- Bolzano: biseccion ----------
+bolz-signos     | 'X^3-2' 'X' 1 = SUBST EVAL \->NUM 'X^3-2' 'X' 2 = SUBST EVAL \->NUM * 0 < | 1.
+bolz-zeros      | 'X^3-2' 'X' ZEROS SIZE                         | 3.

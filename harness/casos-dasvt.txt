@@ -1,0 +1,47 @@
+# Casos de DASVTC: 'F' -> { AV CAND MSG }
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# ESPERADO calculados a mano ANTES de correr.
+# AV = asintotas verticales (exactas, de los PES de DDOMC), CAND = todos los
+# candidatos probados, MSG = "" o avisos.
+# Dependencias: DDOMC (DCONDC DRELC DINTC DSATC), DCONTFC (decide por
+# laterales del CAS) y DASVC (control y respaldo por sondeo).
+
+USAR: DCONDC DSATC DINTC DRELC DDOMC DCONTFC DASVC DASVTC
+
+# --- polos simples y dobles ---
+asvt-1x        | '1/X' DASVTC 1 GET                         | { 0 }
+asvt-x29       | '1/(X^2-9)' DASVTC 1 GET                   | { -3 3 }
+asvt-q         | '(X+1)/(X-2)' DASVTC 1 GET                 | { 2 }
+# --- evitable: el 3 es candidato y NO es asintota (no se simplifica) ---
+asvt-canc      | '(X-3)/(X^2-9)' DASVTC 1 GET               | { -3 }
+asvt-canc-cand | '(X-3)/(X^2-9)' DASVTC 2 GET               | { -3 3 }
+asvt-canc-msg  | '(X-3)/(X^2-9)' DASVTC 3 GET               |
+# AV exacto, como viene de PES: entero exacto (ZINT, TYPE 28)
+asvt-exacto    | '(X-3)/(X^2-9)' DASVTC 1 GET 1 GET TYPE    | 28.
+# --- logaritmos: DASVC solo NO los ve (LN(1e-6) = -13.8 < 1e5) ---
+asvt-ln        | 'LN(X)' DASVTC 1 GET                       | { 0 }
+asvt-lnq       | 'LN(X-2)/(X-5)' DASVTC 1 GET               | { 2 5 }
+# --- raiz: borde cerrado, un lado complejo, no es asintota ---
+asvt-raiz      | '\v/(X-1)' DASVTC 1 GET                    | { }
+asvt-raiz-cand | '\v/(X-1)' DASVTC 2 GET                    | { 1 }
+asvt-raiz-msg  | '\v/(X-1)' DASVTC 3 GET                    |
+# 1/raiz: asintota de un solo lado; f(1+1e-6) = 1000, DASVC solo no la ve
+asvt-invraiz   | '1/\v/(X-1)' DASVTC 1 GET                  | { 1 }
+# --- sin candidatos o sin polos reales ---
+asvt-poli      | 'X^2+1' DASVTC 1 GET                       | { }
+asvt-poli-cand | 'X^2+1' DASVTC 2 GET                       | { }
+asvt-sinpolos  | '1/(X^2+1)' DASVTC 1 GET                   | { }
+# --- lateral derecho infinito, izquierdo 0 ---
+asvt-exp       | 'EXP(1/X)' DASVTC 1 GET                    | { 0 }
+# --- candidatos irracionales: AV exacta, se mira el numero ---
+asvt-r2-n      | '1/(X^2-2)' DASVTC 1 GET SIZE              | 2.
+asvt-r2-v      | '1/(X^2-2)' DASVTC 1 GET 2 GET \->NUM 4 RND | 1.4142
+# --- el control: sondeo grande, limite finito -> no entra, pero avisa ---
+# en 3: 1e6/6 = 166667 > 1e5, y el limite es 500000/3 (finito)
+asvt-big       | '1000000*(X-3)/(X^2-9)' DASVTC 1 GET       | { -3 }
+asvt-big-msg   | '1000000*(X-3)/(X^2-9)' DASVTC 3 GET "finito" POS 0 > | 1
+# --- forma de la salida ---
+asvt-size      | '1/X' DASVTC SIZE                          | 3.
+asvt-string    | "'1/X'" DASVTC 1 GET                       | { 0 }
+asvt-depth     | DEPTH \-> D0 \<< '1/(X^2-9)' DASVTC DROP DEPTH D0 - \>> | 0
+asvt-depth0    | DEPTH \-> D0 \<< 'X^2+1' DASVTC DROP DEPTH D0 - \>> | 0

@@ -1,0 +1,7 @@
+# Sin ENTER automaticos (-EnterCadaMs = -EsperaMs): si el CAS abre
+# "Unsigned inf. Solve?", la bateria se cuelga y la lectura falla.
+# DCONTFC evalua f(a) primero en numerico desde el 02/10/2026.
+USAR: DCONTFC
+sil-polo-k   | '1/(X^2-9)' 3 DCONTFC 4 GET | 4
+sil-1x-k     | '1/X' 0 DCONTFC 4 GET       | 4
+sil-ok       | 'X^2' 1 DCONTFC 4 GET       | ?

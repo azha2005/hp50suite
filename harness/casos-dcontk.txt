@@ -1,0 +1,43 @@
+# Casos de DCONTKC: 'IZQ' 'DER' A 'K' -> { SOLS LI LD MSG }
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# ESPERADO calculados a mano ANTES de correr. Los limites se comprueban
+# por valor numerico (sustituyendo K), no por la forma simbolica.
+
+USAR: DCONTKC
+
+# Saladillo 2024: (2x-K)/(1+x) si x>1 ; x^2-Kx+3 si x<=1. izq 4-K,
+# der (2-K)/2 -> K=6, limite comun -2.
+dk-sal-sols    | 'X^2-K*X+3' '(2*X-K)/(1+X)' 1 'K' DCONTKC 1 GET          | { 6 }
+dk-sal-msg     | 'X^2-K*X+3' '(2*X-K)/(1+X)' 1 'K' DCONTKC 4 GET          | OK
+dk-sal-li      | 'X^2-K*X+3' '(2*X-K)/(1+X)' 1 'K' DCONTKC 2 GET 'K' 6 = SUBST \->NUM | -2.
+dk-sal-ld      | 'X^2-K*X+3' '(2*X-K)/(1+X)' 1 'K' DCONTKC 3 GET 'K' 0 = SUBST \->NUM | 1.
+# Recu 2014: e^(4/(x+1)) si x<-1 ; 3x+k si x>=-1. Parametro en minuscula.
+# izq 0, der k-3 -> k=3.
+dk-recu-sols   | 'EXP(4/(X+1))' '3*X+k' -1 'k' DCONTKC 1 GET               | { 3 }
+dk-recu-li     | 'EXP(4/(X+1))' '3*X+k' -1 'k' DCONTKC 2 GET               | 0
+# Resolucion 2018: (x-4)^2+k si x<=3 ; 2x si x>3. izq 1+k, der 6 -> k=5.
+dk-res-sols    | '(X-4)^2+K' '2*X' 3 'K' DCONTKC 1 GET                     | { 5 }
+dk-res-ld      | '(X-4)^2+K' '2*X' 3 'K' DCONTKC 3 GET                     | 6
+# Otro 2018: a*x^2-2 si x<=2 ; x+2a si x>2. Parametro A. 4A-2=2+2A -> A=2.
+dk-otro-sols   | 'A*X^2-2' 'X+2*A' 2 'A' DCONTKC 1 GET                     | { 2 }
+dk-otro-msg    | 'A*X^2-2' 'X+2*A' 2 'A' DCONTKC 4 GET                     | OK
+# Inventado, K en las dos ramas: K^2*x+1 si x<1 ; 5Kx-5 si x>=1.
+# K^2+1 = 5K-5 -> K^2-5K+6=0 -> K=2 o K=3. SORT porque el orden es del CAS.
+dk-cuad-sols   | 'K^2*X+1' '5*K*X-5' 1 'K' DCONTKC 1 GET SORT              | { 2 3 }
+dk-cuad-msg    | 'K^2*X+1' '5*K*X-5' 1 'K' DCONTKC 4 GET                   | OK
+# Sin solucion real: izq K^2, der -1 -> K^2=-1.
+dk-nohay-msg   | 'X^2+K^2' '-1-X' 0 'K' DCONTKC 4 GET                      | NO HAY K
+dk-nohay-sols  | 'X^2+K^2' '-1-X' 0 'K' DCONTKC 1 GET                      | { }
+# Limite infinito: 1/(x-1) por izquierda en 1 da -oo. No hay K.
+dk-inf-msg     | '1/(X-1)' '2*X+K' 1 'K' DCONTKC 4 GET                     | LIMITE INFINITO
+dk-inf-sols    | '1/(X-1)' '2*X+K' 1 'K' DCONTKC 1 GET                     | { }
+# Entradas como string, como pueden llegar del formulario (AGENTS.md 2.10).
+dk-string      | "'X^2-K*X+3'" "'(2*X-K)/(1+X)'" 1 "K" DCONTKC 1 GET       | { 6 }
+# Parametro invalido (0): se usa K.
+dk-default     | 'X^2-K*X+3' '(2*X-K)/(1+X)' 1 0 DCONTKC 1 GET             | { 6 }
+# Guardian de profundidad: el nucleo deja UN objeto y nada mas.
+dk-depth-inf   | DEPTH \-> D0 \<< '1/(X-1)' '2*X+K' 1 'K' DCONTKC DROP DEPTH D0 - \>> | 0
+dk-depth-ok    | DEPTH \-> D0 \<< 'K^2*X+1' '5*K*X-5' 1 'K' DCONTKC DROP DEPTH D0 - \>> | 0
+# RCLF/STOF: el modo Complex del usuario vuelve como estaba.
+dk-flag        | RCLF -103 SF '(X-4)^2+K' '2*X' 3 'K' DCONTKC DROP IF -103 FS? THEN "PRENDIDA" ELSE "APAGADA" END SWAP STOF | PRENDIDA
+# Los strings vuelven sin comillas en la columna OBTENIDO (leer-resultado.py).

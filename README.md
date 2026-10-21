@@ -51,7 +51,8 @@ for asymptotes, and how to load single programs.
   Programs that draw also have a `…G` layer that draws without waiting for a key.
 - **Tested on the 50g ROM.** The cores run in an emulator with the real HP 50g
   ROM, against the course datasets and the exercises' own results: several
-  hundred cases, including pixel checks on the plots. The emulator is not the
+  hundred cases, including pixel checks on the plots. The test tables and
+  scripts are in [`harness/`](harness/README.md). The emulator is not the
   calculator, so try each program on the real machine before an exam.
 - **Every rule was learned from a real bug.** [`AGENTS.md`](AGENTS.md)
   collects the UserRPL traps found along the way: `FOR` always runs at least

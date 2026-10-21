@@ -1,0 +1,15 @@
+# Inecuaciones dobles en DINECC (02/10/2026). Antes daban "NO CONFIABLE: R".
+# ESPERADO a mano antes de correr.
+USAR: DCONDC DSATC DINTC DRELC DINECC
+dob-txt     | '1<X<2' DINECC 1 GET                  | (1, 2)
+dob-msg     | '1<X<2' DINECC 3 GET                  |
+dob-lin     | '-3<2*X+1\<=5' DINECC 1 GET           | (-2, 2]
+dob-lin-pes | '-3<2*X+1\<=5' DINECC 2 GET           | { -2 2 }
+dob-cerr    | '-1\<=3-X\<=4' DINECC 1 GET           | [-1, 4]
+dob-mayor-c  | '5>X^2>1' DINECC 1 GET 3 3 SUB NUM          | 131.
+dob-mayor-r  | '5>X^2>1' DINECC 1 GET 4 11 SUB            | 5, -1) U
+dob-mayor-pes| '5>X^2>1' DINECC 2 GET SIZE                  | 4.
+dob-racio   | '0<1/X<1' DINECC 1 GET                | (1, +\oo)
+dob-vacio   | '2<X<1' DINECC 1 GET                  | VACIO
+dob-nodoble | '1<X' DINECC 1 GET                    | (1, +\oo)
+dob-pila    | DEPTH \-> D0 \<< '1<X<2' DINECC DROP DEPTH D0 - \>> | 0

@@ -1,0 +1,22 @@
+# Tercera tanda: lo ultimo que bloquea escribir los programas.
+#   nombre | expresion UserRPL | esperado
+# ZEROS con raiz unica NO devuelve lista (medido en casos-nuevos2).
+z-doble-tipo    | 'X^2-2*X+1' 'X' ZEROS TYPE                     | 9.
+z-simple-tipo   | 'X-3' 'X' ZEROS TYPE                           | 9.
+z-dos-tipo      | 'X^2-4' 'X' ZEROS TYPE                         | 5.
+z-cero-sol      | IFERR '5' 'X' ZEROS THEN "SIN SOLUCION" END    | { }
+# HORNER: el orden de la pila, explicito.
+horner-resto    | 'X^3-1' 1 HORNER 3 \->LIST 3 GET               | 0
+horner-coc      | 'X^3-1' 1 HORNER 3 \->LIST 1 GET               | X^2+X+1
+# El infinito numerico de la maquina, para detectar discontinuidades.
+maxreal         | '1/X' 'X' 0 = SUBST EVAL \->NUM ABS 1000000000 > | 1.
+maxreal-tipo    | '1/X' 'X' 0 = SUBST EVAL \->NUM TYPE           | 0.
+lateral-neg     | '1/X' 'X' -.001 = SUBST EVAL \->NUM 0 <        | 1.
+# DIVIS en los bordes.
+divis-cero      | IFERR 0 DIVIS THEN "NO ACEPTA CERO" END        | NO ACEPTA CERO
+divis-uno       | -1 DIVIS                                       | { 1 -1 }
+divis-12        | -12 DIVIS                                      | { 1 2 3 4 6 12 -1 -2 -3 -4 -6 -12 }
+# FACTOR para mostrar lindo el resultado de la sustitucion.
+factor-den      | '2/(T^2+2*T+1)' FACTOR                         | 2/(T+1)^2
+# Y el caso hostil de Weierstrass: extremo en un pico sin derivada.
+abs-deriv       | IFERR 'ABS(X)' DERVX 'X' ZEROS THEN "NO PUDO" END | NO PUDO

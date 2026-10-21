@@ -1,0 +1,36 @@
+# Sondeo 2 previo a DINEC / DINV / DDOM.
+#     nombre | expresion UserRPL | esperado
+
+solve-abs-eq  | 'ABS(6*X-3)=9' 'X' SOLVE | ?
+solve-racio   | '(X+1)/(X-2)\>=0' 'X' SOLVE | ?
+solve-raiz    | '\v/(X-1)>2' 'X' SOLVE | ?
+solve-cuad2   | '-X^2-X+2\<=0' 'X' SOLVE | ?
+solve-nada    | 'X^2+1<0' 'X' SOLVE | ?
+solve-todo    | 'X^2+1>0' 'X' SOLVE | ?
+solve-abs2    | 'ABS(1/2-2*X)>1' 'X' SOLVE | ?
+solve-abs3    | 'ABS(-2*X-3/4)\>=1' 'X' SOLVE | ?
+solve-cerr    | '-X^2+X+6\<=0' 'X' SOLVE | ?
+solve-princ   | -1 SF 'Y=2^X+1' 'X' SOLVE -1 CF | ?
+solve-princ2  | -1 SF 'Y=(X-1)^2+2' 'X' SOLVE -1 CF | ?
+signtab-rac   | '(X+1)/(X-2)' SIGNTAB | ?
+signtab-raiz  | '\v/(X-1)' SIGNTAB | ?
+signtab-ln    | 'LN(X)' SIGNTAB | ?
+srepl-zeros   | "ABS(X-2)-3" "ABS(" "-(" SREPL DROP STR\-> 'X' ZEROS | ?
+srepl-zeros2  | 'ABS(X-2)-3' \->STR "ABS(" "(" SREPL DROP STR\-> 'X' ZEROS | ?
+subst-irr     | '9-X^2' 'X' '-\v/2' = SUBST EVAL \->NUM | ?
+zeros-raiz9   | '9-X^2' 'X' ZEROS | ?
+zeros-nada    | 'X^2+1' 'X' ZEROS | ?
+zeros-const   | '5' 'X' ZEROS | ?
+zeros-x       | 'X' 'X' ZEROS | ?
+zeros-exp     | 'EXP(X)' 'X' ZEROS | ?
+zeros-log     | 'LN(X+1)' 'X' ZEROS | ?
+zeros-lnabs   | 'LN(ABS(X-2))' 'X' ZEROS | ?
+lim-inf       | 'LN(X+1)' 'X' \oo = LIMIT | ?
+lim-minf      | '2^X+1' 'X' \oo NEG = LIMIT | ?
+numq          | '?' \->NUM | ?
+tipo-q        | '?' TYPE | ?
+str-lista     | { 'X<-1' 'X>2' } \->STR | ?
+flag-exact    | -105 FS? | ?
+flag-cplx     | -103 FS? | ?
+flag-princ    | -1 FS? | ?
+xq-tras-subst | 'X' VTYPE | ?

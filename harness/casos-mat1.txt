@@ -1,0 +1,85 @@
+# Casos de NUESTROS programas de mat1 (no de comandos sueltos de la maquina).
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# Las lineas USAR: nombran los objetos que la bateria carga antes de correr.
+#
+# Se prueban los nucleos XXXC: el INFORM de XXX es interactivo y no se puede
+# correr desde una bateria. Por eso los programas estan partidos en nucleo +
+# interfaz.
+#
+# Los ESPERADO son prediccion propia, calculada a mano ANTES de correr; NO se
+# copian de lo que devuelva la maquina. Cuando difieren hay que decidir quien
+# tiene razon: varias veces fue la tabla la equivocada (el formato con que la
+# calculadora escribe un resultado) y varias veces fue el programa.
+#
+# Donde el formato de un real es fragil se prueba un campo suelto con N GET en
+# vez de la lista entera.
+
+USAR: DCONTC DASVC DDEFC DTANORC DDOMPC DVFGC DASHOC DESTFUNC DOPFUNC
+
+# ---------- DCONTC: 'FI' 'FD' A -> { LI LD IG ES } ----------
+dcont-continua  | 'X^2' '2*X-1' 1 DCONTC                     | { 1 1 1. 0. }
+dcont-salto     | 'X' 'X+1' 0 DCONTC                         | { 0 1 0. 0. }
+dcont-evitable  | '(X^2-1)/(X-1)' 'X+1' 1 DCONTC             | { 2 2 1. 0. }
+# Laterales de verdad: 1/X por izquierda en 0 es -oo. Antes el caso decia
+# +oo, que era el infinito SIN signo del limite ordinario (AGENTS.md 2.12).
+dcont-esencial  | '1/X' 'X' 0 DCONTC                         | { '-\oo' 0 0. 3. }
+dcont-polo-der  | 'X' '1/X' 0 DCONTC                         | { 0 '+\oo' 0. 3. }
+# Corte negativo: 'X=-1-0' armado como texto.
+dcont-neg       | 'X' 'X+1' -1 DCONTC                        | { -1 0 0. 0. }
+
+# ---------- DASVC: 'f' A -> { VI VD HAY } ----------
+# 1/X en 0: sondeo a 1e-6 da -1e6 y +1e6, signos opuestos, hay asintota.
+dasv-polo       | '1/X' 0 DASVC 3 GET                        | 1
+dasv-polo-vi    | '1/X' 0 DASVC 1 GET                        | -1000000.
+# X^2 en 0 queda acotada: no hay asintota.
+dasv-acotada    | 'X^2' 0 DASVC 3 GET                        | 0
+# Polo doble: los dos lados van a +oo.
+dasv-doble      | '1/X^2' 0 DASVC 3 GET                      | 1
+
+# ---------- DDEFC: 'f' X0 -> { Q DV } ----------
+ddef-simbolica  | 'X^2' 'X' DDEFC 2 GET                      | 2*X
+ddef-en-punto   | 'X^2' 3 DDEFC 2 GET                        | 6
+ddef-cubica     | 'X^3' 'X' DDEFC 2 GET                      | 3*X^2
+
+# ---------- DTANORC: 'f' X0 -> { M Y0 TG NR } ----------
+dtanor-m        | 'X^2' 1 DTANORC 1 GET                      | 2.
+dtanor-y0       | 'X^2' 1 DTANORC 2 GET                      | 1.
+dtanor-tg       | 'X^2' 1 DTANORC 3 GET                      | Y=2.*X-1.
+# f'(0)=0: la normal es vertical y sale como X = x0, no como division por cero.
+dtanor-normal-v | 'X^2' 0 DTANORC 4 GET                      | X=0
+
+# ---------- DDOMPC: 'F' { puntos } -> { RES DENTRO } ----------
+# raiz de X: -1 queda fuera, 0/1/4 dentro.
+ddomp-raiz      | '\v/X' { -1 0 1 4 } DDOMPC                 | { { "FUERA" 0. 1. 2. } 3 }
+ddomp-cuenta    | '1/X' { -1 0 1 } DDOMPC 2 GET              | 2
+
+# ---------- DVFGC: 'F' 'G' 'H' { puntos } -> { DIF MAL } ----------
+dvfg-ok         | 'X^2-1' 'X-1' 'X+1' { -3 .5 2 } DVFGC 2 GET | 0
+dvfg-mal        | 'X^2-1' 'X-1' 'X+2' { -3 .5 2 } DVFGC 2 GET | 3
+
+# ---------- DASHOC: 'f' -> { MP BP MN BN TP TN } ----------
+dasho-oblicua   | '(X^2+1)/X' DASHOC 5 GET                   | OBLICUA y = 1X + 0
+dasho-horiz     | '1/X' DASHOC 5 GET                         | HORIZONTAL y = 0
+# m infinita: NO tiene asintota. Antes esto salia como "el CAS no pudo", que
+# es enganoso; el CAS pudo perfectamente.
+dasho-sin       | 'X^2' DASHOC 5 GET                         | sin asintota (m infinita)
+dasho-m         | '(X^2+1)/X' DASHOC 1 GET                   | 1
+
+# ---------- DESTFUNC: 'f' AV PV -> { D1 Z1 D2 Z2 TP TN TV } ----------
+destfun-d1      | 'X^3-3*X' 0 0 DESTFUNC 1 GET               | 3*X^2-3
+destfun-z1      | 'X^3-3*X' 0 0 DESTFUNC 2 GET               | {-1 1}
+destfun-tp      | 'X^3-3*X' 0 0 DESTFUNC 5 GET               | sin asintota (m infinita)
+destfun-tv      | '1/X' 0 1 DESTFUNC 7 GET                   | HAY ASINT. VERTICAL
+
+# ---------- DOPFUNC: 'f' 'g' X0 -> { SU RE PR CO FG GF FX GX } ----------
+# El cociente: SIMPLIFY cancela y devuelve X+3, perdiendo que X=3 no
+# pertenece al dominio. Se prueba para dejarlo documentado, no porque este bien.
+dopfun-cociente | 'X^2-9' 'X-3' 0 DOPFUNC 4 GET              | X+3
+dopfun-suma     | 'X^2' 'X' 0 DOPFUNC 1 GET                  | X^2+X
+dopfun-comp     | 'X^2' 'X+1' 0 DOPFUNC 5 GET                | X^2+2*X+1
+dopfun-fuera    | '\v/(X-1)' '2*X^2' 0 DOPFUNC 7 GET         | NO EXISTE
+
+# NOTA: los casos con raiz de arriba (ddomp-raiz, dopfun-fuera) estuvieron
+# midiendo cualquier cosa hasta que se arreglo compilar.py: el escape / no se
+# traducia y a la calculadora le llegaban los tres caracteres literales, que
+# compilan como un nombre basura y fallan recien al evaluar.

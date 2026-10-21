@@ -1,0 +1,41 @@
+# Sondas para DRUF (Ruffini), DWEIER (extremos absolutos), DBOLZ (Bolzano)
+# y DWSUS (sustitucion de Weierstrass). Los ESPERADO son predicciones mias;
+# lo que importa de esta tanda es la columna OBTENIDO.
+#   nombre | expresion UserRPL | esperado
+
+# ---------- HORNER: la division sintetica de fabrica ----------
+# Si existe y devuelve cociente + resto, la tabla de Ruffini sale sola.
+horner-3sal     | 'X^3-1' 1 HORNER 3 \->LIST                  | { 'X^2+X+1' 1 0 }
+horner-resto    | 'X^3+2*X^2-X-2' 1 HORNER 3 \->LIST          | { 'X^2+3*X+2' 1 0 }
+horner-noraiz   | 'X^3-1' 2 HORNER 3 \->LIST                  | { 'X^2+2*X+4' 2 7 }
+horner-cero     | 'X^3-1' 0 HORNER 3 \->LIST                  | { 'X^2' 0 -1 }
+horner-lista    | IFERR { 1 0 0 -1 } 1 HORNER 3 \->LIST THEN "NO ACEPTA LISTA" END | NO ACEPTA LISTA
+
+# ---------- Grado y divisores (teorema de la raiz racional) ----------
+grado           | 'X^3-1' DEGREE                              | 3
+divis-6         | 6 DIVIS                                     | { 1 2 3 6 }
+divis-neg       | IFERR -6 DIVIS THEN "NO ACEPTA NEGATIVO" END | { 1 2 3 6 }
+# El termino independiente y el coeficiente principal, si se pueden sacar solos.
+indep           | 'X^3+2*X^2-X-2' 'X' 0 = SUBST EVAL          | -2
+princ           | IFERR 'X^3+2*X^2-X-2' LCOEF THEN "NO EXISTE LCOEF" END | 1
+
+# ---------- ZEROS: los candidatos de Weierstrass ----------
+zeros-forma     | 'X^2-2' 'X' ZEROS                           | { -\v/2 \v/2 }
+zeros-deriv     | 'X^3-3*X' DERVX 'X' ZEROS                   | { -1 1 }
+zeros-tipo      | 'X^2-2' 'X' ZEROS TYPE                      | 5.
+zeros-sin       | IFERR 'X^2+1' 'X' ZEROS THEN "FALLA" END    | { }
+# TABVAL: tabla de valores de una funcion en una lista de puntos.
+tabval          | IFERR 'X^2' { 0 1 2 } TABVAL THEN "NO EXISTE TABVAL" END | { { 0 1 2 } { 0 1 4 } }
+
+# ---------- Bolzano: signo en los extremos ----------
+signo-a         | 'X^3-2' 'X' 0 = SUBST EVAL \->NUM SIGN      | -1.
+signo-b         | 'X^3-2' 'X' 2 = SUBST EVAL \->NUM SIGN      | 1.
+
+# ---------- Sustitucion de Weierstrass sin MATCH ----------
+# Idea: en vez de reemplazar SIN(X) y COS(X) por partes (que necesita MATCH y
+# comodines), se sustituye la VARIABLE por 2*ATAN(T), que es x = 2 arctan t.
+# Si el CAS simplifica SIN(2*ATAN(T)) a 2*T/(1+T^2), el rodeo entero sobra.
+wsus-sin        | 'SIN(2*ATAN(T))' SIMPLIFY                   | 2*T/(T^2+1)
+wsus-cos        | 'COS(2*ATAN(T))' SIMPLIFY                   | (1-T^2)/(T^2+1)
+wsus-texpand    | 'SIN(2*ATAN(T))' TEXPAND SIMPLIFY           | 2*T/(T^2+1)
+wsus-subst      | '1/(1+SIN(X))' 'X' '2*ATAN(T)' = SUBST SIMPLIFY | (T^2+1)/(T+1)^2

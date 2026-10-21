@@ -1,0 +1,2 @@
+USAR:
+sc-eval | '1/(X^2-9)' 'X' 3 = SUBST EVAL | ?

@@ -1,0 +1,12 @@
+# Que caracter quedo adentro del algebraico, y si falla tambien sin variable.
+# El \->STR de un algebraico viene con comillas, asi que el caracter de la raiz
+# esta en la posicion 2.
+s1-codigo       | '\v/X' \->STR 2 2 SUB NUM                   | 131
+s2-constante    | IFERR '\v/4' \->NUM THEN "FALLA-CONST" END   | 2.
+s3-largo        | '\v/X' \->STR SIZE                           | 4
+# Comparar contra una raiz construida por la propia maquina con XROOT.
+s4-maq-codigo   | 'XROOT(2,X)' \->STR 2 2 SUB NUM              | 88
+s5-simplif      | IFERR '\v/4' EVAL \->STR THEN "FALLA-EVAL" END | 2
+# Y el caso que importa para la suite: X^(1/2) exacto.
+s6-pot-exacta   | IFERR 'X^(1/2)' 4 'X' STO \->NUM THEN "FALLA" END | 2.
+s7-limpiar      | IFERR { X } PURGE THEN 0 END 1               | 1

@@ -1,0 +1,11 @@
+# Hipotesis 2: un FOR que NO se ejecuta (inicio > fin) adentro de la
+# condicion de un WHILE deja algo inconsistente.
+#   nombre | expresion UserRPL | esperado
+# A) Confirmar 2.7 aislado: un FOR con inicio > fin no corre y no ensucia.
+for-vacio       | DEPTH 'DD' STO 2 1 FOR i 5 NEXT DEPTH DD -    | 0.
+for-vacio-lim   | IFERR { DD } PURGE THEN 0 END 1               | 1
+# B) WHILE cuya condicion tiene un FOR que en la ULTIMA vuelta no corre.
+for-vacio-while | 3 0 \-> N S \<< WHILE N 0 > 2 N FOR i S 1 + 'S' STO NEXT 1 AND REPEAT N 1 - 'N' STO END S \>> | 3
+# C) El mismo bucle nuestro, pero con la cuenta adentro de un IF que
+#    protege al FOR de quedar con inicio > fin. Este es el rodeo.
+while-guardado  | { 1 -2 1 } { } { } 0 1 \-> CF FI RA B C \<< WHILE IF CF SIZE 1 > THEN CF 1 1 SUB 'FI' STO CF 1 GET 'B' STO 2 CF SIZE FOR i CF i GET C B * + 'B' STO FI B 1 \->LIST + 'FI' STO NEXT FI FI SIZE GET 0 == ELSE 0 END REPEAT RA C 1 \->LIST + 'RA' STO FI 1 FI SIZE 1 - SUB 'CF' STO END RA \>> | { 1 1 }

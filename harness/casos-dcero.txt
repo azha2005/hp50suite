@@ -1,0 +1,66 @@
+# Casos de DCEROC: 'H' -> { CZ ZD TD MSG }
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# CZ = ceros dentro del dominio, ZD = candidatos descartados por caer
+# fuera, TD = dominio en texto (DDOMC), MSG = "" o avisos.
+# ESPERADO calculados a mano ANTES de correr.
+#
+# Dependencias: DCEROC llama a DCONDC, DSATC y DDOMC; DDOMC llama a
+# DINTC (y nombra a DRELC); DINTC llama a DSATC.
+
+USAR: DCONDC DSATC DINTC DRELC DDOMC DCEROC
+
+# --- la cancelacion: el numerador se anula en +-3, el 3 no esta ---
+dc-canc-cz    | '(X^2-9)/(X-3)' DCEROC 1 GET              | { -3 }
+dc-canc-zd    | '(X^2-9)/(X-3)' DCEROC 2 GET              | { 3 }
+dc-canc-td    | '(X^2-9)/(X-3)' DCEROC 3 GET              | R - {3}
+dc-canc-msg   | '(X^2-9)/(X-3)' DCEROC 4 GET              |
+dc-canc2-cz   | '(X^2-4)/(X+2)' DCEROC 1 GET              | { 2 }
+dc-canc2-zd   | '(X^2-4)/(X+2)' DCEROC 2 GET              | { -2 }
+# --- producto con una raiz: -2 anula X+2 pero \v/(-3) no es real ---
+dc-raiz-cz    | '\v/(X-1)*(X+2)' DCEROC 1 GET             | { 1 }
+dc-raiz-zd    | '\v/(X-1)*(X+2)' DCEROC 2 GET             | { -2 }
+dc-raiz-td    | '\v/(X-1)*(X+2)' DCEROC 3 GET             | [1, +\oo)
+# --- LN(1) = 0 pero X-1 = 0 ahi: el 1 queda afuera ---
+dc-ln-cz      | 'LN(X)/(X-1)' DCEROC 1 GET                | { }
+dc-ln-zd      | 'LN(X)/(X-1)' DCEROC 2 GET                | { 1 }
+dc-ln-td      | 'LN(X)/(X-1)' DCEROC 3 GET                | (0, 1) U (1, +\oo)
+# --- sin ceros reales: las raices complejas NO van a ZD (2.19) ---
+dc-nada-cz    | 'X^2+1' DCEROC 1 GET                      | { }
+dc-nada-zd    | 'X^2+1' DCEROC 2 GET                      | { }
+dc-nada-msg   | 'X^2+1' DCEROC 4 GET                      |
+# --- raiz unica: ZEROS no devuelve lista (2.19) ---
+dc-doble-cz   | 'X^2-2*X+1' DCEROC 1 GET                  | { 1 }
+dc-doble-zd   | 'X^2-2*X+1' DCEROC 2 GET                  | { }
+# --- g o f con f = \v/X, g = X^2-4: (\v/X)^2-4, cero en 4 ---
+# ZD no se afirma: depende de si ZEROS devuelve un -4 (se descartaria).
+dc-gof-cz     | '(\v/X)^2-4' DCEROC 1 GET                 | { 4 }
+dc-gof-td     | '(\v/X)^2-4' DCEROC 3 GET                 | [0, +\oo)
+dc-gof-msg    | '(\v/X)^2-4' DCEROC 4 GET                 |
+# La composicion armada como la arma DCERO: SUBST sin EVAL.
+dc-gof-subst  | 'X^2-4' 'X' '\v/X' = SUBST DCEROC 1 GET    | { 4 }
+dc-gof-sub-td | 'X^2-4' 'X' '\v/X' = SUBST DCEROC 3 GET    | [0, +\oo)
+# El cociente armado como lo arma DCERO: F G / sin SIMPLIFY.
+dc-fg-div-zd  | 'X^2-9' 'X-3' / DCEROC 2 GET              | { 3 }
+dc-fg-div-td  | 'X^2-9' 'X-3' / DCEROC 3 GET              | R - {3}
+# --- LN de algo: ceros donde el argumento vale 1 ---
+dc-lnq-cz     | 'LN(X^2-3)' DCEROC 1 GET                  | { -2 2 }
+dc-lnq-zd     | 'LN(X^2-3)' DCEROC 2 GET                  | { }
+# ceros irracionales: +-\v/2; se mira el numero, no la escritura
+dc-lnirr-n    | 'LN(X^2-1)' DCEROC 1 GET 2 GET \->NUM 4 RND | 1.4142
+dc-lnirr-k    | 'LN(X^2-1)' DCEROC 1 GET SIZE              | 2.
+# 2022 T1 ej 2: f/g con f = \v/(9-X^2), g = LN(3*X-2). Dom (2/3,1) U (1,3]
+dc-2022-cz    | '\v/(9-X^2)/LN(3*X-2)' DCEROC 1 GET       | { 3 }
+dc-2022-zd    | '\v/(9-X^2)/LN(3*X-2)' DCEROC 2 GET       | { -3 }
+# --- sin ceros: numerador constante ---
+dc-1x-cz      | '1/X' DCEROC 1 GET                        | { }
+dc-1x-zd      | '1/X' DCEROC 2 GET                        | { }
+# --- NEG arriba y un factor X suelto (nombre, TYPE 6) ---
+dc-x-cz       | 'X*(X-2)/(X+1)' DCEROC 1 GET              | { 0 2 }
+dc-x-zd       | 'X*(X-2)/(X+1)' DCEROC 2 GET              | { }
+dc-neg-cz     | '-((X-1)/X)' DCEROC 1 GET                 | { 1 }
+# --- la expresion llega como string desde el formulario (2.10) ---
+dc-string     | "'(X^2-9)/(X-3)'" DCEROC 1 GET            | { -3 }
+dc-size       | 'X^2+1' DCEROC SIZE                       | 4.
+# --- pila limpia (2.11), tambien cuando hay descartes ---
+dc-depth      | DEPTH \-> D0 \<< '(X^2-9)/(X-3)' DCEROC DROP DEPTH D0 - \>> | 0
+dc-depth-ln   | DEPTH \-> D0 \<< 'LN(X)/(X-1)' DCEROC DROP DEPTH D0 - \>>   | 0

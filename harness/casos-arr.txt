@@ -1,0 +1,12 @@
+# Por que DSTATSC falla con un vector en modo EXACTO?
+# Hipotesis: [ 2 4 6 8 10 ] con enteros exactos no es un array real (TYPE 3)
+# sino un array simbolico, asi que el IF DUP TYPE 3 == no convierte y SIZE
+# devuelve una lista.
+USAR: BM5X
+#   nombre | expresion | esperado
+arr-tipo        | [ 2 4 6 8 10 ] TYPE                      | 3.
+arr-tipo-real   | [ 2. 4. 6. 8. 10. ] TYPE                 | 3.
+arr-size        | [ 2 4 6 8 10 ] SIZE                      | 5.
+arr-objdim      | [ 2 4 6 8 10 ] OBJ\-> 1 GET              | 5.
+arr-1er         | [ 2 4 6 8 10 ] 1 GET TYPE                | 28.
+arr-bm5x        | BM5X OBJ\-> \->ARRY TYPE                 | 3.

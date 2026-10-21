@@ -1,0 +1,74 @@
+# Casos de DDOMC: 'F' -> { TXT CSTR PES MSG }  (y sus piezas DCONDC, DSATC, DINTC)
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# ESPERADO calculados a mano ANTES de correr. Ejercicios de los parciales
+# (MEGATXT_TODOS_LOS_PARCIALES_MATE_1.txt) marcados con su origen.
+
+USAR: DCONDC DSATC DINTC DRELC DDOMC
+
+# --- piezas ---
+cond-canc     | '(X-3)/(X^2-9)' DCONDC SIZE              | 1.
+cond-lnraiz   | '\v/(9-X^2)/LN(3*X-2)' DCONDC SIZE       | 3.
+cond-2x       | '2^X' DCONDC SIZE                        | 1.
+sat-si        | { { 'X-1' 1 } } 5 DSATC                  | 1
+sat-no        | { { 'X-1' 1 } } -5. DSATC                | 0
+sat-borde     | { { 'X-1' 1 } } 1 DSATC                  | 1
+sat-borde-gt  | { { 'X-1' 2 } } 1 DSATC                  | 0
+sat-num       | { { 2 2 } } 7. DSATC                     | 1
+
+# --- el bug de domain49: no simplificar (TP 7, discontinuidad evitable) ---
+dom-canc      | '(X-3)/(X^2-9)' 0 DDOMC 1 GET              | R - {-3, 3}
+dom-canc2     | '(X^2-9)/(X-3)' 0 DDOMC 1 GET              | R - {3}
+dom-canc-cond | '(X-3)/(X^2-9)' 0 DDOMC 2 GET 1 GET        | X^2-9 \=/ 0
+# --- racionales, logaritmos, raices ---
+dom-1x        | '1/X' 0 DDOMC 1 GET                        | R - {0}
+dom-poli      | 'X^2+1' 0 DDOMC 1 GET                      | R
+dom-lnq       | 'LN(X-1)/(X-3)' 0 DDOMC 1 GET              | (1, 3) U (3, +\oo)
+dom-raiz42    | '\v/(4-X^2)' 0 DDOMC 1 GET                 | [-2, 2]
+dom-raiz21    | '\v/(X^2-1)' 0 DDOMC 1 GET                 | (-\oo, -1] U [1, +\oo)
+# 2023 T4 ej 1a
+dom-2023a     | '(3*X-1)/\v/(X^2-1)' 0 DDOMC 1 GET         | (-\oo, -1) U (1, +\oo)
+# 2023 T4 ej 1b
+dom-2023b     | 'LN(3*X+1)' 0 DDOMC 1 GET                  | (-1/3, +\oo)
+# 2022 T1 ej 2: f/g con f=raiz(9-x^2), g=ln(3x-2)
+dom-2022fg    | '\v/(9-X^2)/LN(3*X-2)' 0 DDOMC 1 GET       | (2/3, 1) U (1, 3]
+# Saladillo 2024 ej 3: f o g con f=raiz(1-x), g=x^2-8
+dom-salad     | '\v/(1-(X^2-8))' 0 DDOMC 1 GET             | [-3, 3]
+# 2022 recu: g o f con g=ln, f=x+2
+dom-recu      | 'LN(X+2)' 0 DDOMC 1 GET                    | (-2, +\oo)
+# 2014 recu: ln|x-2|
+dom-lnabs     | 'LN(ABS(X-2))' 0 DDOMC 1 GET               | R - {2}
+dom-cociente  | '\v/((X+1)/(X-2))' 0 DDOMC 1 GET           | (-\oo, -1] U (2, +\oo)
+dom-punto     | '\v/(-X^2)' 0 DDOMC 1 GET                  | {0}
+dom-potneg    | '(X-1)^(-2)' 0 DDOMC 1 GET                 | R - {1}
+dom-mediopot  | 'X^(1/2)' 0 DDOMC 1 GET                    | [0, +\oo)
+dom-asin      | 'ASIN(X)' 0 DDOMC 1 GET                    | [-1, 1]
+# Modelo 1 de final: (x^2-3)^(2x) pide base > 0. Se mira el numero.
+dom-fg-n      | '(X^2-3)^(2*X)' 0 DDOMC 3 GET 1 GET \->NUM 4 RND | -1.7321
+dom-fg-k      | '(X^2-3)^(2*X)' 0 DDOMC 1 GET 1 1 SUB      | (
+dom-sinmsg    | '\v/(4-X^2)' 0 DDOMC 4 GET                 | 
+# La expresion llega como string desde el formulario (AGENTS.md 2.10).
+dom-string    | "'1/X'" 0 DDOMC 1 GET                      | R - {0}
+# --- la misma respuesta escrita de la otra manera (TXT2, elemento 5) ---
+dom2-canc     | '(X-3)/(X^2-9)' 0 DDOMC 5 GET              | (-\oo, -3) U (-3, 3) U (3, +\oo)
+dom2-1x       | '1/X' 0 DDOMC 5 GET                        | (-\oo, 0) U (0, +\oo)
+dom2-lnq      | 'LN(X-1)/(X-3)' 0 DDOMC 5 GET              | (1, +\oo) - {3}
+dom2-2022fg   | '\v/(9-X^2)/LN(3*X-2)' 0 DDOMC 5 GET       | (2/3, 3] - {1}
+dom2-raiz42   | '\v/(4-X^2)' 0 DDOMC 5 GET                 | 
+dom2-poli     | 'X^2+1' 0 DDOMC 5 GET                      | 
+dom2-cociente | '\v/((X+1)/(X-2))' 0 DDOMC 5 GET           | 
+dom-depth     | DEPTH \-> D0 \<< '\v/(4-X^2)' 0 DDOMC DROP DEPTH D0 - \>> | 0
+# --- dominio dado en el enunciado (RES distinto de 0) ---
+# 2024 T2 practica ej 2: f:[-3,4] 3x-2, g:[-1,7] raiz(x+1). Dom(f/g) = (-1, 4]
+res-2024      | '(3*X-2)/\v/(X+1)' { { -3 4 } { -1 7 } } DDOMC 1 GET | (-1, 4]
+res-2024-cstr | '(3*X-2)/\v/(X+1)' { { -3 4 } { -1 7 } } DDOMC 2 GET SIZE | 6.
+res-2024-dado | '(3*X-2)/\v/(X+1)' { { -3 4 } { -1 7 } } DDOMC 2 GET 3 GET | Dado: X \>= -3
+# 2023 T4 ej 2: f:[-3,2] 2-3x, g:[0,5] -x+2. Dom(f*g) = [0, 2]
+res-2023      | '(2-3*X)*(-X+2)' { { -3 2 } { 0 5 } } DDOMC 1 GET | [0, 2]
+res-uno       | '1/X' { -3 4 } DDOMC 1 GET                  | [-3, 0) U (0, 4]
+res-uno-2     | '1/X' { -3 4 } DDOMC 5 GET                  | [-3, 4] - {0}
+res-desig     | 'LN(X)' 'X<5' DDOMC 1 GET                     | (0, 5)
+res-lista-des | '1/X' { 'X\>=-2' 'X<3' } DDOMC 1 GET          | [-2, 0) U (0, 3)
+res-inf       | '\v/X' { -1 INF } DDOMC 1 GET                  | [0, +\oo)
+res-mal       | '1/X' { 5 } DDOMC 4 GET "no entendida" POS 0 > | 1
+res-string    | '1/X' "{ -3 4 }" DDOMC 1 GET                | [-3, 0) U (0, 4]
+res-depth     | DEPTH \-> D0 \<< '1/X' { { -3 4 } { -1 7 } } DDOMC DROP DEPTH D0 - \>> | 0

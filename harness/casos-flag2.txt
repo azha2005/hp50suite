@@ -1,0 +1,10 @@
+# El modo afecta como STR\-> COMPILA los literales, no como opera sobre
+# enteros ya compilados. Por eso hay que compilar DESPUES de poner la
+# bandera. TYPE 28 = entero exacto (ZINT), TYPE 0 = real.
+n1-tipo-ahora   | "1" STR\-> TYPE                              | 28.
+n2-105-set      | -105 SF "1" STR\-> TYPE                       | 0.
+n3-105-clear    | -105 CF "1" STR\-> TYPE                       | 28.
+n4-105-division | -105 SF "1 3 /" STR\-> EVAL \->STR             | .333333333333
+n5-105-vuelta   | -105 CF "1 3 /" STR\-> EVAL \->STR             | 1/3
+n6-risch-aprox  | -105 SF IFERR "'X^2' 'X' RISCH" STR\-> EVAL \->STR THEN "FALLA" END | falla-o-real
+n7-restaurar    | -105 CF IFERR 'X^2' 'X' RISCH \->STR THEN "FALLA" END | 1/3*X^3

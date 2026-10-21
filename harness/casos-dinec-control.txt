@@ -1,0 +1,10 @@
+# El control por sondeo de DINTC tiene que poder saltar (AGENTS.md 2.15:
+# un control que no puede fallar no es un control). Dos inecuaciones
+# cuyos ceros ZEROS no encuentra en forma cerrada. Medido: sin el
+# control, la quintica daba VACIO y la trascendente R, las dos falsas.
+USAR: DCONDC DSATC DINTC DRELC DINECC
+ctl-quintica-ojo | 'X^5-X-1>0' DINECC 3 GET "Ojo" POS 0 >  | 1
+ctl-quintica-txt | 'X^5-X-1>0' DINECC 1 GET 1 12 SUB       | NO CONFIABLE
+ctl-trasc-ojo    | 'EXP(X)-3*X>0' DINECC 3 GET "Ojo" POS 0 > | 1
+ctl-trasc-txt    | 'EXP(X)-3*X>0' DINECC 1 GET 1 12 SUB    | NO CONFIABLE
+ctl-quintica-t2  | 'X^5-X-1>0' DINECC 4 GET                 | 

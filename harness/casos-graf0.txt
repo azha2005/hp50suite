@@ -1,0 +1,15 @@
+# Mecanica de probar un dibujo sin abrir PICTURE (que es interactivo).
+# Se dibuja en PICT, y se mide con PIX? en COORDENADAS REALES: si XRNG/YRNG
+# reescalan de verdad, PIX? tiene que entenderlas igual que LINE.
+g1-tam-pict     | ERASE PICT SIZE                            | { 131. 64. }
+# Diagonal de (0,0) a (10,10): el punto (5,5) tiene que estar encendido.
+g2-diagonal-on  | ERASE 0 10 XRNG 0 10 YRNG 0 0 R\->C 10 10 R\->C LINE 5 5 R\->C PIX? | 1.
+# Y un punto lejos de la diagonal, apagado.
+g3-fuera-off    | ERASE 0 10 XRNG 0 10 YRNG 0 0 R\->C 10 10 R\->C LINE 1 9 R\->C PIX? | 0.
+# Con escala distinta: la misma diagonal en un rango 0..100.
+g4-escala       | ERASE 0 100 XRNG 0 100 YRNG 0 0 R\->C 100 100 R\->C LINE 50 50 R\->C PIX? | 1.
+# BOX: el borde inferior de una barra de 0 a 5 de alto.
+g5-box-borde    | ERASE 0 10 XRNG 0 10 YRNG 2 0 R\->C 4 5 R\->C BOX 2 5 R\->C PIX? | 1.
+g6-box-adentro  | ERASE 0 10 XRNG 0 10 YRNG 2 0 R\->C 4 5 R\->C BOX 3 2 R\->C PIX? | 0.
+# Y que PICT vuelva como GROB para poder mirarlo desde la PC.
+g7-pict-tipo    | ERASE PICT TYPE                            | 11.

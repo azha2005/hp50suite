@@ -1,0 +1,8 @@
+# Diagnostico. La pregunta de fondo: el IFERR limpia la pila o no?
+#     nombre | expresion | esperado
+iferr-limpia   | DEPTH \-> D0 \<< IFERR 1 2 0 INV THEN "E" END DEPTH D0 - \>> | 1
+dervx          | 'X^2' DERVX \->STR                     | '2*X'
+deriv          | 'X^2*Y' 'X' DERIV \->STR               | '2*X*Y'
+risch-1arg     | '1/X' RISCH \->STR                     | ERROR
+risch-2arg     | '1/X' 'X' RISCH \->STR                 | 'LN(X)'
+intvx          | '1/X' INTVX \->STR                     | 'LN(X)'

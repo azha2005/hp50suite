@@ -1,2 +1,9 @@
 MEGA_TODOS_LOS_TPS*.txt
 CLAUDE.md
+harness/B*.txt
+harness/UI-*.txt
+harness/*.hp
+harness/*.bin
+harness/fuente-*.json
+harness/pantallas/
+__pycache__/

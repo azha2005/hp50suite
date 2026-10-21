@@ -1,0 +1,9 @@
+# Que hace RISCH cuando no hay primitiva elemental?
+# Prediccion (a revisar): NO tira error, devuelve 'INT(...)' sin evaluar,
+# asi que el IFERR de DSEPC nunca salta y la respuesta sale inventada.
+#   nombre | expresion | esperado
+risch-falla     | IFERR 'EXP(Y^2)' 'Y' RISCH THEN "ERROR" END DUP TYPE SWAP DROP | 9.
+risch-tiene-int | 'EXP(Y^2)' 'Y' RISCH \->STR "INT(" POS                | 2.
+risch-bueno-int | 'Y' 'Y' RISCH EXPAND \->STR "INT(" POS                | 0.
+risch-sin-int2  | '1/X' 'X' RISCH \->STR "INT(" POS                     | 0.
+risch-seno      | 'SIN(Y)' 'Y' RISCH \->STR "INT(" POS                  | 0.

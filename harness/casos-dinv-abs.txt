@@ -1,0 +1,27 @@
+# DINVC con modulo y con polos. ESPERADO a mano antes de correr.
+# Medido el 02/10/2026: con 'ABS(2*X-4)' sobre R, DINVC decia OK y daba
+# f^-1 = -((X-4)/2) con imagen (-oo,+oo). f' = 2*SIGN(2*X-4) y ZEROS da ERROR.
+#     nombre | expresion UserRPL | esperado
+USAR: DINVC
+
+abs-R-msg     | 'ABS(2*X-4)' "-INF" "INF" DINVC 6 GET 1 28 SUB | NO INYECTIVA: partir en x=2
+abs-int-msg   | 'ABS(2*X-4)' 0 5 DINVC 6 GET 1 28 SUB         | NO INYECTIVA: partir en x=2
+abs-izq-msg   | 'ABS(2*X-4)' "-INF" 2 DINVC 6 GET            | OK
+abs-der-msg   | 'ABS(2*X-4)' 2 "INF" DINVC 6 GET             | OK
+abs-izq-f     | 'ABS(2*X-4)' "-INF" 2 DINVC 1 GET 'X' 6 = SUBST \->NUM | -1.
+abs-x-msg     | 'ABS(X)' -1 1 DINVC 6 GET 1 28 SUB            | NO INYECTIVA: partir en x=0
+abs-cuad-msg  | 'ABS(X^2-4)' 0 "INF" DINVC 6 GET 1 28 SUB     | NO INYECTIVA: partir en x=2
+abs-cuad-ok   | 'ABS(X^2-4)' 2 "INF" DINVC 6 GET              | OK
+abs-mas-msg   | 'ABS(X-1)+3' "-INF" "INF" DINVC 6 GET 1 28 SUB | NO INYECTIVA: partir en x=1
+abs-tramos    | 'ABS(X-1)+3' "-INF" "INF" DINVC 6 GET 29 60 SUB | Tramos: (-inf,1] [1,+inf)
+abs-neg-msg   | '-ABS(X+3)' "-INF" "INF" DINVC 6 GET 1 29 SUB | NO INYECTIVA: partir en x=-3
+# Polos: el sondeo NO tiene que confundir un salto con una vuelta.
+polo-hip      | '(2*X+1)/(X-3)' 0 4.9 DINVC 6 GET              | OK
+polo-inv      | '1/X' -2.3 1.9 DINVC 6 GET                     | OK
+polo-par      | '1/X^2' -2.3 1.9 DINVC 6 GET 1 12 SUB          | NO INYECTIVA
+# Monotonas que tienen que seguir dando OK (el sondeo corre en todas).
+mono-exp      | '2^X+1' "-INF" "INF" DINVC 6 GET               | OK
+mono-cub      | 'X^3' "-INF" "INF" DINVC 6 GET                 | OK
+mono-ln       | 'LN(X+1)' -1 "INF" DINVC 6 GET                 | OK
+# Pila limpia
+abs-pila      | DEPTH \-> D0 \<< 'ABS(2*X-4)' "-INF" "INF" DINVC DROP DEPTH D0 - \>> | 0

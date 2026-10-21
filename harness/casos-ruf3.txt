@@ -1,0 +1,12 @@
+# Hipotesis: un FOR dentro de la CONDICION de un WHILE revienta al reentrar.
+#   nombre | expresion UserRPL | esperado
+# A) WHILE con FOR en la condicion, UNA sola vuelta: deberia andar.
+for-en-cond-1   | 1 0 \-> N S \<< WHILE N 1 == 0 'S' STO 1 3 FOR i S i + 'S' STO NEXT 1 AND REPEAT 0 'N' STO END S \>> | 6
+# B) Lo mismo pero DOS vueltas: si la hipotesis vale, aca truena.
+for-en-cond-2   | 2 0 \-> N S \<< WHILE N 0 > 0 'S' STO 1 3 FOR i S i + 'S' STO NEXT 1 AND REPEAT N 1 - 'N' STO END S \>> | 6
+# C) Control: el MISMO bucle con el FOR en el CUERPO, dos vueltas.
+for-en-cuerpo   | 2 0 \-> N S \<< WHILE N 0 > REPEAT 0 'S' STO 1 3 FOR i S i + 'S' STO NEXT N 1 - 'N' STO END S \>> | 6
+# D) WHILE sin FOR, dos vueltas, con la condicion compuesta igual que la nuestra.
+while-sin-for   | 2 0 \-> N S \<< WHILE N 0 > N 'S' STO 1 AND REPEAT N 1 - 'N' STO END S \>> | 1
+# E) Y la version con DO/UNTIL, que es el rodeo si la hipotesis vale.
+do-until        | 3 { } \-> N L \<< DO L N 1 \->LIST + 'L' STO N 1 - 'N' STO UNTIL N 0 == END L \>> | { 3 2 1 }

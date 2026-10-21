@@ -1,0 +1,2 @@
+USAR:
+sb-lat  | '1/(X^2-9)' "'X=3-0'" STR\-> LIMIT | ?

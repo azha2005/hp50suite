@@ -1,0 +1,6 @@
+USAR: DSTATSC
+d1-prefijo      | [ 2 4 6 8 10 ] IF DUP TYPE 3 == THEN OBJ\-> 1 GET \->LIST END | { 2. 4. 6. 8. 10. }
+d2-lista-ok     | { 2 4 6 8 10 } DSTATSC 2 GET               | 6.
+d3-vector       | IFERR [ 2 4 6 8 10 ] DSTATSC THEN "FALLA-VECTOR" END | { 5. 6. 10. 3.16227766017 52.7046276695 }
+d4-reales       | IFERR [ 2. 4. 6. 8. 10. ] DSTATSC THEN "FALLA-REALES" END 1 GET | 5.
+d5-preconvert   | [ 2 4 6 8 10 ] OBJ\-> 1 GET \->LIST DSTATSC 2 GET | 6.

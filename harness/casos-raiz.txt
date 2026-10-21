@@ -1,0 +1,11 @@
+# Por que falla la raiz compilada con STR\->.
+# Hipotesis: el caracter 131 sin parentesis no parsea como funcion.
+r1-tipo-sin-par | '\v/X' TYPE                               | 9
+r2-tipo-con-par | '\v/(X)' TYPE                             | 9
+r3-str-sin-par  | '\v/X' \->STR                             | sin-par
+r4-str-con-par  | '\v/(X)' \->STR                           | con-par
+r6-num-sin-par  | 4 'X' STO IFERR '\v/X' \->NUM THEN "FALLA-SIN-PAR" END | 2.
+r7-num-con-par  | IFERR '\v/(X)' \->NUM THEN "FALLA-CON-PAR" END | 2.
+r8-xroot        | IFERR 'XROOT(2,X)' \->NUM THEN "FALLA-XROOT" END | 2.
+r9-pot          | IFERR 'X^.5' \->NUM THEN "FALLA-POT" END   | 2.
+r10-limpiar     | IFERR { X } PURGE THEN 0 END 1             | 1

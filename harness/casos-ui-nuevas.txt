@@ -1,0 +1,5 @@
+# Compila las interfaces nuevas en la maquina (cargarlas = compilarlas).
+# El caso mira que quedaron guardadas como programa (TYPE 8).
+USAR: DASVT DCERO
+ui-dasvt   | 'DASVT' RCL TYPE | 8.
+ui-dcero   | 'DCERO' RCL TYPE | 8.

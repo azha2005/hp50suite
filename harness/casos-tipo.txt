@@ -1,0 +1,11 @@
+# Hipotesis: TYPE devuelve un REAL y el guardia lo compara contra un entero
+# EXACTO (ZINT). Si real == ZINT da falso en modo exacto, el guardia NUNCA
+# dispara y la coercion de tipos no existe. Esta en 6 programas de Lab y en
+# los 9 nucleos de mat1.
+t1-tipo-vector  | [ 2 4 6 8 10 ] TYPE                        | 3.
+t2-real-vs-zint | 3. 3 ==                                    | 1.
+t3-guardia-vec  | [ 2 4 6 8 10 ] TYPE 3 ==                   | 1.
+t4-guardia-str  | "hola" TYPE 2 ==                           | 1.
+t5-if-dispara   | IF [ 2 4 6 8 10 ] TYPE 3 == THEN "DISPARA" ELSE "NO DISPARA" END | DISPARA
+t6-str-dispara  | IF "hola" TYPE 2 == THEN "DISPARA" ELSE "NO DISPARA" END | DISPARA
+t7-size-vector  | [ 2 4 6 8 10 ] SIZE                        | { 5. }

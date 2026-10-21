@@ -1,0 +1,15 @@
+# Prueba el PAQUETE MAT1.txt compacto (sin comentarios ni sangria), no los
+# fuentes: la bateria lo compila entero como DIR, entra y corre adentro.
+USAR:
+pq-dinv-abs  | 'ABS(2*X-4)' "-INF" "INF" DINVC 6 GET 1 28 SUB | NO INYECTIVA: partir en x=2
+pq-dinv-t1   | '(X+2)^2-4' -2 "INF" DINVC 2 GET              | -4
+pq-ddom      | '(X-3)/(X^2-9)' 0 DDOMC 1 GET                 | R - {-3, 3}
+pq-dcero     | '(X^2-9)/(X-3)' DCEROC 1 GET                  | { -3 }
+pq-dasvt     | '(X-3)/(X^2-9)' DASVTC 1 GET                  | { -3 }
+pq-dinec     | 'X^2-2*X-3\>=0' DINECC 1 GET                  | (-\oo, -1] U [3, +\oo)
+pq-dpar      | '4*X+1/X' 0 0 DPARC 1 GET                     | -1
+pq-druf      | 'X^3-1' DRUFC 5 GET                           | (X-1)*(X^2+X+1)
+pq-dweier    | 'X^3-3*X' -2 3 DWEIERC 4 GET                  | 18.
+pq-dcontk    | 'X^2-K*X+3' '(2*X-K)/(1+X)' 1 'K' DCONTKC 1 GET | { 6 }
+pq-dsep      | 'Y' 'X' DSEPC 3 GET                           | Y^2/2=X^2/2+C
+pq-objs      | VARS SIZE                                     | 60.

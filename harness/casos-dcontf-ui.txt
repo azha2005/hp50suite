@@ -1,0 +1,4 @@
+# Solo comprueba que DCONTF (la interfaz, con INFORM) COMPILA en la 50g.
+# No se puede correr: INFORM es interactivo.
+USAR: DCONTFC DCONTF
+dcf-compila  | 'DCONTF' RCL TYPE                    | 8.

@@ -1,0 +1,36 @@
+# Casos de DPARC: 'EXPR' PF PG -> { K MSG P FP FMP FMX }
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# K: 1 par, -1 impar, 0 ninguna, 3 par e impar, 2 no se pudo.
+# ESPERADO calculados a mano ANTES de correr.
+
+USAR: DPARC
+
+# --- f concreta ---
+# 2do parcial 2022: 4x+1/x
+par-4x        | '4*X+1/X' 0 0 DPARC 1 GET               | -1
+par-fmx       | '4*X+1/X' 0 0 DPARC 6 GET               | '4*-X+1/-X'
+par-cos       | 'X^2+COS(X)' 0 0 DPARC 1 GET            | 1
+par-x3        | 'X^3+1' 0 0 DPARC 1 GET                 | 0
+par-x3-p      | 'X^3+1' 0 0 DPARC 3 GET                 | .37
+par-racio     | 'X/(X^2-1)' 0 0 DPARC 1 GET             | -1
+# Resolucion 2014: |2x-4| y ln|x-2| (dominio no simetrico)
+par-abs       | 'ABS(2*X-4)' 0 0 DPARC 1 GET            | 0
+par-lnabs     | 'LN(ABS(X-2))' 0 0 DPARC 1 GET          | 0
+par-lnabs-p   | 'LN(ABS(X-2))' 0 0 DPARC 3 GET          | 2
+par-lnabs-fp  | 'LN(ABS(X-2))' 0 0 DPARC 4 GET          | NO EXISTE
+par-sen       | '3*SIN(X)+1' 0 0 DPARC 1 GET            | 0
+par-cero      | 'X^2-X^2' 0 0 DPARC 1 GET               | 3
+# --- abstracto: CI 2026, F par (1) y G impar (-1) ---
+abs-ci-i      | 'F(X)*G(X^3)' 1 -1 DPARC 1 GET          | -1
+abs-ci-ii     | 'X^3+3*F(G(X))' 1 -1 DPARC 1 GET        | 0
+abs-ci-iii    | '5*F(X)-3*G(X)^2' 1 -1 DPARC 1 GET      | 1
+# --- abstracto: curso especial, F impar (-1) y G par (1) ---
+abs-ce-i      | 'F(G(X)+3*X^2)' -1 1 DPARC 1 GET        | 1
+abs-ce-ii     | 'F(X)*G(X)-4*X^2' -1 1 DPARC 1 GET      | 0
+abs-ce-iii    | 'G(X*F(X))+5' -1 1 DPARC 1 GET          | 1
+# F y G se purgan despues
+abs-purga     | 'F(X)*G(X^3)' 1 -1 DPARC DROP 'F' VTYPE 'G' VTYPE + | -2.
+# Una F del usuario no se pisa
+abs-existe    | 5 'F' STO 'F(X)' 1 0 DPARC 1 GET 'F' RCL 'F' PURGE 2 \->LIST | { 2 5 }
+par-string    | "'4*X+1/X'" 0 0 DPARC 1 GET             | -1
+par-depth     | DEPTH \-> D0 \<< 'LN(ABS(X-2))' 0 0 DPARC DROP DEPTH D0 - \>> | 0

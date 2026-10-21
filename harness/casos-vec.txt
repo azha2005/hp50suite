@@ -1,0 +1,8 @@
+# Por que falla la entrada por VECTOR. La coercion es la misma en DSTATS,
+# DMODA, DPCTIL, DFRECTABLA, DOLS y DCOVCORR, asi que si esta rota, esta
+# rota en los seis.
+v1-tipo         | [ 2 4 6 8 10 ] TYPE                        | 3.
+v2-objexplota   | DEPTH [ 2 4 6 8 10 ] OBJ\-> DEPTH SWAP - 1 \->LIST | { 6. }
+v3-que-queda    | [ 2 4 6 8 10 ] OBJ\-> \->STR               | { 5. }
+v4-coercion     | IFERR [ 2 4 6 8 10 ] OBJ\-> 1 GET \->LIST THEN "FALLA-COERCION" END | { 2. 4. 6. 8. 10. }
+v5-sin-get      | IFERR [ 2 4 6 8 10 ] OBJ\-> OBJ\-> DROP \->LIST THEN "FALLA-2" END | { 2. 4. 6. 8. 10. }

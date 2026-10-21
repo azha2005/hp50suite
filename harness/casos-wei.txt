@@ -1,0 +1,53 @@
+# DWEIERC (extremos absolutos), DBOLZC (Bolzano) y DWSUSC (sustitucion).
+#   nombre | expresion UserRPL | esperado
+# Predicciones hechas a mano ANTES de correr.
+
+USAR: DWEIERC DBOLZC DWSUSC
+
+# ---------- DWEIERC: { CAND VAL XMAX FMAX XMIN FMIN AVISO } ----------
+# f=X^3-3X en [-2,3]: criticos -1 y 1; f(-2)=-2, f(-1)=2, f(1)=-2, f(3)=18.
+# Maximo 18 en X=3; minimo -2, que se alcanza en DOS puntos (se informa uno).
+wei-cand-cant   | 'X^3-3*X' -2 3 DWEIERC 1 GET SIZE           | 4.
+wei-fmax        | 'X^3-3*X' -2 3 DWEIERC 4 GET                | 18.
+wei-xmax        | 'X^3-3*X' -2 3 DWEIERC 3 GET                | 3.
+wei-fmin        | 'X^3-3*X' -2 3 DWEIERC 6 GET                | -2.
+wei-aviso       | 'X^3-3*X' -2 3 DWEIERC 7 GET                | OK
+# Parabola en [0,3]: el minimo es interior (X=1) y el maximo en el borde.
+wei-parab-min   | 'X^2-2*X' 0 3 DWEIERC 5 GET                 | 1.
+wei-parab-fmin  | 'X^2-2*X' 0 3 DWEIERC 6 GET                 | -1.
+wei-parab-fmax  | 'X^2-2*X' 0 3 DWEIERC 4 GET                 | 3.
+# Monotona sin criticos: solo los dos extremos.
+wei-monot-cant  | 'EXP(X)' 0 1 DWEIERC 1 GET SIZE             | 2.
+# El caso que importa: hipotesis rota. 1/X en [-1,1] NO es continua.
+wei-rota        | '1/X' -1 1 DWEIERC 7 GET                    | HIPOTESIS NO VERIFICADA: f no parece continua en todo [a,b]
+# Intervalo dado al reves: se ordena solo.
+wei-alreves     | 'X^3-3*X' 3 -2 DWEIERC 4 GET                | 18.
+# Guardian de profundidad.
+wei-guard       | DEPTH 'DD' STO 'X^2' 0 1 DWEIERC DROP DEPTH DD - | 0.
+
+# ---------- DBOLZC: { FA FB HAY RAIZ MSG } ----------
+# X^3-2 en [1,2]: f(1)=-1, f(2)=6, raiz en la raiz cubica de 2 = 1.2599.
+bolz-fa         | 'X^3-2' 1 2 DBOLZC 1 GET                    | -1.
+bolz-hay        | 'X^3-2' 1 2 DBOLZC 3 GET                    | 1
+bolz-raiz       | 'X^3-2' 1 2 DBOLZC 4 GET 4 RND              | 1.2599
+# Mismo signo en los extremos: NO se puede afirmar, y no hay que mentir.
+bolz-nohay      | 'X^2-1' -2 2 DBOLZC 3 GET                   | 0
+bolz-nohay-raiz | 'X^2-1' -2 2 DBOLZC 4 GET                   | SIN LOCALIZAR
+bolz-nohay-cant | 'X^2-1' -2 2 DBOLZC SIZE                    | 5.
+bolz-nohay-msg  | 'X^2-1' -2 2 DBOLZC 5 GET                   | NO SE PUEDE AFIRMAR: f(a) y f(b) tienen igual signo. OJO: eso NO prueba que no haya raiz
+# Un extremo YA es raiz.
+bolz-borde      | 'X^2-1' 1 3 DBOLZC 5 GET                    | f(a)=0: el extremo a YA es raiz
+bolz-borde-r    | 'X^2-1' 1 3 DBOLZC 4 GET                    | 1.
+# Guardian de profundidad.
+bolz-guard      | DEPTH 'DD' STO 'X^3-2' 1 2 DBOLZC DROP DEPTH DD - | 0.
+
+# ---------- DWSUSC: { FT PRIM RES } ----------
+# 1/(1+SIN(X)) -> 2/(T+1)^2 -> -2/(T+1) -> -2/(TAN(X/2)+1). Medido entero.
+wsus-ft         | '1/(1+SIN(X))' DWSUSC 1 GET                 | 2/(T^2+2*T+1)
+wsus-prim       | '1/(1+SIN(X))' DWSUSC 2 GET                 | -2/(T+1)
+wsus-res        | '1/(1+SIN(X))' DWSUSC 3 GET                 | -2/(TAN(X/2)+1)
+# Con coseno.
+wsus-cos        | '1/(2+COS(X))' DWSUSC 1 GET                 | 2/(T^2+3)
+# Guardian de profundidad.
+wsus-guard      | DEPTH 'DD' STO '1/(1+SIN(X))' DWSUSC DROP DEPTH DD - | 0.
+wsus-limpiar    | IFERR { DD } PURGE THEN 0 END 1             | 1

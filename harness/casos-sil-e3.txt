@@ -1,0 +1,2 @@
+USAR: DASVC
+e3-dasv | '1/(X^2-9)' 3 DASVC 3 GET | ?

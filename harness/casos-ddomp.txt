@@ -1,0 +1,16 @@
+# Diagnostico de ddomp-raiz: la raiz devolvio FUERA en puntos que SI estan
+# en el dominio (0, 1, 4). Con '1/X' el mismo programa anda bien, asi que el
+# problema es de la raiz, no del recorrido de la lista.
+USAR: DDOMPC
+
+# Que llego realmente como F: hay que ver el simbolo de raiz, no "\v/".
+d1-que-llego    | '\v/X' \->STR                              | raiz
+# La raiz sola, sin el programa: se guarda X y se evalua.
+d2-directo      | 4 'X' STO '\v/X' \->NUM                    | 2.
+d3-limpiar      | IFERR { X } PURGE THEN 0 END 1             | 1
+# El programa con un solo punto bueno.
+d4-un-punto     | '\v/X' { 4 } DDOMPC                        | { { 2. } 1 }
+# Control sin raiz: mismo programa, misma lista.
+d5-control      | 'X^2' { -1 0 1 4 } DDOMPC                  | { { 1. 0. 1. 16. } 4 }
+# La raiz con la lista entera, que es el caso que fallo.
+d6-raiz-lista   | '\v/X' { -1 0 1 4 } DDOMPC                 | { { "FUERA" 0. 1. 2. } 3 }

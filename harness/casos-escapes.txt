@@ -1,0 +1,26 @@
+# Bateria APARTE, solo para los escapes sin confirmar. Va separada a proposito:
+# si uno de estos escapes no compila, se cae este archivo y no la bateria
+# principal. Ver AGENTS.md 2.1.
+#
+#     nombre | expresion | esperado
+
+# El escape del infinito: si \oo es el correcto, TYPE da 9 y el limite da 0.
+oo-type        | \oo TYPE                                      | 9
+oo-limit       | '1/X' 'X' \oo = LIMIT EVAL                     | 0
+# El caracter 3, no el 1 ni el 2: \->STR de un algebraico devuelve '+oo',
+# con comillas Y con el signo. Es la misma secuencia 39 -> 43 -> 159 que costo
+# tres lecturas al medirlo en la calculadora con DINF.
+oo-char        | \oo \->STR 3 3 SUB NUM                         | 159
+# El calculo exacto que hace DASHO, escribiendo el infinito en el fuente
+# en vez de sacarlo del global INF: la pendiente de la asintota oblicua.
+dasho-m        | '(X^2+1)/X' 'X' / 'X' \oo = LIMIT EVAL          | 1
+dasho-b        | '(X^2+1)/X' 'X' - 'X' \oo = LIMIT EVAL          | 0
+oo-neg         | '1/X' 'X' \oo NEG = LIMIT EVAL                 | 0
+
+# Los comparadores: existen como entradas de ROM (=x<=? y =x>=? en
+# Suprom49.a); lo que falta probar es la grafia ASCII.
+mayor-igual    | 3 3 \>=                                        | 1
+menor-igual    | 4 3 \<=                                        | 0
+
+# La integral definida como comando de 4 argumentos (visto en GRAF.txt).
+integral       | 0 1 'X^2' 'X' \.S EVAL                         | 1/3

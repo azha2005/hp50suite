@@ -1,0 +1,2 @@
+USAR:
+f3-sondeo | '1/(X^2-9)' 'X' 3 -1 .000001 * + = SUBST EVAL \->NUM | ?

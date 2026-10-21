@@ -1,0 +1,221 @@
+# Laboratorio de Datos, tanda 2: los 8 programas para el Parcial 1
+# (instrucciones-claude-code-hp50g.txt).
+#     nombre | expresion UserRPL | esperado
+# Los ESPERADO salen del enunciado de la tarea (examen intensivo 2026,
+# Anderson) y se recalcularon en la PC antes de correr. Lo irracional se
+# prueba con tolerancia: lo que importa es la aritmetica, no el digito 12.
+#
+# Las pruebas de coherencia comparan contra el programa viejo en la MISMA
+# corrida (DCOVCORRC, DSTATSC, DPCTILC), no contra un numero copiado: si
+# alguno cambia, el caso lo ve.
+
+# Los datasets de catedra, para las pruebas de coherencia.
+USAR: BM5X BM5Y BMHIST HORAS BMSCY
+USAR: DSTATSC DCOVCORRC DPCTILC DCOMPZC DBOXPLOTC DFRECTABLAC DHISTOG
+USAR: DTABLA2C DZLISTAC DCINCOC DPCTIL2C DLOOPCC DCHEBYC DPONDC DREALC
+# Las interfaces no se pueden correr (INFORM), pero se cargan igual: asi
+# las compila el STR\-> de la maquina y un error de sintaxis se ve aca.
+USAR: DTABLA2 DZLISTA DCINCO DPCTIL2 DLOOPC DCHEBY DPOND DREAL
+
+# ---------- DTABLA2C ----------
+# a) X={1 2 3 4 5} Y={1 4 3 5 6}, examen intensivo 2026.
+#    { N XB YB SSX SSY SXY VX VY SX SY COV R MAT }
+t2a-medias  | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C \-> T \<< T 2 GET T 3 GET 2 \->LIST \>> | { 3. 3.8 }
+t2a-sumas   | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C \-> T \<< T 4 GET T 5 GET T 6 GET 3 \->LIST \>> | { 10. 14.8 11. }
+t2a-var     | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C \-> T \<< T 7 GET T 8 GET T 11 GET 3 \->LIST \>> | { 2.5 3.7 2.75 }
+t2a-sx      | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 9 GET 1.5811 - ABS .00005 <  | 1.
+t2a-sy      | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 10 GET 1.9235 - ABS .00005 < | 1.
+t2a-r       | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 12 GET .9042 - ABS .00005 <  | 1.
+t2a-tamano  | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 13 GET SIZE                 | { 6. 7. }
+t2a-matriz  | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 13 GET TYPE                 | 3.
+# Columna de desvios de x y de y, fila por fila.
+t2a-dx      | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 13 GET \-> M \<< 1 5 FOR i M i 3 2 \->LIST GET NEXT 5 \->LIST \>> | { -2. -1. 0. 1. 2. }
+t2a-dy      | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 13 GET \-> M \<< 1 5 FOR i M i 4 2 \->LIST GET NEXT 5 \->LIST \>> | { -2.8 .2 -.8 1.2 2.2 }
+# Fila de sumas: 15 19 0 0 10 14.8 11
+t2a-fsumas  | { 1 2 3 4 5 } { 1 4 3 5 6 } DTABLA2C 13 GET \-> M \<< 1 7 FOR j M 6 j 2 \->LIST GET NEXT 7 \->LIST \>> | { 15. 19. 0. 0. 10. 14.8 11. }
+# b)
+t2b-sumas   | { 2 4 4 5 7 8 } { 3 5 4 6 9 9 } DTABLA2C \-> T \<< T 2 GET T 3 GET T 4 GET T 5 GET T 6 GET 5 \->LIST \>> | { 5. 6. 24. 32. 27. }
+t2b-var     | { 2 4 4 5 7 8 } { 3 5 4 6 9 9 } DTABLA2C \-> T \<< T 7 GET T 8 GET T 11 GET 3 \->LIST \>> | { 4.8 6.4 5.4 }
+t2b-r       | { 2 4 4 5 7 8 } { 3 5 4 6 9 9 } DTABLA2C 12 GET .9743 - ABS .00005 < | 1.
+# c) Coherencia con DCOVCORR: la misma covarianza y el mismo r, al bit.
+t2c-cov     | BM5X BM5Y DTABLA2C 11 GET BM5X BM5Y DCOVCORRC 4 GET ==   | 1.
+t2c-r       | BM5X BM5Y DTABLA2C 12 GET BM5X BM5Y DCOVCORRC 7 GET ==   | 1.
+t2c-sx      | BM5X BM5Y DTABLA2C 9 GET BM5X DSTATSC 4 GET ==           | 1.
+t2c-cov-val | BM5X BM5Y DTABLA2C 11 GET 62909.8 - ABS .05 <            | 1.
+t2c-r-val   | BM5X BM5Y DTABLA2C 12 GET .9781 - ABS .00005 <           | 1.
+# Las varianzas de la tabla son exactamente el cuadrado del desvio que
+# reporta DCOVCORR? No al bit (el desvio pasa por la raiz), pero si
+# SSX/(N-1) tiene que ser el mismo numero que DSTATSC da como varianza.
+t2c-var     | BM5X BM5Y DTABLA2C 7 GET BM5X DSTATSC 3 GET ==           | 1.
+# d) Una variable: Y = 0.  { N XB SSX VX SX MAT }
+t2d-una     | { 2 4 4 5 7 8 } 0 DTABLA2C \-> T \<< T 2 GET T 3 GET T 4 GET 3 \->LIST \>> | { 5. 24. 4.8 }
+t2d-s       | { 2 4 4 5 7 8 } 0 DTABLA2C 5 GET 2.1909 - ABS .00005 <   | 1.
+t2d-tamano  | { 2 4 4 5 7 8 } 0 DTABLA2C 6 GET SIZE                    | { 7. 3. }
+t2d-fsumas  | { 2 4 4 5 7 8 } 0 DTABLA2C 6 GET \-> M \<< 1 3 FOR j M 7 j 2 \->LIST GET NEXT 3 \->LIST \>> | { 30. 0. 24. }
+t2d-vector  | [ 2 4 4 5 7 8 ] 0 DTABLA2C 4 GET                         | 4.8
+t2d-coher   | { 2 4 4 5 7 8 } 0 DTABLA2C 5 GET { 2 4 4 5 7 8 } DSTATSC 4 GET == | 1.
+# e) Largos distintos: un string con el motivo, no un ERROR, y sin
+#    basura en la pila (DEPTH sube exactamente en 1).
+t2e-error   | { 1 2 3 4 5 } { 1 2 3 4 } DTABLA2C TYPE                  | 2.
+t2e-pila    | DEPTH \-> D \<< { 1 2 3 4 5 } { 1 2 3 4 } DTABLA2C DROP DEPTH D - \>> | 0.
+t2e-uno     | { 7 } 0 DTABLA2C TYPE                                    | 2.
+t2-pila     | DEPTH \-> D \<< { 1 2 3 } { 2 4 7 } DTABLA2C DROP DEPTH D - \>> | 0.
+
+# ---------- DZLISTAC: Datos Z0 -> { N XB S MAT ATIPS X0 } ----------
+# a) crecimiento del PIB, examen intensivo.
+zl-media    | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 2 GET                   | 1.6
+zl-var      | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 3 GET SQ 5.05 - ABS 1E-9 < | 1.
+zl-s        | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 3 GET 4 RND               | 2.2472
+zl-z        | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 4 GET \-> M \<< 1 5 FOR i M i 2 2 \->LIST GET 4 RND NEXT 5 \->LIST \>> | { 1.2905 .178 -1.3795 -.4895 .4005 }
+zl-x        | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 4 GET \-> M \<< 1 5 FOR i M i 1 2 \->LIST GET NEXT 5 \->LIST \>> | { 4.5 2. -1.5 .5 2.5 }
+zl-tamano   | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 4 GET SIZE                | { 5. 2. }
+zl-sinatip  | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 5 GET                     | { }
+zl-inv0     | { 4.5 2 -1.5 .5 2.5 } 0 DZLISTAC 6 GET                     | 1.6
+zl-inv1     | { 4.5 2 -1.5 .5 2.5 } 1 DZLISTAC 6 GET 4 RND               | 3.8472
+# NOVAL o cualquier cosa que no sea numero cuenta como z objetivo 0.
+zl-noval    | { 4.5 2 -1.5 .5 2.5 } "x" DZLISTAC 6 GET                   | 1.6
+# b) 20 unos y un 10: el 10 da z = 4.3644 > 3.
+zl-atip     | { 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 10 } 0 DZLISTAC 5 GET | { 10. }
+zl-atip-z   | { 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 10 } 0 DZLISTAC 4 GET { 21 2 } GET 4 RND | 4.3644
+# Coherencia con DCOMPZ: el mismo z que DCOMPZC con la media y s de DSTATSC.
+zl-coher    | BM5X 0 DZLISTAC 4 GET { 1 2 } GET 1489 BM5X DSTATSC 2 GET BM5X DSTATSC 4 GET DCOMPZC 1 GET == | 1.
+zl-vector   | [ 4.5 2 -1.5 .5 2.5 ] 0 DZLISTAC 2 GET                    | 1.6
+zl-uno      | { 5 } 0 DZLISTAC TYPE                                      | 2.
+zl-s0       | { 3 3 3 } 0 DZLISTAC TYPE                                  | 2.
+zl-pila     | DEPTH \-> D \<< { 1 2 3 } 0 DZLISTAC DROP DEPTH D - \>>    | 0.
+
+# ---------- DCINCOC: Datos -> { N MINV Q1 Q2 Q3 MAXV RIC LINF LSUP OUTS XB ASIM } ----------
+c5a-nums    | { 1 4 3 5 6 } DCINCOC \-> T \<< 2 9 FOR i T i GET NEXT 8 \->LIST \>> | { 1. 2. 4. 5.5 6. 3.5 -3.25 10.75 }
+c5a-outs    | { 1 4 3 5 6 } DCINCOC 10 GET                             | { }
+c5a-media   | { 1 4 3 5 6 } DCINCOC 11 GET                             | 3.8
+c5a-asim    | { 1 4 3 5 6 } DCINCOC 12 GET                             | -1
+c5b-nums    | { 1 2 3 4 5 6 7 50 } DCINCOC \-> T \<< 3 9 FOR i T i GET NEXT 7 \->LIST \>> | { 2.25 4.5 6.75 50. 4.5 -4.5 13.5 }
+c5b-outs    | { 1 2 3 4 5 6 7 50 } DCINCOC 10 GET                      | { 50. }
+c5b-media   | { 1 2 3 4 5 6 7 50 } DCINCOC 11 GET                      | 9.75
+c5b-asim    | { 1 2 3 4 5 6 7 50 } DCINCOC 12 GET                      | 1
+c5-simetr   | { 1 2 3 } DCINCOC 12 GET                                 | 0
+# c) Q1 y Q3 identicos a DPCTIL p=25 y p=75, con datasets reales.
+c5c-q1      | BMHIST DCINCOC 3 GET BMHIST 25 DPCTILC 3 GET ==            | 1.
+c5c-q3      | BMHIST DCINCOC 5 GET BMHIST 75 DPCTILC 3 GET ==            | 1.
+c5c-q1-h    | HORAS DCINCOC 3 GET HORAS 25 DPCTILC 3 GET ==              | 1.
+c5c-media   | BMHIST DCINCOC 11 GET BMHIST DSTATSC 2 GET ==              | 1.
+c5-vector   | [ 1 4 3 5 6 ] DCINCOC 4 GET                                | 4.
+c5-pila     | DEPTH \-> D \<< { 1 4 3 5 6 } DCINCOC DROP DEPTH D - \>>   | 0.
+
+# ---------- DPCTIL2C: Datos P -> { N LP VCL FUERA AI APOS VAND COINC } ----------
+p2a         | { 2 4 6 8 10 } 70 DPCTIL2C \-> T \<< 2 8 FOR i T i GET NEXT 7 \->LIST \>> | { 4.2 8.4 0 3.5 4. 8. 0 }
+p2b         | { 2 4 6 8 10 } 40 DPCTIL2C \-> T \<< 2 8 FOR i T i GET NEXT 7 \->LIST \>> | { 2.4 4.8 0 2. 2. 5. 0 }
+p2c         | { 1 4 3 5 6 } 25 DPCTIL2C \-> T \<< T 3 GET T 5 GET T 6 GET T 7 GET 4 \->LIST \>> | { 2. 1.25 2. 3. }
+p2d         | { 1 4 3 5 6 } 75 DPCTIL2C \-> T \<< T 3 GET T 5 GET T 6 GET T 7 GET 4 \->LIST \>> | { 5.5 3.75 4. 5. }
+p2-coinc    | { 2 4 6 8 10 } 50 DPCTIL2C 8 GET                           | 1
+p2-p100     | { 2 4 6 8 10 } 100 DPCTIL2C \-> T \<< T 4 GET T 7 GET 2 \->LIST \>> | { 1 10. }
+p2-p0       | { 2 4 6 8 10 } 0 DPCTIL2C \-> T \<< T 3 GET T 4 GET T 7 GET 3 \->LIST \>> | { 2. -1 2. }
+p2-bajo     | { 2 4 6 8 10 } 10 DPCTIL2C 4 GET                           | -1
+# e) El valor de clase identico a DPCTIL, con datasets reales.
+p2e-bm      | BMHIST 37 DPCTIL2C 3 GET BMHIST 37 DPCTILC 3 GET ==        | 1.
+p2e-horas   | HORAS 62 DPCTIL2C 3 GET HORAS 62 DPCTILC 3 GET ==          | 1.
+p2-desorden | { 10 2 8 4 6 } 70 DPCTIL2C 7 GET                           | 8.
+p2-pila     | DEPTH \-> D \<< { 1 4 3 5 6 } 75 DPCTIL2C DROP DEPTH D - \>> | 0.
+
+# ---------- DLOOPCC: V0 Modo Tasa Limite Cond -> { K VFIN CORTE MAT } ----------
+lp-a        | 100 1 10 200 1 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 8. 214.358881 0. }
+lp-b        | 100 1 10 200 2 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 8. 214.358881 0. }
+lp-c        | 100 1 100 200 1 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 2. 400. 0. }
+lp-d        | 100 1 100 200 2 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 1. 200. 0. }
+lp-e        | 1 2 1 5 2 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 4. 5. 0. }
+lp-f        | 1 2 1 5 1 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 5. 6. 0. }
+lp-g        | 1 2 0 5 2 DLOOPCC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 500. 1. 1. }
+lp-a-tam    | 100 1 10 200 1 DLOOPCC 4 GET SIZE                          | { 8. 3. }
+lp-a-fila1  | 100 1 10 200 1 DLOOPCC 4 GET \-> M \<< 1 3 FOR j M 1 j 2 \->LIST GET NEXT 3 \->LIST \>> | { 1. 100. 110. }
+lp-a-fila8  | 100 1 10 200 1 DLOOPCC 4 GET \-> M \<< 1 3 FOR j M 8 j 2 \->LIST GET NEXT 3 \->LIST \>> | { 8. 194.87171 214.358881 }
+lp-g-tam    | 1 2 0 5 2 DLOOPCC 4 GET SIZE                               | { 500. 3. }
+# Condicion falsa desde el inicio: 0 vueltas y sin tabla.
+lp-cero     | 300 1 10 200 1 DLOOPCC \-> T \<< T 1 GET T 2 GET T 4 GET 3 \->LIST \>> | { 0. 300. { } }
+# >= y >: un valor que baja mientras siga arriba del limite.
+lp-mayor    | 100 1 -50 20 3 DLOOPCC \-> T \<< T 1 GET T 2 GET 2 \->LIST \>> | { 3. 12.5 }
+lp-mayor2   | 100 2 -10 50 4 DLOOPCC \-> T \<< T 1 GET T 2 GET 2 \->LIST \>> | { 5. 50. }
+lp-modo     | 100 3 10 200 1 DLOOPCC TYPE                                | 2.
+lp-cond     | 100 1 10 200 5 DLOOPCC TYPE                                | 2.
+lp-pila     | DEPTH \-> D \<< 100 1 10 200 1 DLOOPCC DROP DEPTH D - \>>  | 0.
+
+# ---------- DCHEBYC: K Media S A B N -> { K PROP PCT NOBS NCEIL ASIM } ----------
+ch-a        | 0 70 5 60 80 100 DCHEBYC \-> T \<< T 1 GET T 3 GET T 4 GET T 5 GET T 6 GET 5 \->LIST \>> | { 2. 75. 75. 75. 0 }
+ch-b        | 0 70 5 58 82 0 DCHEBYC \-> T \<< T 1 GET T 3 GET 2 RND 2 \->LIST \>> | { 2.4 82.64 }
+ch-c        | 3 0 0 0 0 0 DCHEBYC 3 GET 2 RND                            | 88.89
+ch-d        | .5 70 5 0 0 0 DCHEBYC TYPE                                 | 2.
+ch-k1       | 1 70 5 0 0 0 DCHEBYC TYPE                                  | 2.
+# El CEIL no se tiene que comer el arrastre: (1-1/9)*9 = 8, no 9.
+ch-ceil     | 3 0 0 0 0 9 DCHEBYC 5 GET                                  | 8.
+ch-asim     | 0 70 5 60 85 0 DCHEBYC \-> T \<< T 1 GET T 6 GET 2 \->LIST \>> | { 2. 1 }
+ch-s0       | 0 70 0 60 80 0 DCHEBYC TYPE                                | 2.
+
+# ---------- DPONDC: X W -> { N SW SWX XP } ----------
+po-a        | { 3 4 5 } { 1 2 1 } DPONDC                                 | { 3. 4. 16. 4. }
+po-b        | { 7 8 5 } { .3 .3 .4 } DPONDC 4 GET                        | 6.5
+po-c        | { 7 8 5 } { 1 2 } DPONDC TYPE                              | 2.
+po-w0       | { 1 2 } { 1 -1 } DPONDC TYPE                               | 2.
+po-vector   | [ 3 4 5 ] [ 1 2 1 ] DPONDC 4 GET                           | 4.
+
+# ---------- DREALC: Nom Inf Sucesivas -> { REAL HAYL ACUM NIVEL } ----------
+re-a        | 30 40 0 DREALC \-> T \<< T 1 GET 4 RND T 2 GET 2 \->LIST \>> | { -7.1429 0 }
+re-b        | 50 20 0 DREALC 1 GET                                       | 25.
+re-c        | 0 0 { -20 20 } DREALC \-> T \<< T 2 GET T 3 GET T 4 GET 3 \->LIST \>> | { 1 -4. 96. }
+re-d        | 0 0 { 10 10 } DREALC \-> T \<< T 3 GET T 4 GET 2 \->LIST \>> | { 21. 121. }
+re-congel   | 0 40 0 DREALC 1 GET 4 RND                                  | -28.5714
+re-vacia    | 0 0 { } DREALC \-> T \<< T 3 GET T 4 GET 2 \->LIST \>>     | { 0. 100. }
+
+# =====================================================================
+# Metodos de la catedra (27/09/2026), leidos del material del curso:
+#  - percentil: diapositiva de Cicowiez, Lp = (p/100)(n+1) interpolado
+#  - histograma: diapositiva "Calcular el tamanio del intervalo"
+# =====================================================================
+
+# ---------- El ejemplo de la diapositiva: 12 precios del Big Mac ----------
+# L70 = 9.1 -> 5.420 + .1*(5.904-5.420) = 5.4684. L50 = 6.5 -> 4.1955
+# (la diapositiva imprime 4.1119, que es un error de tipeo: la cuenta que
+# muestra al lado, 4.091 + .5*(4.300-4.091), da 4.1955).
+cat-l70     | { 2.893 3.358 3.662 3.974 3.978 4.091 4.3 4.542 5.42 5.904 6.252 7.143 } 70 DPCTILC 3 GET | 5.4684
+cat-l70-pos | { 2.893 3.358 3.662 3.974 3.978 4.091 4.3 4.542 5.42 5.904 6.252 7.143 } 70 DPCTILC 2 GET | 9.1
+cat-l50     | { 2.893 3.358 3.662 3.974 3.978 4.091 4.3 4.542 5.42 5.904 6.252 7.143 } 50 DPCTILC 3 GET | 4.1955
+
+# ---------- DBOXPLOTC con los cuartiles de la catedra ----------
+# { N MINV Q1 Q2 Q3 MAXV IQR LINF LSUP WMIN WMAX OUTS }
+bx-q        | { 1 4 3 5 6 } DBOXPLOTC \-> T \<< 3 5 FOR i T i GET NEXT 3 \->LIST \>> | { 2. 4. 5.5 }
+bx-b        | { 1 2 3 4 5 6 7 50 } DBOXPLOTC \-> T \<< 3 9 FOR i T i GET NEXT 7 \->LIST \>> | { 2.25 4.5 6.75 50. 4.5 -4.5 13.5 }
+bx-b-outs   | { 1 2 3 4 5 6 7 50 } DBOXPLOTC 12 GET                      | { 50. }
+bx-b-bigote | { 1 2 3 4 5 6 7 50 } DBOXPLOTC 11 GET                      | 7.
+# El grafico y DCINCO dicen lo mismo: mismos cuartiles y mismos atipicos.
+bx-vs-c5-q1 | BMHIST DBOXPLOTC 3 GET BMHIST DCINCOC 3 GET ==           | 1.
+bx-vs-c5-q3 | BMHIST DBOXPLOTC 5 GET BMHIST DCINCOC 5 GET ==           | 1.
+bx-vs-c5-out| BMHIST DBOXPLOTC 12 GET BMHIST DCINCOC 10 GET SAME       | 1.
+bx-vs-pct   | HORAS DBOXPLOTC 3 GET HORAS 25 DPCTILC 3 GET ==          | 1.
+
+# ---------- DFRECTABLAC automatico = regla de la catedra ----------
+# { K H START FREQ MAT }
+# BMHIST: Sturges 6.49 -> 6; 5.44/6 = .9067 -> 1; arranca en 1: las 7
+# clases 1.00-1.99 ... 7.00-7.99 de la tabla de la diapositiva.
+fr-bm       | BMHIST 0 0 0 DFRECTABLAC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 7. 1. 1. }
+fr-bm-frec  | BMHIST 0 0 0 DFRECTABLAC 4 GET                           | [ 1. 11. 15. 9. 7. 1. 1. ]
+# HORAS en automatico da justo el enunciado de catedra: K=5, Ancho=5, Inicio=10.
+fr-horas    | HORAS 0 0 0 DFRECTABLAC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 5. 5. 10. }
+fr-horas-f  | HORAS 0 0 0 DFRECTABLAC 4 GET HORAS 5 5 10 DFRECTABLAC 4 GET SAME | 1.
+# Ancho dado, K automatico: K son las clases que cubren hasta el maximo.
+fr-h-dado   | HORAS 0 5 0 DFRECTABLAC \-> T \<< T 1 GET T 3 GET 2 \->LIST \>> | { 5. 10. }
+# K dado: se respeta; como con inicio 9 no llega a 16, arranca en el minimo.
+fr-k-dado   | [ 10 12 14 16 ] 2 0 0 DFRECTABLAC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 2. 3. 10. }
+fr-k-dado-f | [ 10 12 14 16 ] 2 0 0 DFRECTABLAC 4 GET                  | [ 2. 2. ]
+# Redondeo a 1 cifra con decimales: 1.3/3 = .4333 -> .5
+fr-decimal  | { 0 .5 1 1.3 } 0 0 0 DFRECTABLAC \-> T \<< T 1 GET T 2 GET T 3 GET 3 \->LIST \>> | { 3. .5 0. }
+fr-iguales  | { 5 5 5 } 0 0 0 DFRECTABLAC \-> T \<< T 1 GET T 4 GET 2 \->LIST \>> | { 1. [ 3. ] }
+fr-suma     | BMSCY 0 0 0 DFRECTABLAC 5 GET DUP SIZE 1 GET 4 2 \->LIST GET | 46.
+# El histograma automatico dibuja la barra de 15 en [3,4) y la de 11 no llega.
+fr-graf-si  | BMHIST 0 0 0 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 3.5 15 R\->C PIX? | 1.
+fr-graf-no  | BMHIST 0 0 0 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 2.5 15 R\->C PIX? | 0.
+
+# ---------- DPCTIL2C: el tercer metodo, Excel .INC (item 9) ----------
+p2-inc-q1   | { 1 4 3 5 6 } 25 DPCTIL2C 9 GET                          | 3.
+p2-inc-q3   | { 1 4 3 5 6 } 75 DPCTIL2C 9 GET                          | 5.
+p2-inc-70   | { 2 4 6 8 10 } 70 DPCTIL2C 9 GET                         | 7.6
+p2-inc-b    | { 1 2 3 4 5 6 7 50 } 25 DPCTIL2C 9 GET                   | 2.75
+p2-inc-100  | { 2 4 6 8 10 } 100 DPCTIL2C 9 GET                        | 10.
+p2-inc-0    | { 2 4 6 8 10 } 0 DPCTIL2C 9 GET                          | 2.

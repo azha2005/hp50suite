@@ -1,0 +1,17 @@
+# Bordes que la regla falsa de 2.7 tapaba: un FOR cuyo inicio supera al fin
+# EJECUTA UNA VEZ, asi que N=0 o N=1 pueden romper donde se creia que no.
+#   nombre | expresion UserRPL | esperado
+USAR: DSTATSC DMODAC DPCTILC DDOMPC DVFGC DBOXPLOTC
+# Un solo dato: DMODAC recorre de 2 a N.
+moda-un-dato    | IFERR { 5 } DMODAC THEN "ROMPE" END           | { { 5 } 1 }
+# Con UN dato la varianza MUESTRAL no existe (divide por N-1 = 0), asi que
+# romper es lo correcto; lo que no se puede es dar un numero inventado.
+stats-un-dato   | IFERR { 5 } DSTATSC 2 GET THEN "ROMPE" END    | ROMPE
+# Lista vacia: no es un uso legitimo, pero tiene que avisar y no dar un numero.
+stats-vacio     | IFERR { } DSTATSC 2 GET THEN "ROMPE" END      | ROMPE
+moda-vacio      | IFERR { } DMODAC THEN "ROMPE" END             | ROMPE
+pctil-vacio     | IFERR { } 50 DPCTILC THEN "ROMPE" END         | ROMPE
+boxplot-un-dato | IFERR { 5 } DBOXPLOTC 4 GET THEN "ROMPE" END  | 5.
+# Lista de puntos vacia en los dos de mat1 que la recorren.
+ddomp-vacio     | IFERR 'X^2' { } DDOMPC THEN "ROMPE" END       | ROMPE
+vfg-vacio       | IFERR 'X' 'X' { } DVFGC THEN "ROMPE" END      | ROMPE

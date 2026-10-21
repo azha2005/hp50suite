@@ -1,0 +1,2 @@
+USAR: DCONTFC
+e2-dcontf | '1/(X^2-9)' 3 DCONTFC 4 GET | ?

@@ -1,0 +1,3 @@
+# Deja la maquina en modo APROXIMADO a proposito, para probar que el
+# prologo de compilar.py la rescate en la corrida siguiente.
+ensuciar        | -105 SF IF -105 FS? THEN "APROXIMADO" ELSE "EXACTO" END | APROXIMADO

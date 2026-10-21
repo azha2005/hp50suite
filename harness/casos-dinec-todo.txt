@@ -1,0 +1,38 @@
+# Inecuaciones dobles en DINECC (02/10/2026). Antes daban "NO CONFIABLE: R".
+# ESPERADO a mano antes de correr.
+USAR: DCONDC DSATC DINTC DRELC DINECC
+dob-txt     | '1<X<2' DINECC 1 GET                  | (1, 2)
+dob-msg     | '1<X<2' DINECC 3 GET                  |
+dob-lin     | '-3<2*X+1\<=5' DINECC 1 GET           | (-2, 2]
+dob-lin-pes | '-3<2*X+1\<=5' DINECC 2 GET           | { -2 2 }
+dob-cerr    | '-1\<=3-X\<=4' DINECC 1 GET           | [-1, 4]
+dob-mayor   | '5>X^2>1' DINECC 1 GET                | (-\v/5, -1) U (1, \v/5)
+dob-racio   | '0<1/X<1' DINECC 1 GET                | (1, +\oo)
+dob-vacio   | '2<X<1' DINECC 1 GET                  | VACIO
+dob-nodoble | '1<X' DINECC 1 GET                    | (1, +\oo)
+dob-pila    | DEPTH \-> D0 \<< '1<X<2' DINECC DROP DEPTH D0 - \>> | 0
+inec-2022t1   | 'ABS(6*X-3)\>=9' DINECC 1 GET            | (-\oo, -1] U [2, +\oo)
+inec-2022t2   | 'ABS(4*X-2)\>=6' DINECC 1 GET            | (-\oo, -1] U [2, +\oo)
+inec-2022t3   | 'ABS(6+3*X)\>=9' DINECC 1 GET            | (-\oo, -5] U [1, +\oo)
+inec-pes      | 'ABS(6*X-3)\>=9' DINECC 2 GET            | { -1 2 }
+inec-cuad1    | '-X^2-X+2\<=0' DINECC 1 GET              | (-\oo, -2] U [1, +\oo)
+inec-cuad2    | '-X^2+X+6\<=0' DINECC 1 GET              | (-\oo, -2] U [3, +\oo)
+inec-2024     | 'ABS(-2*X-3/4)\>=1' DINECC 1 GET         | (-\oo, -7/8] U [1/8, +\oo)
+inec-salad    | 'ABS(1/2-2*X)>1' DINECC 1 GET            | (-\oo, -1/4) U (3/4, +\oo)
+inec-2017a    | 'X^2-2*X-3\>=0' DINECC 1 GET             | (-\oo, -1] U [3, +\oo)
+inec-2017b    | '-2*X^2+4*X+6\>=0' DINECC 1 GET          | [-1, 3]
+inec-racio    | '(X+1)/(X-2)\>=0' DINECC 1 GET           | (-\oo, -1] U (2, +\oo)
+inec-vacio    | 'X^2+1<0' DINECC 1 GET                   | VACIO
+inec-todo     | 'X^2+1>0' DINECC 1 GET                   | R
+inec-igual    | 'X^2=4' DINECC 1 GET                     | {-2} U {2}
+inec-raiz     | '\v/(X-1)>2' DINECC 1 GET                | (5, +\oo)
+inec-distinto | 'X^2-4\=/0' DINECC 1 GET                 | R - {-2, 2}
+inec-estricta | 'X^2-X-2>0' DINECC 1 GET                 | (-\oo, -1) U (2, +\oo)
+inec-menor    | 'X^2-X-2<0' DINECC 1 GET                 | (-1, 2)
+inec-noes     | 'X^2' DINECC 3 GET                       | No es una inecuacion
+inec-sinmsg   | 'ABS(6*X-3)\>=9' DINECC 3 GET            | 
+inec-string   | "'X^2-X-2>0'" DINECC 1 GET               | (-\oo, -1) U (2, +\oo)
+inec2-dist    | 'X^2-4\=/0' DINECC 4 GET                 | (-\oo, -2) U (-2, 2) U (2, +\oo)
+inec2-racio   | '(X+1)/(X-2)\>=0' DINECC 4 GET           | 
+inec2-noes    | 'X^2' DINECC 4 GET                       | 
+inec-depth    | DEPTH \-> D0 \<< 'ABS(6*X-3)\>=9' DINECC DROP DEPTH D0 - \>> | 0

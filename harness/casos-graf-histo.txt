@@ -1,0 +1,29 @@
+# DHISTO: el DIBUJO, medido con PIX? en coordenadas reales.
+# HORAS con K=5, ancho=5, inicio=10 -> FREQ = [4 8 5 2 1], MAXF = 8.
+# XRNG queda 10..35 y YRNG 0..8. Cada barra i va de XLO=10+(i-1)*5 a XLO+5,
+# con altura FREQ[i]. BOX dibuja el CONTORNO, no rellena.
+# Solo se prueban bordes horizontales y verticales y extremos: en una
+# diagonal, PIX? falla por el redondeo del rasterizado (medido aparte).
+
+USAR: DFRECTABLAC DHISTOG HORAS
+
+# Techo de la barra 2, la mas alta (frecuencia 8 = MAXF).
+hist-alta-techo | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 17.5 8 R\->C PIX? | 1.
+# A la altura 8 pero sobre la barra 1 (frecuencia 4) NO tiene que haber nada.
+# Este par es el que verifica la ORIENTACION del eje Y: si estuviera al
+# reves, la barra alta y la baja se intercambiarian (AGENTS.md 2.8).
+hist-baja-arriba| HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 12.5 8 R\->C PIX? | 0.
+# Techo de la barra 1, a su altura correcta (4).
+hist-baja-techo | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 12.5 4 R\->C PIX? | 1.
+# Barra 3: frecuencia 5.
+hist-b3-techo   | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 22.5 5 R\->C PIX? | 1.
+# Barra 5: frecuencia 1, la mas baja.
+hist-b5-techo   | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 32.5 1 R\->C PIX? | 1.
+# BOX es contorno: el interior de la barra 2 esta VACIO.
+hist-interior   | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 17.5 4 R\->C PIX? | 0.
+# Borde inferior (la base de las barras, en y=0).
+hist-base       | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 17.5 0 R\->C PIX? | 1.
+# Borde vertical izquierdo de la barra 2, en x=15.
+hist-lado       | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG 15 4 R\->C PIX? | 1.
+# Y que el dibujo quede en un PICT de 131x64 recuperable como GROB.
+hist-pict-tipo  | HORAS 5 5 10 DFRECTABLAC OBJ\-> DROP DROP DHISTOG PICT RCL TYPE | 11.

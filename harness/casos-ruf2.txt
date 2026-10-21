@@ -1,0 +1,14 @@
+# Aislar por que DRUFC falla recien con la SEGUNDA raiz.
+#   nombre | expresion UserRPL | esperado
+# 1) El CASE con default, dentro de un FOR, mutando un local dos veces.
+case-doble      | "" \-> FS \<< 1 2 FOR i CASE 1 0 == THEN FS "X" + END 1 0 < THEN FS "(X+)" + END FS "(X-)" + END 'FS' STO NEXT FS \>> | (X-)(X-)
+case-cero       | "" \-> FS \<< 1 2 FOR i CASE 0 0 == THEN FS "X" + END 0 0 < THEN FS "(X+)" + END FS "(X-)" + END 'FS' STO NEXT FS \>> | XX
+# 2) El bucle de division sintetica, dos veces sobre { 1 -2 1 } con C=1.
+div-1           | { 1 -2 1 } { } 0 1 \-> CF FI B C \<< CF 1 1 SUB 'FI' STO CF 1 GET 'B' STO 2 CF SIZE FOR i CF i GET C B * + 'B' STO FI B 1 \->LIST + 'FI' STO NEXT FI \>> | { 1 -1 0 }
+div-2           | { 1 -1 } { } 0 1 \-> CF FI B C \<< CF 1 1 SUB 'FI' STO CF 1 GET 'B' STO 2 CF SIZE FOR i CF i GET C B * + 'B' STO FI B 1 \->LIST + 'FI' STO NEXT FI \>> | { 1 0 }
+# 3) El WHILE entero, con dos commits seguidos.
+while-doble     | { 1 -2 1 } { } { } 0 1 \-> CF FI RA B C \<< WHILE CF SIZE 1 > CF 1 1 SUB 'FI' STO CF 1 GET 'B' STO 2 CF SIZE FOR i CF i GET C B * + 'B' STO FI B 1 \->LIST + 'FI' STO NEXT FI FI SIZE GET 0 == AND REPEAT RA C 1 \->LIST + 'RA' STO FI 1 FI SIZE 1 - SUB 'CF' STO END RA \>> | { 1 1 }
+# 4) Lo mismo pero acumulando la tabla, que es lo unico que falta.
+while-tabla     | { 1 -2 1 } { } { } 0 1 \-> CF FI TB B C \<< WHILE CF SIZE 1 > CF 1 1 SUB 'FI' STO CF 1 GET 'B' STO 2 CF SIZE FOR i CF i GET C B * + 'B' STO FI B 1 \->LIST + 'FI' STO NEXT FI FI SIZE GET 0 == AND REPEAT TB C FI 2 \->LIST 1 \->LIST + 'TB' STO FI 1 FI SIZE 1 - SUB 'CF' STO END TB \>> | { { 1 { 1 -1 0 } } { 1 { 1 0 } } }
+# 5) El FOR con STEP -1 que da vuelta la lista (corre una sola vez por caso).
+revertir        | { 1 2 3 } { } \-> CA CF \<< CA SIZE 1 FOR i CF CA i GET 1 \->LIST + 'CF' STO -1 STEP CF \>> | { 3 2 1 }

@@ -1,0 +1,34 @@
+# DRUFC: la tabla de Ruffini completa.
+#   nombre | expresion UserRPL | esperado
+# Predicciones hechas a mano ANTES de correr, sobre papel.
+
+USAR: DRUFC
+
+# X^3-1: una sola raiz racional, 1. La fila es 1 1 1 0 (cociente X^2+X+1, resto 0).
+ruf-coef        | 'X^3-1' DRUFC 1 GET                        | { 1 0 0 -1 }
+ruf-raices      | 'X^3-1' DRUFC 2 GET                        | { 1 }
+ruf-tabla       | 'X^3-1' DRUFC 3 GET                        | { { 1 { 1 1 1 0 } } }
+ruf-cociente    | 'X^3-1' DRUFC 4 GET                        | X^2+X+1
+ruf-fact        | 'X^3-1' DRUFC 5 GET                        | (X-1)*(X^2+X+1)
+# El del apunte (Practica 7): (X^3-1)/(X-1) para levantar la indeterminada.
+# Factoreo completo de un cubico con tres raices enteras.
+ruf-tres        | 'X^3+2*X^2-X-2' DRUFC 2 GET                | { 1 -1 -2 }
+ruf-tres-fact   | 'X^3+2*X^2-X-2' DRUFC 5 GET                | (X-1)*(X+1)*(X+2)
+ruf-tres-cuant  | 'X^3+2*X^2-X-2' DRUFC 3 GET SIZE           | 3.
+# Raiz doble: tiene que aparecer dos veces.
+ruf-doble       | 'X^2-2*X+1' DRUFC 2 GET                    | { 1 1 }
+ruf-doble-fact  | 'X^2-2*X+1' DRUFC 5 GET                    | (X-1)*(X-1)
+# Raiz 0: se escribe X, no (X-0).
+ruf-cero        | 'X^3-X' DRUFC 2 GET                        | { 0 1 -1 }
+ruf-cero-fact   | 'X^3-X' DRUFC 5 GET                        | X*(X-1)*(X+1)
+# Sin raices racionales: lo dice, no inventa.
+ruf-sin         | 'X^2+1' DRUFC 2 GET                        | { }
+ruf-sin-fact    | 'X^2+1' DRUFC 5 GET                        | NO TIENE RAICES RACIONALES
+# Raiz fraccionaria: 2X^2-3X+1 = (X-1)(2X-1), raices 1 y 1/2.
+ruf-frac        | '2*X^2-3*X+1' DRUFC 2 GET                  | { 1 1/2 }
+# No polinomio: avisa en vez de romper.
+ruf-nopol       | 'SIN(X)' DRUFC 5 GET                       | NO ES UN POLINOMIO EN X DE GRADO 1 O MAS
+# Guardian de profundidad (2.11): entra 1, sale 1.
+ruf-guard       | DEPTH 'DD' STO 'X^3-1' DRUFC DROP DEPTH DD - | 0.
+ruf-guard-mal   | DEPTH 'DD' STO 'SIN(X)' DRUFC DROP DEPTH DD - | 0.
+ruf-limpiar     | IFERR { DD } PURGE THEN 0 END 1            | 1

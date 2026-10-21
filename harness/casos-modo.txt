@@ -1,0 +1,9 @@
+# Que bandera controla el modo exacto/aproximado, medido y no asumido.
+# En la 50g la -105 seria Approx (set) / Exact (clear).
+m1-estado       | IF -105 FS? THEN "APROXIMADO" ELSE "EXACTO" END | EXACTO
+m2-risch-ahora  | IFERR 'X^2' 'X' RISCH \->STR THEN "FALLA" END   | 1/3*X^3
+m3-forzar       | -105 CF IFERR 'X^2' 'X' RISCH \->STR THEN "FALLA" END | 1/3*X^3
+m4-igualdad     | -105 CF 'X' 2 = \->STR                          | X=2
+m5-un-tercio    | -105 CF 1 3 / \->STR                            | 1/3
+m6-aprox        | -105 SF 1 3 / \->STR                            | .333333333333
+m7-volver       | -105 CF 1 3 / \->STR                            | 1/3

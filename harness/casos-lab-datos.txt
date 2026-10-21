@@ -1,0 +1,73 @@
+# Laboratorio de Datos contra los DATASETS REALES de la catedra
+# (programas\datos). Los esperados salen del apunte, cuando
+# el apunte los da, y si no de calcularlos aparte en la PC.
+# Los floats se comparan con tolerancia: se prueba la aritmetica, no el
+# ultimo digito de 12.
+
+USAR: DSTATSC DPCTILC DMODAC DOLSC DCOVCORRC DBOXPLOTC DFRECTABLAC SIGFIG
+USAR: BM5X BM5Y BMHIST BMSCX BMSCY HORAS
+
+# ---------- DSTATS con BM5X (PIB pc PPA de 5 paises) ----------
+# Apunte: Media = 32172.2, sX = 32930.3
+dat-stats-n     | BM5X DSTATSC 1 GET                         | 5.
+dat-stats-media | BM5X DSTATSC 2 GET                         | 32172.2
+dat-stats-desv  | BM5X DSTATSC 4 GET 32930.3094079 - ABS .0001 <   | 1.
+dat-stats-cv    | BM5X DSTATSC 5 GET 102.356411461 - ABS .000001 < | 1.
+# Los mismos datos como vector tienen que dar identico.
+dat-stats-vec   | BM5X OBJ\-> \->ARRY DSTATSC 2 GET          | 32172.2
+
+# ---------- DOLS con BM5X / BM5Y ----------
+# Apunte: Y = 1.952 + 0.0000580*X, r = 0.9781
+dat-ols-n       | BM5X BM5Y DOLSC 1 GET                      | 5.
+dat-ols-b0      | BM5X BM5Y DOLSC 2 GET 1.9515870522 - ABS .0000001 <    | 1.
+dat-ols-b1      | BM5X BM5Y DOLSC 3 GET .0000580132209735 - ABS .0000000001 < | 1.
+dat-ols-r       | BM5X BM5Y DOLSC 4 GET .978099233457 - ABS .000000001 < | 1.
+dat-ols-r2      | BM5X BM5Y DOLSC 5 GET .95667811049 - ABS .000000001 <  | 1.
+# Redondeado a 4 cifras como lo muestra el programa: 1.952 y .000058.
+# SIGFIG tiene que estar cargado: sin el, DOLS deja el nombre 'SIGFIG' SIN
+# EVALUAR en la pila y el resultado sale mal sin avisar (AGENTS.md 2.1). Es
+# justo el problema de scope de AGENTS.md 5, y el paquete LAB.txt lo elimina
+# poniendo todo en un mismo DIR, donde los nombres se ven entre si.
+dat-ols-sigfig0 | BM5X BM5Y DOLSC 2 GET 4 SIGFIG             | 1.952
+dat-ols-sigfig1 | BM5X BM5Y DOLSC 3 GET 4 SIGFIG             | .00005801
+
+# ---------- DOLS con la muestra grande (46 paises) ----------
+# Apunte: r = 0.7579
+dat-ols46-r     | BMSCX BMSCY DOLSC 4 GET .757883861802 - ABS .000000001 < | 1.
+
+# ---------- DMODA con BMHIST (45 precios Big Mac) ----------
+# Apunte: moda 5.31 con frecuencia 3.
+dat-moda        | BMHIST DMODAC                              | { { 5.31 } 3 }
+
+# ---------- DPCTIL con HORAS ----------
+# n=20, p50 -> Lp = .5*21 = 10.5; el valor interpolado entre el 10mo y el
+# 11mo dato ordenados (18 y 18) es 18.
+dat-pctil-med   | HORAS 50 DPCTILC                           | { 20. 10.5 18. }
+
+# ---------- DFRECTABLA con HORAS, K=5 ancho=5 inicio=10 ----------
+# OJO: AGENTS.md seccion 6 dice que estas frecuencias son 2,2,6,6,4. Con el
+# HORAS.txt que esta en datos/ NO da eso: da 4,8,5,2,1, y tampoco da 2,2,6,6,4
+# con intervalos cerrados por derecha (daria 6,7,4,2,1). O el apunte o el
+# dataset quedaron viejos. Se deja el valor MEDIDO sobre los datos reales.
+dat-frec        | HORAS 5 5 10 DFRECTABLAC 4 GET             | [ 4. 8. 5. 2. 1. ]
+dat-frec-suma   | HORAS 5 5 10 DFRECTABLAC 5 GET { 5 4 } GET | 20.
+
+# ---------- DCOVCORR con BM5X / BM5Y ----------
+# Apunte: sXY = 62909.8, r = 0.9781. Es la unica copia de estas sumatorias
+# en la suite: DOLSC llama aca.
+dat-cov-cov     | BM5X BM5Y DCOVCORRC 4 GET 62909.843 - ABS .001 <    | 1.
+dat-cov-sdx     | BM5X BM5Y DCOVCORRC 5 GET 32930.3094079 - ABS .0001 < | 1.
+dat-cov-sdy     | BM5X BM5Y DCOVCORRC 6 GET 1.9531692195 - ABS .000001 < | 1.
+dat-cov-r       | BM5X BM5Y DCOVCORRC 7 GET .978099233457 - ABS .000000001 < | 1.
+# El desvio de X tiene que ser EXACTAMENTE el mismo que da DSTATS, y el r
+# exactamente el mismo que da DOLS: son los dos chequeos de consistencia
+# entre programas que el apunte pide y que antes nadie verificaba.
+dat-coh-sdx     | BM5X BM5Y DCOVCORRC 5 GET BM5X DSTATSC 4 GET ==     | 1.
+dat-coh-r       | BM5X BM5Y DCOVCORRC 7 GET BM5X BM5Y DOLSC 4 GET ==  | 1.
+
+# ---------- DBOXPLOT con HORAS ----------
+# Cuartiles por indice: Q1=15, Q2=18, Q3=22, RIC=7, vallas 4.5 y 32.5,
+# el 33 es atipico y los bigotes van de 12 a 28.
+dat-box         | HORAS DBOXPLOTC | { 20. 12. 15. 18. 22. 33. 7. 4.5 32.5 12. 28. { 33 } }
+# La mediana por indice y la de DPCTIL (interpolada) coinciden en este caso.
+dat-box-vs-pct  | HORAS DBOXPLOTC 4 GET HORAS 50 DPCTILC 3 GET ==     | 1.

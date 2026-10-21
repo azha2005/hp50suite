@@ -1,0 +1,15 @@
+# Como sacar PICT como GROB, y como medir una diagonal sin pelearse con el
+# redondeo del rasterizado.
+h1-rcl-tipo     | ERASE PICT RCL TYPE                        | 11.
+h1b-rcl-tam     | ERASE PICT RCL SIZE                        | { 131. 64. }
+# Los EXTREMOS de una linea si son exactos (son los pixeles que le pasas).
+h2-extremo-a    | ERASE 0 10 XRNG 0 10 YRNG 0 0 R\->C 10 10 R\->C LINE 0 0 R\->C PIX? | 1.
+h3-extremo-b    | ERASE 0 10 XRNG 0 10 YRNG 0 0 R\->C 10 10 R\->C LINE 10 10 R\->C PIX? | 1.
+# PIXON pone UN pixel: PIX? en la misma coordenada tiene que dar 1.
+h4-pixon        | ERASE 0 10 XRNG 0 10 YRNG 3 7 R\->C PIXON 3 7 R\->C PIX? | 1.
+# Vecindad 3x3 alrededor del medio de la diagonal: alguno tiene que estar.
+h5-vecindad     | ERASE 0 10 XRNG 0 10 YRNG 0 0 R\->C 10 10 R\->C LINE 0 -1 1 FOR k 5 5 k .2 * + R\->C PIX? NEXT + + | 1.
+# Una HORIZONTAL en el medio: eso si es exacto.
+h6-horizontal   | ERASE 0 10 XRNG 0 10 YRNG 0 5 R\->C 10 5 R\->C LINE 5 5 R\->C PIX? | 1.
+# Y una VERTICAL.
+h7-vertical     | ERASE 0 10 XRNG 0 10 YRNG 5 0 R\->C 5 10 R\->C LINE 5 5 R\->C PIX? | 1.

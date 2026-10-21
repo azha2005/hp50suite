@@ -1,0 +1,42 @@
+# Casos de DCONTFC: 'F' A -> { FA LI LD K }
+#     nombre | expresion UserRPL | resultado esperado (como \->STR)
+# K: 0 continua, 1 evitable sin f(a), 2 evitable f(a)<>lim, 3 salto,
+#    4 lim infinito, 5 lateral no existe, 6 continua de un lado.
+# ESPERADO calculados a mano ANTES de correr.
+
+USAR: DCONTFC
+
+# Continua: polinomio.
+dcf-cont-k     | 'X^2+1' 2 DCONTFC 4 GET                      | 0
+dcf-cont-fa    | 'X^2+1' 2 DCONTFC 1 GET                      | 5
+# Evitable, f(a) no existe (0/0). Laterales 2.
+dcf-evit-k     | '(X^2-1)/(X-1)' 1 DCONTFC 4 GET              | 1
+dcf-evit-fa    | '(X^2-1)/(X-1)' 1 DCONTFC 1 GET              | NO EXISTE
+dcf-evit-li    | '(X^2-1)/(X-1)' 1 DCONTFC 2 GET              | 2
+# TP 9 ej. 2a: x^2/(x^4-x^2). En 0 evitable con lim -1; en 1 infinito.
+dcf-tp2a-0     | 'X^2/(X^4-X^2)' 0 DCONTFC 4 GET              | 1
+dcf-tp2a-0-li  | 'X^2/(X^4-X^2)' 0 DCONTFC 2 GET              | -1
+dcf-tp2a-1     | 'X^2/(X^4-X^2)' 1 DCONTFC 4 GET              | 4
+dcf-tp2a-m1    | 'X^2/(X^4-X^2)' -1 DCONTFC 4 GET             | 4
+# TP 9 ej. 3c: |x|/x^2 en 0, laterales +oo.
+dcf-tp3c       | 'ABS(X)/X^2' 0 DCONTFC 4 GET                 | 4
+# Salto: ABS(X)/X en 0, laterales -1 y 1.
+dcf-salto-k    | 'ABS(X)/X' 0 DCONTFC 4 GET                   | 3
+dcf-salto-li   | 'ABS(X)/X' 0 DCONTFC 2 GET                   | -1
+dcf-salto-ld   | 'ABS(X)/X' 0 DCONTFC 3 GET                   | 1
+# Polo con signo en los laterales.
+dcf-polo-k     | '1/X' 0 DCONTFC 4 GET                        | 4
+dcf-polo-li    | '1/X' 0 DCONTFC 2 GET                        | '-\oo'
+dcf-polo-fa    | '1/X' 0 DCONTFC 1 GET                        | NO EXISTE
+# Borde del dominio: el CAS dice 0 por izquierda, el sondeo da complejo.
+dcf-raiz-k     | '\v/X' 0 DCONTFC 4 GET                       | 6
+dcf-raiz-li    | '\v/X' 0 DCONTFC 2 GET                       | NO EXISTE
+# Oscilante: los laterales dan '?'.
+dcf-osc        | 'SIN(1/X)' 0 DCONTFC 4 GET                   | 5
+# Punto negativo: 'X=-1-0' armado como texto.
+dcf-neg        | 'ABS(X+1)/(X+1)' -1 DCONTFC 4 GET            | 3
+# La expresion llega como string desde el formulario (AGENTS.md 2.10).
+dcf-string     | "'X^2+1'" 2 DCONTFC 4 GET                    | 0
+# Guardian de profundidad: el nucleo deja UN objeto y nada mas.
+dcf-depth      | DEPTH \-> D0 \<< '1/X' 0 DCONTFC DROP DEPTH D0 - \>> | 0
+# Los strings vuelven sin comillas en la columna OBTENIDO (leer-resultado.py).

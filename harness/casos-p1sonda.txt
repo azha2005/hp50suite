@@ -1,0 +1,63 @@
+# Sondeo previo a DINEC / DINV / DCONTK / DDOM / DPAR (regla AGENTS.md 3.1).
+# Los ESPERADO son "?" a proposito: interesa el OBTENIDO.
+#     nombre | expresion UserRPL | esperado
+
+# --- recorrer el arbol de un algebraico con OBJ\-> ---
+obj-div     | DEPTH \-> D \<< '(X-3)/(X^2-9)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-ln      | DEPTH \-> D \<< 'LN(X-1)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-raiz    | DEPTH \-> D \<< '\v/(X-1)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-pot     | DEPTH \-> D \<< 'X^(1/2)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-neg     | DEPTH \-> D \<< '-(X+1)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-potneg  | DEPTH \-> D \<< '(X-1)^(-2)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-abs     | DEPTH \-> D \<< 'ABS(X-2)' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-ge      | DEPTH \-> D \<< 'ABS(6*X-3)\>=9' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-ge-cod  | 'ABS(6*X-3)\>=9' OBJ\-> \->STR NUM | ?
+obj-gt-cod  | 'X>9' OBJ\-> \->STR NUM | ?
+obj-lt-cod  | 'X<9' OBJ\-> \->STR NUM | ?
+obj-le-cod  | 'X\<=9' OBJ\-> \->STR NUM | ?
+obj-ne-cod  | 'X\=/9' OBJ\-> \->STR NUM | ?
+obj-fn-sin  | 'SIN(X)' OBJ\-> \->STR | ?
+obj-fn-div  | '(X-3)/(X^2-9)' OBJ\-> \->STR | ?
+obj-fn-raiz | '\v/(X-1)' OBJ\-> \->STR NUM | ?
+obj-fn-ln   | 'LN(X-1)' OBJ\-> \->STR | ?
+obj-fn-pot  | 'X^2' OBJ\-> \->STR | ?
+obj-fn-inv  | 'INV(X)' OBJ\-> \->STR | ?
+obj-nombre  | 'X' OBJ\-> | ?
+obj-tipo-x  | 'X' TYPE | ?
+obj-const   | DEPTH \-> D \<< '2*X' OBJ\-> DEPTH D - \->LIST \>> | ?
+obj-numtype | '2*X' OBJ\-> DROP DROP DROP TYPE | ?
+
+# --- desigualdades con el CAS ---
+solve-cuad  | 'X^2-X-2>0' 'X' SOLVE | ?
+solve-abs   | 'ABS(6*X-3)\>=9' 'X' SOLVE | ?
+zeros-abs   | 'ABS(6*X-3)-9' 'X' ZEROS | ?
+signtab     | '(X-2)*(X+1)' SIGNTAB | ?
+zeros-canc  | '(X-3)/(X^2-9)' 'X' ZEROS | ?
+zeros-ln    | 'LN(X)-1' 'X' ZEROS | ?
+zeros-lista | 'X^2+X-2' 'X' ZEROS | ?
+zeros-raiz  | 'X^2-2' 'X' ZEROS | ?
+exacto-cero | '(-\v/2)^2-2' EVAL | ?
+subst-canc  | '(X-3)/(X^2-9)' 'X' 3 = SUBST EVAL | ?
+subst-num   | 'X^2-1' 'X' 1.5 = SUBST \->NUM | ?
+subst-raizneg | '\v/(X-1)' 'X' -3. = SUBST \->NUM TYPE | ?
+subst-lnneg | 'LN(X)' 'X' -3. = SUBST \->NUM TYPE | ?
+subst-ln0   | 'LN(X)' 'X' 0. = SUBST \->NUM | ?
+sort        | { 3 1 2.5 } SORT | ?
+srepl       | "ABS(X)+ABS(2*X)" "ABS(" "(" SREPL | ?
+
+# --- inversa ---
+inv-cuad    | 'Y=(X+2)^2-4' 'X' SOLVE | ?
+inv-ln      | 'Y=LN(X+1)' 'X' SOLVE | ?
+inv-exp     | 'Y=2^X+1' 'X' SOLVE | ?
+inv-raiz    | 'Y=\v/(X-4)' 'X' SOLVE | ?
+
+# --- paridad ---
+par-subst   | '4*X+1/X' 'X' '-X' = SUBST | ?
+par-suma    | '4*X+1/X' DUP 'X' '-X' = SUBST + EXPAND | ?
+par-define  | 'FQZ(X)=X^3+2*X' DEFINE 'FQZ(2)' EVAL 'FQZ' PURGE | ?
+
+# --- continuidad con parametro ---
+k-lat       | 'X^2-K*X+3' "'X=1-0'" STR\-> LIMIT | ?
+k-lat2      | '(2*X-K)/(1+X)' "'X=1+0'" STR\-> LIMIT | ?
+k-solve     | '4-K=(2-K)/2' 'K' SOLVE | ?
+k-exp       | 'EXP(4/(X+1))' "'X=-1-0'" STR\-> LIMIT | ?

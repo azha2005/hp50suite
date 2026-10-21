@@ -1,0 +1,76 @@
+# Los GRAFICOS de la suite, medidos con PIX? en coordenadas reales.
+# Se prueban bordes horizontales/verticales y extremos de linea, que son
+# exactos; NO puntos medios de diagonales, donde PIX? falla por el redondeo
+# del rasterizado (medido en casos-graf1.txt).
+# Cada caso vuelve a dibujar: ERASE al principio de cada XXXG.
+
+USAR: DFRECTABLAC DHISTOG DPCTILC DBOXPLOTC DBOXPLOTG DCOVCORRC DCOVCORRG
+USAR: DMKTC DMKTG DCOMPFIRMC DCOMPFIRMG DMKTFISCC DMKTFISCG
+USAR: BM5X BM5Y HORAS
+
+# ================= DBOXPLOT con HORAS =================
+# RES = { 20 12 15 18 22 33 7 4.5 32.5 12 28 {33} }
+# XRNG 12..33, YRNG 0..10. Caja de (15,2.5) a (22,5.5), mediana en x=18,
+# bigotes en y=4 de 12 a 15 y de 22 a 28, atipico en 33, eje en y=6.
+box-caja-izq    | HORAS HORAS DBOXPLOTC DBOXPLOTG 15 4 R\->C PIX?       | 1.
+box-caja-techo  | HORAS HORAS DBOXPLOTC DBOXPLOTG 18.5 5.5 R\->C PIX?   | 1.
+box-mediana     | HORAS HORAS DBOXPLOTC DBOXPLOTG 18 4 R\->C PIX?       | 1.
+box-interior    | HORAS HORAS DBOXPLOTC DBOXPLOTG 20 4.8 R\->C PIX?     | 0.
+box-bigote-izq  | HORAS HORAS DBOXPLOTC DBOXPLOTG 13.5 4 R\->C PIX?     | 1.
+box-bigote-der  | HORAS HORAS DBOXPLOTC DBOXPLOTG 25 4 R\->C PIX?       | 1.
+# Entre el fin del bigote (28) y el atipico (33) no hay nada en y=4.
+box-hueco       | HORAS HORAS DBOXPLOTC DBOXPLOTG 30.5 4 R\->C PIX?     | 0.
+# El atipico 33 SI esta marcado.
+box-atipico     | HORAS HORAS DBOXPLOTC DBOXPLOTG 33 4 R\->C PIX?       | 1.
+# Tope del bigote izquierdo (vertical en x=12, de 3.3 a 4.7).
+box-tope        | HORAS HORAS DBOXPLOTC DBOXPLOTG 12 3.5 R\->C PIX?     | 1.
+# Eje de referencia en y=6.
+box-eje         | HORAS HORAS DBOXPLOTC DBOXPLOTG 20 6 R\->C PIX?       | 1.
+# Puntos individuales en y=1.5: hay un 18 en los datos, no hay un 30.
+box-punto-si    | HORAS HORAS DBOXPLOTC DBOXPLOTG 18 1.5 R\->C PIX?     | 1.
+box-punto-no    | HORAS HORAS DBOXPLOTC DBOXPLOTG 30 1.5 R\->C PIX?     | 0.
+
+# ================= DCOVCORR con BM5X / BM5Y =================
+# XRNG 1489..80776, YRNG 1.62..6.81. Dispersion con PIXON en cada par.
+cov-punto1      | BM5X BM5Y BM5X BM5Y DCOVCORRC DCOVCORRG 1489 1.62 R\->C PIX?  | 1.
+cov-punto3      | BM5X BM5Y BM5X BM5Y DCOVCORRC DCOVCORRG 24359 3.59 R\->C PIX? | 1.
+# Un par que NO esta en los datos: el X del 3er pais con el Y del 5to.
+cov-par-falso   | BM5X BM5Y BM5X BM5Y DCOVCORRC DCOVCORRG 24359 6.81 R\->C PIX? | 0.
+# Ejes: horizontal en Y=YMIN, vertical en X=XMIN.
+cov-eje-h       | BM5X BM5Y BM5X BM5Y DCOVCORRC DCOVCORRG 40000 1.62 R\->C PIX? | 1.
+cov-eje-v       | BM5X BM5Y BM5X BM5Y DCOVCORRC DCOVCORRG 1489 4 R\->C PIX?     | 1.
+
+# ================= DCOMPFIRM: CF=20 b=3 c=1 P=43 =================
+# Q*=20. QMAX=40, CMGMAX=83, PMAX=91.3. XRNG 0..40, YRNG 0..91.3.
+firm-eje-h      | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 20 0 R\->C PIX?  | 1.
+firm-eje-v      | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 0 45 R\->C PIX?  | 1.
+# La horizontal de Precio en y=43, a lo ancho.
+firm-precio     | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 30 43 R\->C PIX? | 1.
+# Brazo vertical de la cruz de equilibrio, en x=Q*=20 arriba de P=43.
+firm-cruz       | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 20 44 R\->C PIX? | 1.
+# A la misma altura pero lejos de la cruz no hay nada.
+firm-vacio      | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 10 44 R\->C PIX? | 0.
+# Arranque de CMg y CVMe en (0,b)=(0,3) y extremo de CMg en (40,83).
+firm-cmg-ini    | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 0 3 R\->C PIX?   | 1.
+firm-cmg-fin    | 20 3 1 43 20 3 1 43 DCOMPFIRMC DCOMPFIRMG 40 83 R\->C PIX? | 1.
+
+# ================= DMKTFISC: a=100 b=2 c=10 d=3 T=5 =================
+# PB=21, QE=58, PS=16, Q0=64. PMAX=42, QMAX=136. XRNG 0..136, YRNG 0..42.
+fiscg-eje-h     | 100 2 10 3 5 0 0 100 2 10 3 5 0 0 DMKTFISCC DMKTFISCG 68 0 R\->C PIX?  | 1.
+fiscg-eje-v     | 100 2 10 3 5 0 0 100 2 10 3 5 0 0 DMKTFISCC DMKTFISCG 0 21 R\->C PIX?  | 1.
+# La brecha del impuesto: vertical en Q=58, entre PS=16 y PB=21.
+fiscg-brecha    | 100 2 10 3 5 0 0 100 2 10 3 5 0 0 DMKTFISCC DMKTFISCG 58 18 R\->C PIX? | 1.
+# Relleno de recaudacion: llega hasta x=58 y no mas.
+fiscg-recaud-si | 100 2 10 3 5 0 0 100 2 10 3 5 0 0 DMKTFISCC DMKTFISCG 30 16 R\->C PIX? | 1.
+fiscg-recaud-no | 100 2 10 3 5 0 0 100 2 10 3 5 0 0 DMKTFISCC DMKTFISCG 90 16 R\->C PIX? | 0.
+# Relleno del PIE: verticales entre QE=58 y Q0=64.
+fiscg-pie       | 100 2 10 3 5 0 0 100 2 10 3 5 0 0 DMKTFISCC DMKTFISCG 61 18 R\->C PIX? | 1.
+
+# ================= DMKT (escala estilo pixel) =================
+# Este es el unico que quedo con XRNG 0..130 / YRNG 0..79 y escalado a
+# mano, asi que solo se prueban los ejes de referencia, que son las unicas
+# coordenadas fijas. Lo demas se cruza con las diagonales de oferta y
+# demanda y la asercion seria ambigua.
+mkt-eje-h       | 100 2 10 3 100 2 10 3 0 DMKTC DMKTG 65 60 R\->C PIX?  | 1.
+mkt-eje-v       | 100 2 10 3 100 2 10 3 0 DMKTC DMKTG 20 35 R\->C PIX?  | 1.
+mkt-vacio       | 100 2 10 3 100 2 10 3 0 DMKTC DMKTG 120 75 R\->C PIX? | 0.
