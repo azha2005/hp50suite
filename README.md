@@ -75,6 +75,10 @@ for asymptotes, and how to load single programs.
 `Graf/` holds a third-party graphing suite (author `au777fait@gmail.com`), kept
 as a reference for the native plotting path. It is not part of this suite.
 
+## License
+
+[MIT](LICENSE), except `Graf/`, which belongs to its author.
+
 ---
 
 ## Español
