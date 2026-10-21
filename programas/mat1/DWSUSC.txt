@@ -21,7 +21,7 @@
   @   -> -2/(TAN(X/2)+1).
   @
   @ RISCH NO falla cuando no hay primitiva elemental: devuelve un
-  @ 'INT(...)' sin evaluar (CLAUDE.md 2.17), asi que el IFERR no alcanza
+  @ 'INT(...)' sin evaluar (AGENTS.md 2.17), asi que el IFERR no alcanza
   @ y hay que buscar "INT(" en el texto.
   @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DWSUS.
   \-> F0

@@ -4,7 +4,7 @@
   @ tipo "que imprime este while". Compuesto o aditivo.
   @ Interfaz: el calculo esta en DLOOPCC (la C de mas es la del nucleo).
   @ Dos pantallas de INFORM: con 5 campos en una, el ultimo queda
-  @ inalcanzable (CLAUDE.md 2.5).
+  @ inalcanzable (AGENTS.md 2.5).
   @ Los campos traen valores iniciales (el ejemplo del examen intensivo:
   @ 100, compuesto, 10 %, limite 200, <=): un campo numerico que nunca
   @ se visita sin valor inicial llega como NOVAL.

@@ -52,7 +52,7 @@
           "'X=" ASZ + "+0'" + STR\->
           \-> EQIZ EQDZ
           \<<
-            @ Laterales, cada uno con su guardian (CLAUDE.md 2.11).
+            @ Laterales, cada uno con su guardian (AGENTS.md 2.11).
             DEPTH \-> D1
             \<<
               IFERR FIZ EQIZ LIMIT IF DUP TYPE 12 == THEN DTAG END THEN "ERR" END
@@ -69,7 +69,7 @@
                 LIZ TYPE 2 == LDZ TYPE 2 == OR
                 THEN { } "EL CAS NO PUDO"
                 END
-                @ Infinito por el caracter 159 (CLAUDE.md 2.1), no con SAME.
+                @ Infinito por el caracter 159 (AGENTS.md 2.1), no con SAME.
                 LIZ \->STR 159 CHR POS LDZ \->STR 159 CHR POS + 0 >
                 THEN { } "LIMITE INFINITO"
                 END
@@ -92,7 +92,7 @@
                     { } { }
                     \-> LSZ VSZ OKZ
                     \<<
-                      @ FOR corre al menos una vez (CLAUDE.md 2.7).
+                      @ FOR corre al menos una vez (AGENTS.md 2.7).
                       IF LSZ SIZE 0 >
                       THEN
                         1 LSZ SIZE

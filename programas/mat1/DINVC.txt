@@ -7,7 +7,7 @@
   @   A, B = extremos del dominio. Un extremo infinito se acepta como el
   @          infinito del CAS (con o sin signo) o como el nombre o string
   @          INF / -INF. Se decide por \->STR: contiene "INF" o el
-  @          caracter 159 (CLAUDE.md 2.1); el signo, por un "-".
+  @          caracter 159 (AGENTS.md 2.1); el signo, por un "-".
   @ Deja: n1 = { FINV IMA IMB CA CB MSG }
   @   FINV = f^-1 como expresion en X. "NO DESPEJO" si ninguna solucion
   @          del CAS vuelve al dominio; "-" si f no es inyectiva.
@@ -25,7 +25,7 @@
   @
   @ Como decide cada cosa:
   @  - Inyectividad: ceros reales de f' (DERIV + ZEROS, normalizado a
-  @    lista, CLAUDE.md 2.19) estrictamente adentro de (A,B). Un cero
+  @    lista, AGENTS.md 2.19) estrictamente adentro de (A,B). Un cero
   @    cuenta solo si f da la vuelta ahi: f(z-h)-f(z) y f(z+h)-f(z) con
   @    el mismo signo. Asi X^3 en 0 no se toma como no inyectiva.
   @    Tambien son candidatos los ceros del argumento de cada ABS( (la
@@ -34,7 +34,7 @@
   @  - Sentido: signo de f(XI+h)-f(XI) en un punto interior XI.
   @  - Extremo finito de la imagen: f en el extremo del dominio. Si f esta
   @    definida ahi (real finito: TYPE, caracter 159, '?' y magnitud;
-  @    CLAUDE.md 2.14 y 2.19) el extremo es cerrado. Si no, limite
+  @    AGENTS.md 2.14 y 2.19) el extremo es cerrado. Si no, limite
   @    LATERAL ('X=a+0' / 'X=b-0', armado como texto con STR\->, como
   @    DCONTFC) y el extremo es abierto.
   @  - Extremo infinito del dominio: LIMIT en el infinito, abierto.

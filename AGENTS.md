@@ -1,4 +1,4 @@
-# CLAUDE.md — Suite de programas UserRPL para HP 50g
+# AGENTS.md — Suite de programas UserRPL para HP 50g
 
 Contexto de proyecto para continuar el desarrollo de una suite de programas en
 UserRPL para una calculadora **HP 50g real** (no emulador), usada en las materias
@@ -670,7 +670,7 @@ corrida anterior.
 
 ### 2.15 ⚠️ Bytes de control: el bug que el chequeo de ASCII no ve
 
-`CLAUDE.md` §1 exige ASCII de 7 bits. Un **byte de control** (0x00–0x1F) cumple
+`AGENTS.md` §1 exige ASCII de 7 bits. Un **byte de control** (0x00–0x1F) cumple
 esa condición y pasa el filtro, pero es igual de venenoso.
 
 Aparece cuando un script de Python escribe un archivo y un literal lleva barra

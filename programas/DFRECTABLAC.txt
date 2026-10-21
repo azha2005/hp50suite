@@ -22,7 +22,7 @@
   @
   @ El bucle de filas deja los 6 valores de cada fila en la pila sin
   @ consumirlos: ahi se acumulan las K*6 celdas hasta el \->ARRY final.
-  @ Por eso este nucleo NO lleva guardian de profundidad (CLAUDE.md
+  @ Por eso este nucleo NO lleva guardian de profundidad (AGENTS.md
   @ 2.11): la acumulacion en la pila es intencional, no basura.
   \-> DATA0 KWANT HWANT SWANT
   \<<

@@ -12,7 +12,7 @@
   @ tuvieras guardado ahi. Si el CAS no puede evaluar en el punto, deja
   @ 'C' simbolica.
   @
-  @ Guardian de profundidad (CLAUDE.md 2.11), por el mismo motivo que
+  @ Guardian de profundidad (AGENTS.md 2.11), por el mismo motivo que
   @ DSEPC: sin el, una primitiva que falla hace que el `=` final arme la
   @ ecuacion con basura y devuelva una respuesta equivocada sin avisar.
   \-> MY0 NX0 X0 Y0

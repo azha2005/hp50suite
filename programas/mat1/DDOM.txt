@@ -36,7 +36,7 @@
       \<<
         F R DDOMC OBJ\-> DROP \-> TXT CSTR PES MSG TXT2
         \<<
-          @ Las condiciones de a dos por caja (CLAUDE.md 2.6).
+          @ Las condiciones de a dos por caja (AGENTS.md 2.6).
           IF CSTR SIZE 0 ==
           THEN "Sin condiciones:" 10 CHR + "vale para todo X" + MSGBOX
           ELSE

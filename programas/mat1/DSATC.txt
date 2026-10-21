@@ -9,9 +9,9 @@
   @
   @ Cuenta como que NO cumple (medido, casos-p1sonda*.txt):
   @  - un resultado complejo: \v/ o LN de un negativo dan TYPE 1 aun con
-  @    el modo Complex apagado (CLAUDE.md 2.14: decidir por TYPE);
+  @    el modo Complex apagado (AGENTS.md 2.14: decidir por TYPE);
   @  - un error: LN(0) da ERROR, y 0/0 da '?' que \->NUM no convierte;
-  @  - una magnitud absurda: 1/0 da 9.99E499 sin error (CLAUDE.md 2.19).
+  @  - una magnitud absurda: 1/0 da 9.99E499 sin error (AGENTS.md 2.19).
   @ Cero es |G| < 1E-9, porque en un punto exacto irracional el \->NUM
   @ puede dejar un residuo de redondeo.
   \-> CL X0

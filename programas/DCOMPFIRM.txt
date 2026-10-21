@@ -26,7 +26,7 @@
         MSGBOX
         @ La semilla NO lleva + adelante: el MSGBOX de arriba ya consumio
         @ el string y la pila quedo vacia, asi que el + no tendria con que
-        @ concatenar (CLAUDE.md 2.4). Estaba mal desde antes.
+        @ concatenar (AGENTS.md 2.4). Estaba mal desde antes.
         IF RES 3 GET 1 == THEN
           "La empresa CIERRA en el corto" 10 CHR +
           "plazo (P menor al CMg minimo)." +

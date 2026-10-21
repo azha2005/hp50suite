@@ -53,7 +53,7 @@ for asymptotes, and how to load single programs.
   ROM, against the course datasets and the exercises' own results: several
   hundred cases, including pixel checks on the plots. The emulator is not the
   calculator, so try each program on the real machine before an exam.
-- **Every rule was learned from a real bug.** [`CLAUDE.md`](CLAUDE.md)
+- **Every rule was learned from a real bug.** [`AGENTS.md`](AGENTS.md)
   collects the UserRPL traps found along the way: `FOR` always runs at least
   once, `IFERR` doesn't clean the stack, `\.oo` isn't infinity, and several
   CAS commands give a plausible answer that is silently wrong.
@@ -107,4 +107,4 @@ resultados coinciden con los de la cátedra.
   programa que vayas a usar.
 
 Las reglas de UserRPL y el porqué de cada decisión están en
-[`CLAUDE.md`](CLAUDE.md).
+[`AGENTS.md`](AGENTS.md).

@@ -282,4 +282,4 @@ que muestra un resultado equivocado.
 Cada programa `XXX` es la interfaz (formulario + cajas). El cálculo está en
 `XXXC` y, en los que grafican, el dibujo en `XXXG`. Única excepción de nombre:
 el núcleo de `DLOOPC` es `DLOOPCC` (el nombre del programa ya terminaba en C). Para el usuario alcanza
-con correr `XXX`. Las reglas y el estado de las pruebas están en `CLAUDE.md` §5–6.
+con correr `XXX`. Las reglas y el estado de las pruebas están en `AGENTS.md` §5–6.

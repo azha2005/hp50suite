@@ -21,7 +21,7 @@
   @
   @ Quien decide: DCONTFC, veredicto K=4 (algun lateral infinito).
   @ Usa los laterales del CAS 'X=a-0' / 'X=a+0', e ignora el lado que
-  @ queda fuera del dominio (ahi el sondeo da complejo, CLAUDE.md 2.14).
+  @ queda fuera del dominio (ahi el sondeo da complejo, AGENTS.md 2.14).
   @ Por que no DASVC solo: sondea en a +/- 1e-6 con umbral 1e5, y eso
   @ no alcanza para una singularidad lenta. LN(X) en 0+1e-6 da -13.8, y
   @ 1/\v/(X-1) en 1+1e-6 da 1000: DASVC diria SIN ASINTOTA en los dos.
@@ -40,9 +40,9 @@
   @ ABS sin mirar el TYPE. Con \v/(X-1) no muerde (modulo 1e-3), pero
   @ asi no depende de eso.
   @
-  @ Cada llamada lleva su IFERR con guardian de profundidad (CLAUDE.md
+  @ Cada llamada lleva su IFERR con guardian de profundidad (AGENTS.md
   @ 2.11), y el FOR va envuelto en IF porque CAND puede venir vacio
-  @ (f polinomio) y el FOR corre una vez igual (CLAUDE.md 2.7).
+  @ (f polinomio) y el FOR corre una vez igual (AGENTS.md 2.7).
   \-> F0
   \<<
     DEPTH \-> D0

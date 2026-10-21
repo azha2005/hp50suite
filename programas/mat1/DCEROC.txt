@@ -18,7 +18,7 @@
   @  1. Candidatos. ZEROS sobre H sola no alcanza: el CAS simplifica
   @     por dentro y (X^2-9)/(X-3) le da -3, sin el 3 que hay que
   @     descartar. Por eso se recorre el arbol desde arriba (OBJ\->,
-  @     CLAUDE.md 2.20, igual que DCONDC) y se buscan los ceros de cada
+  @     AGENTS.md 2.20, igual que DCONDC) y se buscan los ceros de cada
   @     FACTOR: de un cociente el numerador, de un producto los dos
   @     factores, de un NEG o una raiz su argumento (\v/g = 0 <=> g = 0).
   @     Lo demas (una suma, un LN, una potencia) es un factor entero y va

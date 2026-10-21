@@ -6,7 +6,7 @@
   @
   @ OJO: este grafico usa coordenadas estilo PIXEL con XRNG 0..130 y
   @ YRNG 0..79, y escala los valores a mano (columnas 20 a 110, filas 10
-  @ a 60). Es el enfoque que CLAUDE.md 2.8 recomienda NO mezclar con
+  @ a 60). Es el enfoque que AGENTS.md 2.8 recomienda NO mezclar con
   @ rangos reales; los demas graficos de la suite (DCOMPFIRM, DMKTFISC,
   @ DHISTO, DBOXPLOT, DCOVCORR) ya usan rango real. Queda asi porque
   @ anda y porque cambiarlo es rediseniar el grafico, no partirlo; pero

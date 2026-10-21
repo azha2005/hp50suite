@@ -3,17 +3,17 @@
 Archivos listos para transferir con Conn4x. Ya están con header `%%HP:`, CRLF y
 ASCII puro verificados.
 
-**CLAUDE.md manda.** Este README dice qué cargar y en qué orden; las reglas de
-UserRPL, el formato de archivo y los casos de prueba están en `../CLAUDE.md` y no
-se repiten acá. Ante cualquier diferencia, vale CLAUDE.md. Lo específico de
-Matemática I está en `../SUITE-MAT1.md`, que también se subordina a CLAUDE.md.
+**AGENTS.md manda.** Este README dice qué cargar y en qué orden; las reglas de
+UserRPL, el formato de archivo y los casos de prueba están en `../AGENTS.md` y no
+se repiten acá. Ante cualquier diferencia, vale AGENTS.md. Lo específico de
+Matemática I está en `../SUITE-MAT1.md`, que también se subordina a AGENTS.md.
 
 ## Orden de carga (importante)
 
 1. **`SIGFIG.txt` primero, y guardarlo en `HOME`** (no dentro de una subcarpeta).
    No tiene envoltorio `DIR` a propósito: se guarda con `'SIGFIG' STO` en HOME.
    `DOLS` y `DCOVCORR` lo llaman por nombre y no lo encuentran si está en una
-   carpeta hermana (regla de scope, CLAUDE.md §5).
+   carpeta hermana (regla de scope, AGENTS.md §5).
 2. El resto de los `.txt` de esta carpeta, en cualquier orden. Cada uno trae su
    propio `DIR` y cae como subcarpeta.
 3. Los archivos de `datos/` son listas sueltas (sin `DIR`). Se guardan con
@@ -34,7 +34,7 @@ Matemática I está en `../SUITE-MAT1.md`, que también se subordina a CLAUDE.md
    dice **TYPE 9**, Conn4x traduce `\oo` y entonces `DINF` y el global `INF`
    dejan de hacer falta, `\>=`/`\<=` reemplazan al rodeo `< NOT` y `\.S` sirve
    para `AREA`/`IMPR`. Si dice **TYPE 6**, el escape no se tradujo y todo queda
-   como está. Los tres ya funcionan **dentro** de la máquina (CLAUDE.md §2.1);
+   como está. Los tres ya funcionan **dentro** de la máquina (AGENTS.md §2.1);
    lo único que esto prueba es la traducción del archivo de texto.
 
 ## Matemática I
@@ -75,10 +75,10 @@ visibilidad. El razonamiento completo está en `../SUITE-MAT1.md` §3.
 | `DSTATS`, `DPCTIL`, `DMODA`, `DFRECTABLA` | Verificado contra valores de cátedra |
 | `DCOVCORR`, `DOLS` | Verificados; `r` coincide entre ambos (0.9781) |
 | `DHISTO` | Verificado tras corregir bug de bloque huérfano |
-| `DMKT`, `DMKTFISC`, `DCOMPFIRM` | Verificados con casos conocidos (CLAUDE.md §6) |
+| `DMKT`, `DMKTFISC`, `DCOMPFIRM` | Verificados con casos conocidos (AGENTS.md §6) |
 | `DPIBPPA`, `DTCAMBIO`, `DVLRZ` | Verificados |
 | `DBOXPLOT` | Versión de coordenadas reales — **probar de nuevo**, se reescribió después de la última confirmación |
-| `DBOXPLOT` (cuartiles), `DFRECTABLA`/`DHISTO` (automático) (27/09/2026) | Pasaron a los métodos de la cátedra (CLAUDE.md §5). **Solo emulador**: las baterías viejas siguen en verde y hay casos nuevos en `casos-lab2.txt`. **Reemplazar las versiones cargadas en la calculadora** |
+| `DBOXPLOT` (cuartiles), `DFRECTABLA`/`DHISTO` (automático) (27/09/2026) | Pasaron a los métodos de la cátedra (AGENTS.md §5). **Solo emulador**: las baterías viejas siguen en verde y hay casos nuevos en `casos-lab2.txt`. **Reemplazar las versiones cargadas en la calculadora** |
 | `DTROZOS` | Versión con extremos `"<"` / `"<="` — **sin confirmar** en hardware |
 | `DTABLA2`, `DZLISTA`, `DCINCO`, `DPCTIL2`, `DLOOPC`, `DCHEBY`, `DPOND`, `DREAL` (27/09/2026) | **Solo emulador.** Los 8 núcleos, 139 de 139 casos (`harness/casos-lab2.txt` del fork). Las interfaces compilan en la máquina pero no se corrieron: `INFORM` es interactivo. **Sin probar en hardware** |
 | `mat1/`: `TCHK`, `DINF`, `DASHO`, `DCONT`, `DESTFUN` | Corridos. Destaparon y arreglaron los dos bugs del infinito (`../SUITE-MAT1.md` §2) |
@@ -112,9 +112,9 @@ cualquiera de los de `mat1/`, correr `TCHK` en la calculadora (SUITE-MAT1 §2).
 - Los programas de estadística y economía usan `MSGBOX` encadenados (apretar OK
   para avanzar entre cajas).
 
-## Inconsistencia conocida contra CLAUDE.md
+## Inconsistencia conocida contra AGENTS.md
 
-CLAUDE.md §2.5 dice que el default de un campo `INFORM` numérico debe ser un
+AGENTS.md §2.5 dice que el default de un campo `INFORM` numérico debe ser un
 string no vacío como `"0"`, nunca `""`, porque un campo nunca visitado se envía
 con su default literal. **`DPIBPPA.txt` usa `""` en sus tres campos** y sin
 embargo figura como verificado.

@@ -1,7 +1,7 @@
 # armar-mat1.ps1 - empaqueta programas\mat1\*.txt en un unico MAT1.txt
 #
 # Por que: TD y TF referencian TDSEP y TEFUN por nombre global, y entre
-# carpetas hermanas NO hay visibilidad (CLAUDE.md seccion 5). Si cada .txt
+# carpetas hermanas NO hay visibilidad (AGENTS.md seccion 5). Si cada .txt
 # viajara con su propio DIR, cada uno caeria como subcarpeta hermana y los
 # helpers quedarian invisibles. Un unico DIR resuelve eso: una transferencia,
 # una subcarpeta, todos los nombres visibles entre si.

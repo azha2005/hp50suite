@@ -1,15 +1,15 @@
 # Suite RPL — Matemática I (HP 50g)
 
 Extensión de la suite a Matemática I (cátedra Barraza). Cubre el ítem 5 de
-"Programas no hechos" de CLAUDE.md §7.
+"Programas no hechos" de AGENTS.md §7.
 
-**CLAUDE.md manda.** Este archivo no repite sus reglas ni las contradice: solo
+**AGENTS.md manda.** Este archivo no repite sus reglas ni las contradice: solo
 agrega lo propio de Mat1 (trabajo simbólico con el CAS, que el resto de la suite
 no usa) y registra las decisiones que Mat1 obligó a tomar. Ante cualquier
-diferencia entre este documento y CLAUDE.md, vale CLAUDE.md.
+diferencia entre este documento y AGENTS.md, vale AGENTS.md.
 
 Formato de archivo, transferencia por Conn4x, reglas de UserRPL y flujo de
-trabajo: CLAUDE.md §1, §2 y §3. No están duplicadas acá a propósito.
+trabajo: AGENTS.md §1, §2 y §3. No están duplicadas acá a propósito.
 
 ---
 
@@ -68,7 +68,7 @@ generada para transferir (ver §3).
 Parcial 1 está cubierto entero y ya en el estilo de la suite. `LHOP`, `DSEP`,
 `DSEPI` y `LAGR` **también**: se convirtieron a `INFORM` + núcleo `XXXC`. Acá
 había dicho antes que quedaban por pila "a propósito", y no era cierto — este
-mismo archivo decía "falta convertir", y `CLAUDE.md` tiene la decisión tomada de
+mismo archivo decía "falta convertir", y `AGENTS.md` tiene la decisión tomada de
 que todo Matemática I va con formulario. Los 13 programas abren formulario; los
 únicos objetos que entran por pila son los 5 de prueba y los 13 núcleos, que no
 los usa el alumno.
@@ -219,18 +219,18 @@ colapsaría a `0` solo.
 *dibuja* como ∞; el infinito de verdad del CAS es un **algebraico**. `LIMIT`
 sustituía porque recibía un identificador cualquiera.
 
-Esto corrige lo anotado en CLAUDE.md §2.1: `\.oo` transfiere y compila, sí, pero
+Esto corrige lo anotado en AGENTS.md §2.1: `\.oo` transfiere y compila, sí, pero
 **no produce la constante de infinito**. No sirve para trabajo de CAS.
 
 ### El arreglo
 
 La raíz es que el archivo de transferencia debe ser ASCII puro de 7 bits
-(CLAUDE.md §1), así que el carácter ∞ no puede viajar dentro del fuente. Hay que
+(AGENTS.md §1), así que el carácter ∞ no puede viajar dentro del fuente. Hay que
 capturarlo en la máquina.
 
 `programas/DINF.txt`: se le pone el ∞ **del teclado** en el nivel 1 y guarda
 el objeto real en el global **`INF`** (va en `HOME`, por la regla de scope de
-CLAUDE.md §5). Además informa el `TYPE` y el código de carácter del objeto capturado y corre
+AGENTS.md §5). Además informa el `TYPE` y el código de carácter del objeto capturado y corre
 una prueba real de `LIMIT`, así se ve en el acto si el arreglo funciona.
 
 **El infinito entra por la pila, no por `INFORM`.** Pasarlo por un campo de
@@ -347,7 +347,7 @@ Los tres confirmados.
 
 ## 3. Decisión de empaquetado: un solo `DIR`
 
-`TD` y `TF` referencian `TDSEP` y `TEFUN` por nombre global. CLAUDE.md §5 es
+`TD` y `TF` referencian `TDSEP` y `TEFUN` por nombre global. AGENTS.md §5 es
 claro: **entre carpetas hermanas no hay visibilidad**. Si cada `.txt` viajara con
 su propio envoltorio `DIR`, cada uno caería como subcarpeta hermana y los helpers
 quedarían invisibles.
@@ -355,7 +355,7 @@ quedarían invisibles.
 Resolución:
 
 - `programas/mat1/*.txt` son **objetos sueltos, sin envoltorio `DIR`**. Son la
-  fuente de verdad para editar (CLAUDE.md §3.2) y lo que se pasa por
+  fuente de verdad para editar (AGENTS.md §3.2) y lo que se pasa por
   `verificar.ps1`.
 - `programas/armar-mat1.ps1` los empaqueta en **un único `programas/MAT1.txt`**
   con un solo `DIR`. Una transferencia, una subcarpeta, todos los nombres
@@ -380,7 +380,7 @@ por `a-crlf.ps1`.
   maneja expresiones y no números; se descartó. Los programas se usan en un
   parcial, y ahí no se edita código ni se arma la pila a mano: se abre el
   programa y se completan campos.
-  Aplican CLAUDE.md §2.4 (patrón semilla en la concatenación), §2.5 (máximo ~4
+  Aplican AGENTS.md §2.4 (patrón semilla en la concatenación), §2.5 (máximo ~4
   campos, default no vacío, orden de `OBJ\-> DROP`) y §2.6 (máximo 2 líneas por
   caja, sin encabezado decorativo).
   **Falta convertir** `LHOP`, `DSEP`, `DSEPI` y `LAGR`, todos de Parcial 2 y
@@ -392,7 +392,7 @@ por `a-crlf.ps1`.
   vistazo; la pila para verlo entero y para seguir operando con él. Cada
   programa dice en su comentario qué deja y en qué nivel.
 
-- **Los campos de expresión llevan el salvaguarda de CLAUDE.md §2.10**
+- **Los campos de expresión llevan el salvaguarda de AGENTS.md §2.10**
   (`IF DUP TYPE 2 == THEN STR\-> END`), por si el campo devuelve un string en
   vez de un algebraico ya interpretado.
 
@@ -430,11 +430,11 @@ por `a-crlf.ps1`.
 
 - ~~`CONT` puede chocar con el comando de fábrica del mismo nombre~~
   **Resuelto:** se llama `DCONT`. El renombre al prefijo `D` alcanzó, y de paso
-  alineó el nombre con el resto de la suite (CLAUDE.md §5).
+  alineó el nombre con el resto de la suite (AGENTS.md §5).
 
 - **Modo exacto vs. gráficos.** Mat1 necesita modo **exacto** y **Complex
   apagado** (si no, la raíz de un negativo devuelve un complejo y `DDOMP` da por
-  bueno un punto que no lo es). CLAUDE.md §2.7 dice lo contrario para gráficos:
+  bueno un punto que no lo es). AGENTS.md §2.7 dice lo contrario para gráficos:
   literales con punto decimal y `\->NUM` antes de usar un valor como coordenada,
   porque las fracciones exactas dan "BAD ARGUMENT TYPE".
   **Regla de frontera:** exacto adentro, `\->NUM` al salir hacia `PICT`. Todavía
@@ -446,7 +446,7 @@ por `a-crlf.ps1`.
 
 - **`LAGR` asume que `X`, `Y` y `LM` no tienen valor.** Purgarlos antes.
 
-- ⚠️ **`IFERR` no limpia la pila** (CLAUDE.md §2.11, medido en el emulador). En
+- ⚠️ **`IFERR` no limpia la pila** (AGENTS.md §2.11, medido en el emulador). En
   la forma que usa toda la suite —`IFERR ARG1 ARG2 COMANDO THEN "FALLO" END`— si
   el comando falla, los argumentos **se quedan apilados**. Donde sigue un
   `'VAR' STO` es solo suciedad; donde sigue una concatenación con `+` sale texto
@@ -545,7 +545,7 @@ bordes de `LN` y raíces) y decide cada uno con **límites laterales** (`DCONTFC
 `DASVC` queda de control: si el sondeo numérico y el CAS no coinciden, avisa.
 Escribir f **sin simplificar**: `(X-3)/(X^2-9)` da candidatos −3 y 3, y solo −3
 es asíntota (el 3 es evitable). **Abre el diálogo "Unsigned inf. Solve?"**
-una vez por lado de cada polo (`CLAUDE.md` §2.12): apretar OK. La respuesta
+una vez por lado de cada polo (`AGENTS.md` §2.12): apretar OK. La respuesta
 es correcta contestando YES o NO; medido en el emulador.
 
 `DCERO` es el par de `DOPFUN` para los ceros. Operación `0` = f sola, `1` = f/g,
@@ -622,7 +622,7 @@ teclado:
 ```
 
 Lo que destapó en las primeras corridas está en §5 (el `IFERR` y el diálogo del
-CAS) y en CLAUDE.md §2.1 (el infinito en el fuente funciona; `\>=`, `\<=` y `\.S`
+CAS) y en AGENTS.md §2.1 (el infinito en el fuente funciona; `\>=`, `\<=` y `\.S`
 también). **Prueba la capa de cálculo, no los formularios**: `INFORM` es
 interactivo por definición. No es grave — los tres bugs que aparecieron en
 hardware estaban todos en la capa de cálculo.
@@ -691,7 +691,7 @@ no sirve para este camino. Por eso hay un empaquetado aparte:
 
 `MAT1-EMU.txt` es un **programa instalador**: cada cuerpo va como literal
 `\<< ... \>>` seguido de `'NOMBRE' STO`. Ese `\<<` huérfano es deliberado —
-CLAUDE.md §2.2 dice que un `\<<` sin `\->` adelante se empuja como dato inerte,
+AGENTS.md §2.2 dice que un `\<<` sin `\->` adelante se empuja como dato inerte,
 que es exactamente lo que hace falta antes del `STO`. Por eso `verificar.ps1` le
 marca 17 huérfanos: **es salida generada, verificar la fuente en `mat1/`.**
 
@@ -804,7 +804,7 @@ Dos trampas medidas antes de escribirlo (`harness/casos-lateral.txt`):
 
 - **El CAS ignora el dominio en los laterales**: `'\v/X' 'X=0-0' LIMIT` da `0`.
   El lado fuera del dominio se reconoce porque el sondeo numérico en a−1e-6
-  devuelve un complejo (§2.14 de CLAUDE.md: por `TYPE`).
+  devuelve un complejo (§2.14 de AGENTS.md: por `TYPE`).
 - **f(a) fuera del dominio no da error**: `0/0` da `'?'` y `1/0` da `'∞'`. Se
   decide por el texto (159 y `?`) y la magnitud, no con `IFERR`.
 

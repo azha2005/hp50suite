@@ -23,7 +23,7 @@
   @ infinito se detecta por su caracter (ver abajo), no comparando.
   \-> FI0 FD0 A
   \<<
-    @ Guardian de profundidad (CLAUDE.md 2.11): IFERR no limpia la pila,
+    @ Guardian de profundidad (AGENTS.md 2.11): IFERR no limpia la pila,
     @ asi que los argumentos de un comando que fallo quedan apilados.
     @ Se anota la profundidad al entrar y se tira lo que sobre al salir.
     DEPTH \-> D0

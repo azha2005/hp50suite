@@ -79,7 +79,7 @@
                 CD k GET 'C' STO
                 @ El IF NO es decorativo: protege al FOR de quedar con
                 @ inicio > fin. Un FOR asi EJECUTA UNA VEZ igual (medido en
-                @ harness/casos-ruf4.txt; CLAUDE.md 2.7 decia lo contrario y
+                @ harness/casos-ruf4.txt; AGENTS.md 2.7 decia lo contrario y
                 @ estaba mal), y con CF de un solo elemento el cuerpo hacia
                 @ CF 2 GET, fuera de rango. Ese era el ERROR que aparecia
                 @ recien con la SEGUNDA raiz, cuando CF se reducia a { 1 }.
@@ -111,7 +111,7 @@
               @ ---- la factorizacion escrita ----
               @ ---- la factorizacion escrita ----
               @ \->STR de un algebraico viene CON las comillas simples
-              @ (CLAUDE.md 2.1, lo mismo que pasaba con '+oo'), asi que hay
+              @ (AGENTS.md 2.1, lo mismo que pasaba con '+oo'), asi que hay
               @ que sacarlas o la caja muestra (X-'1/2').
               IF RA SIZE 0 ==
               THEN

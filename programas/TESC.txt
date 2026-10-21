@@ -3,7 +3,7 @@
   @ TESC - prueba la TRADUCCION DE ESCAPES de la transferencia.
   @
   @ Los tres escapes ya se probaron adentro de la maquina y funcionan
-  @ (ver CLAUDE.md 2.1): el caracter infinito da TYPE 9 y LIMIT calcula,
+  @ (ver AGENTS.md 2.1): el caracter infinito da TYPE 9 y LIMIT calcula,
   @ >= y <= son comandos de pila, y la integral definida toma 4 args.
   @ Lo unico que falta saber es si Conn4x traduce las grafias \oo, \>=,
   @ \<= y \.S de este archivo a los caracteres 159, 138, 137 y 132.

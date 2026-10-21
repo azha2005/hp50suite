@@ -4,7 +4,7 @@
   @ INF, para que DASHO, DESTFUN y DCONT lo usen.
   @
   @ Por que hace falta: el archivo de transferencia tiene que ser
-  @ ASCII puro de 7 bits (CLAUDE.md 1), asi que el caracter infinito
+  @ ASCII puro de 7 bits (AGENTS.md 1), asi que el caracter infinito
   @ no puede viajar dentro del fuente. El escape \.oo parecia la
   @ solucion pero produce un NOMBRE GLOBAL (TYPE 6) que solo se
   @ dibuja como infinito; el de verdad es un ALGEBRAICO (TYPE 9).
@@ -12,7 +12,7 @@
   @
   @ USO: poner el simbolo infinito DEL TECLADO en el nivel 1 de la
   @ pila, y recien ahi correr DINF. Guardar DINF en HOME para que
-  @ INF se vea desde cualquier subcarpeta (CLAUDE.md 5).
+  @ INF se vea desde cualquier subcarpeta (AGENTS.md 5).
   @
   @ NO toma el infinito por INFORM a proposito: pasarlo por un campo
   @ de texto obligaria a un STR\-> que lo devolveria como nombre,

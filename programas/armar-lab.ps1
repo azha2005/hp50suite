@@ -6,7 +6,7 @@
 # ven entre si, asi que DOLS y DCOVCORR encuentran a SIGFIG, y cada
 # interfaz encuentra a su nucleo. Con una transferencia por programa,
 # cada uno caeria en su propia subcarpeta y entre carpetas hermanas NO hay
-# visibilidad (CLAUDE.md seccion 5): por eso antes SIGFIG TENIA que estar
+# visibilidad (AGENTS.md seccion 5): por eso antes SIGFIG TENIA que estar
 # en HOME. Empaquetado, esa restriccion desaparece.
 #
 # Si SIGFIG falta, DOLS no da error: deja el nombre 'SIGFIG' SIN EVALUAR en

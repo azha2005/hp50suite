@@ -262,7 +262,7 @@
     @ infinito se detecta por su caracter (ver abajo), no comparando.
     \-> FI0 FD0 A
     \<<
-      @ Guardian de profundidad (CLAUDE.md 2.11): IFERR no limpia la pila,
+      @ Guardian de profundidad (AGENTS.md 2.11): IFERR no limpia la pila,
       @ asi que los argumentos de un comando que fallo quedan apilados.
       @ Se anota la profundidad al entrar y se tira lo que sobre al salir.
       DEPTH \-> D0
@@ -386,13 +386,13 @@
     @    texto.
     @  - El CAS ignora el dominio: \v/X en 0-0 da 0. Un lateral fuera del
     @    dominio se detecta con el sondeo numerico en a -/+ 1e-6, que ahi
-    @    devuelve un complejo (CLAUDE.md 2.14: decidir por TYPE).
+    @    devuelve un complejo (AGENTS.md 2.14: decidir por TYPE).
     @  - f(a) fuera del dominio NO da error: 0/0 da '?', 1/0 da 'oo' (y
     @    9.99999999999E499 con \->NUM). Se decide por el caracter 159,
     @    por el "?" y por la magnitud, no con IFERR.
     @  - 'SIN(1/X)' en 0+0 da '?': lateral que no existe.
     @
-    @ Cada IFERR lleva su guardian de profundidad (CLAUDE.md 2.11): los
+    @ Cada IFERR lleva su guardian de profundidad (AGENTS.md 2.11): los
     @ laterales se acumulan en la pila y un argumento que quedara de un
     @ comando fallido correria todo.
     \-> F0 A
@@ -1240,7 +1240,7 @@
     @ lo que el profesor quiere ver escrito, y automatizarla en RPL no
     @ termina nunca. Entras con M(Y) y N(X) ya separadas.
     @
-    @ Guardian de profundidad (CLAUDE.md 2.11): IFERR no limpia la pila, y
+    @ Guardian de profundidad (AGENTS.md 2.11): IFERR no limpia la pila, y
     @ este era el caso PEOR de la suite -- si una primitiva fallaba, los
     @ argumentos quedaban apilados y el `=` final armaba la ecuacion con la
     @ basura, devolviendo una respuesta equivocada SIN avisar.
@@ -1317,7 +1317,7 @@
     @ tuvieras guardado ahi. Si el CAS no puede evaluar en el punto, deja
     @ 'C' simbolica.
     @
-    @ Guardian de profundidad (CLAUDE.md 2.11), por el mismo motivo que
+    @ Guardian de profundidad (AGENTS.md 2.11), por el mismo motivo que
     @ DSEPC: sin el, una primitiva que falla hace que el `=` final arme la
     @ ecuacion con basura y devuelva una respuesta equivocada sin avisar.
     \-> MY0 NX0 X0 Y0
@@ -1542,7 +1542,7 @@
                   CD k GET 'C' STO
                   @ El IF NO es decorativo: protege al FOR de quedar con
                   @ inicio > fin. Un FOR asi EJECUTA UNA VEZ igual (medido en
-                  @ harness/casos-ruf4.txt; CLAUDE.md 2.7 decia lo contrario y
+                  @ harness/casos-ruf4.txt; AGENTS.md 2.7 decia lo contrario y
                   @ estaba mal), y con CF de un solo elemento el cuerpo hacia
                   @ CF 2 GET, fuera de rango. Ese era el ERROR que aparecia
                   @ recien con la SEGUNDA raiz, cuando CF se reducia a { 1 }.
@@ -1574,7 +1574,7 @@
                 @ ---- la factorizacion escrita ----
                 @ ---- la factorizacion escrita ----
                 @ \->STR de un algebraico viene CON las comillas simples
-                @ (CLAUDE.md 2.1, lo mismo que pasaba con '+oo'), asi que hay
+                @ (AGENTS.md 2.1, lo mismo que pasaba con '+oo'), asi que hay
                 @ que sacarlas o la caja muestra (X-'1/2').
                 IF RA SIZE 0 ==
                 THEN
@@ -1952,7 +1952,7 @@
     @   -> -2/(TAN(X/2)+1).
     @
     @ RISCH NO falla cuando no hay primitiva elemental: devuelve un
-    @ 'INT(...)' sin evaluar (CLAUDE.md 2.17), asi que el IFERR no alcanza
+    @ 'INT(...)' sin evaluar (AGENTS.md 2.17), asi que el IFERR no alcanza
     @ y hay que buscar "INT(" en el texto.
     @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DWSUS.
     \-> F0
@@ -2130,9 +2130,9 @@
     @
     @ Cuenta como que NO cumple (medido, casos-p1sonda*.txt):
     @  - un resultado complejo: \v/ o LN de un negativo dan TYPE 1 aun con
-    @    el modo Complex apagado (CLAUDE.md 2.14: decidir por TYPE);
+    @    el modo Complex apagado (AGENTS.md 2.14: decidir por TYPE);
     @  - un error: LN(0) da ERROR, y 0/0 da '?' que \->NUM no convierte;
-    @  - una magnitud absurda: 1/0 da 9.99E499 sin error (CLAUDE.md 2.19).
+    @  - una magnitud absurda: 1/0 da 9.99E499 sin error (AGENTS.md 2.19).
     @ Cero es |G| < 1E-9, porque en un punto exacto irracional el \->NUM
     @ puede dejar un residuo de redondeo.
     \-> CL X0
@@ -2213,7 +2213,7 @@
     @  3. Control: se sondean 31 puntos y se comparan contra la tabla. Si
     @     ZEROS se salteo un punto critico, la tabla miente y el sondeo lo
     @     ve. Un resultado prolijo y equivocado es el peor caso de esta
-    @     suite (CLAUDE.md 2.1, 2.17); por eso el control.
+    @     suite (AGENTS.md 2.1, 2.17); por eso el control.
     @
     @ Por que no SOLVE: medido (casos-p1sonda2.txt), '(X+1)/(X-2)>=0'
     @ 'X' SOLVE da 'X<=-1 OR X>=2', con el 2 adentro, donde el denominador
@@ -2731,7 +2731,7 @@
         \<<
           F R DDOMC OBJ\-> DROP \-> TXT CSTR PES MSG TXT2
           \<<
-            @ Las condiciones de a dos por caja (CLAUDE.md 2.6).
+            @ Las condiciones de a dos por caja (AGENTS.md 2.6).
             IF CSTR SIZE 0 ==
             THEN "Sin condiciones:" 10 CHR + "vale para todo X" + MSGBOX
             ELSE
@@ -2910,7 +2910,7 @@
     @   A, B = extremos del dominio. Un extremo infinito se acepta como el
     @          infinito del CAS (con o sin signo) o como el nombre o string
     @          INF / -INF. Se decide por \->STR: contiene "INF" o el
-    @          caracter 159 (CLAUDE.md 2.1); el signo, por un "-".
+    @          caracter 159 (AGENTS.md 2.1); el signo, por un "-".
     @ Deja: n1 = { FINV IMA IMB CA CB MSG }
     @   FINV = f^-1 como expresion en X. "NO DESPEJO" si ninguna solucion
     @          del CAS vuelve al dominio; "-" si f no es inyectiva.
@@ -2928,7 +2928,7 @@
     @
     @ Como decide cada cosa:
     @  - Inyectividad: ceros reales de f' (DERIV + ZEROS, normalizado a
-    @    lista, CLAUDE.md 2.19) estrictamente adentro de (A,B). Un cero
+    @    lista, AGENTS.md 2.19) estrictamente adentro de (A,B). Un cero
     @    cuenta solo si f da la vuelta ahi: f(z-h)-f(z) y f(z+h)-f(z) con
     @    el mismo signo. Asi X^3 en 0 no se toma como no inyectiva.
     @    Tambien son candidatos los ceros del argumento de cada ABS( (la
@@ -2937,7 +2937,7 @@
     @  - Sentido: signo de f(XI+h)-f(XI) en un punto interior XI.
     @  - Extremo finito de la imagen: f en el extremo del dominio. Si f esta
     @    definida ahi (real finito: TYPE, caracter 159, '?' y magnitud;
-    @    CLAUDE.md 2.14 y 2.19) el extremo es cerrado. Si no, limite
+    @    AGENTS.md 2.14 y 2.19) el extremo es cerrado. Si no, limite
     @    LATERAL ('X=a+0' / 'X=b-0', armado como texto con STR\->, como
     @    DCONTFC) y el extremo es abierto.
     @  - Extremo infinito del dominio: LIMIT en el infinito, abierto.
@@ -3499,7 +3499,7 @@
             "'X=" ASZ + "+0'" + STR\->
             \-> EQIZ EQDZ
             \<<
-              @ Laterales, cada uno con su guardian (CLAUDE.md 2.11).
+              @ Laterales, cada uno con su guardian (AGENTS.md 2.11).
               DEPTH \-> D1
               \<<
                 IFERR FIZ EQIZ LIMIT IF DUP TYPE 12 == THEN DTAG END THEN "ERR" END
@@ -3516,7 +3516,7 @@
                   LIZ TYPE 2 == LDZ TYPE 2 == OR
                   THEN { } "EL CAS NO PUDO"
                   END
-                  @ Infinito por el caracter 159 (CLAUDE.md 2.1), no con SAME.
+                  @ Infinito por el caracter 159 (AGENTS.md 2.1), no con SAME.
                   LIZ \->STR 159 CHR POS LDZ \->STR 159 CHR POS + 0 >
                   THEN { } "LIMITE INFINITO"
                   END
@@ -3539,7 +3539,7 @@
                       { } { }
                       \-> LSZ VSZ OKZ
                       \<<
-                        @ FOR corre al menos una vez (CLAUDE.md 2.7).
+                        @ FOR corre al menos una vez (AGENTS.md 2.7).
                         IF LSZ SIZE 0 >
                         THEN
                           1 LSZ SIZE
@@ -3917,7 +3917,7 @@
     @
     @ Quien decide: DCONTFC, veredicto K=4 (algun lateral infinito).
     @ Usa los laterales del CAS 'X=a-0' / 'X=a+0', e ignora el lado que
-    @ queda fuera del dominio (ahi el sondeo da complejo, CLAUDE.md 2.14).
+    @ queda fuera del dominio (ahi el sondeo da complejo, AGENTS.md 2.14).
     @ Por que no DASVC solo: sondea en a +/- 1e-6 con umbral 1e5, y eso
     @ no alcanza para una singularidad lenta. LN(X) en 0+1e-6 da -13.8, y
     @ 1/\v/(X-1) en 1+1e-6 da 1000: DASVC diria SIN ASINTOTA en los dos.
@@ -3936,9 +3936,9 @@
     @ ABS sin mirar el TYPE. Con \v/(X-1) no muerde (modulo 1e-3), pero
     @ asi no depende de eso.
     @
-    @ Cada llamada lleva su IFERR con guardian de profundidad (CLAUDE.md
+    @ Cada llamada lleva su IFERR con guardian de profundidad (AGENTS.md
     @ 2.11), y el FOR va envuelto en IF porque CAND puede venir vacio
-    @ (f polinomio) y el FOR corre una vez igual (CLAUDE.md 2.7).
+    @ (f polinomio) y el FOR corre una vez igual (AGENTS.md 2.7).
     \-> F0
     \<<
       DEPTH \-> D0
@@ -4112,7 +4112,7 @@
     @  1. Candidatos. ZEROS sobre H sola no alcanza: el CAS simplifica
     @     por dentro y (X^2-9)/(X-3) le da -3, sin el 3 que hay que
     @     descartar. Por eso se recorre el arbol desde arriba (OBJ\->,
-    @     CLAUDE.md 2.20, igual que DCONDC) y se buscan los ceros de cada
+    @     AGENTS.md 2.20, igual que DCONDC) y se buscan los ceros de cada
     @     FACTOR: de un cociente el numerador, de un producto los dos
     @     factores, de un NEG o una raiz su argumento (\v/g = 0 <=> g = 0).
     @     Lo demas (una suma, un LN, una potencia) es un factor entero y va

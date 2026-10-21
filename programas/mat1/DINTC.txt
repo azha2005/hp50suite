@@ -25,7 +25,7 @@
   @  3. Control: se sondean 31 puntos y se comparan contra la tabla. Si
   @     ZEROS se salteo un punto critico, la tabla miente y el sondeo lo
   @     ve. Un resultado prolijo y equivocado es el peor caso de esta
-  @     suite (CLAUDE.md 2.1, 2.17); por eso el control.
+  @     suite (AGENTS.md 2.1, 2.17); por eso el control.
   @
   @ Por que no SOLVE: medido (casos-p1sonda2.txt), '(X+1)/(X-2)>=0'
   @ 'X' SOLVE da 'X<=-1 OR X>=2', con el 2 adentro, donde el denominador

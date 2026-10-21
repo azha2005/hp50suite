@@ -21,7 +21,7 @@
   @ modo exacto 10/100 daria la fraccion 1/10 y el valor se volveria
   @ simbolico. Los contadores arrancan en 0. por lo mismo: un ZINT en la
   @ matriz la volveria TYPE 29.
-  @ La condicion se evalua con < y > NOT, sin >= ni <= (CLAUDE.md 2.1).
+  @ La condicion se evalua con < y > NOT, sin >= ni <= (AGENTS.md 2.1).
   @ Las filas se apilan en vez de concatenarse a una lista: con 500
   @ vueltas, agregar a una lista que crece seria cuadratico.
   @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DLOOPC.

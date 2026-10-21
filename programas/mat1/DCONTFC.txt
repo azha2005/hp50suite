@@ -25,13 +25,13 @@
   @    texto.
   @  - El CAS ignora el dominio: \v/X en 0-0 da 0. Un lateral fuera del
   @    dominio se detecta con el sondeo numerico en a -/+ 1e-6, que ahi
-  @    devuelve un complejo (CLAUDE.md 2.14: decidir por TYPE).
+  @    devuelve un complejo (AGENTS.md 2.14: decidir por TYPE).
   @  - f(a) fuera del dominio NO da error: 0/0 da '?', 1/0 da 'oo' (y
   @    9.99999999999E499 con \->NUM). Se decide por el caracter 159,
   @    por el "?" y por la magnitud, no con IFERR.
   @  - 'SIN(1/X)' en 0+0 da '?': lateral que no existe.
   @
-  @ Cada IFERR lleva su guardian de profundidad (CLAUDE.md 2.11): los
+  @ Cada IFERR lleva su guardian de profundidad (AGENTS.md 2.11): los
   @ laterales se acumulan en la pila y un argumento que quedara de un
   @ comando fallido correria todo.
   \-> F0 A

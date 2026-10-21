@@ -21,7 +21,7 @@
         1 'CURFREQ' STO
         @ El IF protege al FOR de quedar con inicio > fin: con un solo
         @ dato, 2 N FOR EJECUTA UNA VEZ igual (medido en
-        @ harness/casos-ruf4.txt; CLAUDE.md 2.7 afirmaba lo contrario) y
+        @ harness/casos-ruf4.txt; AGENTS.md 2.7 afirmaba lo contrario) y
         @ el cuerpo pedia L 2 GET, fuera de rango. La racha unica la
         @ cierra igual el bloque de abajo, que corre siempre.
         IF N 1 >

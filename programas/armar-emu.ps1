@@ -8,7 +8,7 @@
 # ASCIIBIN falla a veces con directorios, asi que este empaquetado NO usa DIR:
 # genera un unico PROGRAMA que, al evaluarse, crea los 17 globales. Cada cuerpo
 # va como literal \<< ... \>> seguido de 'NOMBRE' STO. Ese \<< huerfano es
-# deliberado: CLAUDE.md 2.2 dice que un \<< sin \-> adelante se empuja a la pila
+# deliberado: AGENTS.md 2.2 dice que un \<< sin \-> adelante se empuja a la pila
 # como dato inerte, que es exactamente lo que hace falta antes del STO.
 #
 # Resultado: un Load Object + un ASCIIBIN + un EVAL, en vez de 17 ciclos.

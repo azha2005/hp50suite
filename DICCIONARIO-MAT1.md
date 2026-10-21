@@ -272,5 +272,5 @@ Los núcleos se prueban con las baterías del fork
 (`harness/casos-*.txt`); las interfaces solo se pueden probar con
 `harness/pantallas-ui.ps1`, que maneja el formulario con teclas y saca fotos.
 Detalle técnico y estado de cada programa en `SUITE-MAT1.md`; reglas de
-UserRPL en `CLAUDE.md`. Este archivo es para **usar** la suite: si un ejemplo
+UserRPL en `AGENTS.md`. Este archivo es para **usar** la suite: si un ejemplo
 de acá deja de dar lo que dice, el que está mal es el programa.

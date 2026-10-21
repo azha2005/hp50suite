@@ -110,7 +110,7 @@ function Test-ArchivoRPL {
         }
     }
     #    >= y <= sueltos no existen; las formas con escape \>= y \<= si son
-    #    validas (aparecen en codigo de terceros que funciona, ver CLAUDE.md
+    #    validas (aparecen en codigo de terceros que funciona, ver AGENTS.md
     #    2.1). El lookbehind deja pasar solo las escapadas.
     foreach ($cmp in @('>=', '<=')) {
         if ($codigoSinStr -match ('(?<!\\)' + [regex]::Escape($cmp))) {
