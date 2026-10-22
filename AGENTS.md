@@ -5,6 +5,10 @@ UserRPL para una calculadora **HP 50g real** (no emulador), usada en las materia
 **Laboratorio de Datos** y **Microeconomía I** (Lic. en Economía, FCE-UNLP), con
 extensión planificada a **Matemática I**.
 
+Para instalar y probar la distribución actual, empezar por
+[INICIO-RAPIDO.md](INICIO-RAPIDO.md). Para enviar reportes o cambios, consultar
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 **Entorno de trabajo: Windows.** Los scripts auxiliares están en PowerShell
 (`programas/verificar.ps1`, `programas/a-crlf.ps1`).
 

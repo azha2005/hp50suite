@@ -1,5 +1,9 @@
 # Suite RPL — Matemática I (HP 50g)
 
+Para empezar a usar los programas, consultar la [guía de instalación](INICIO-RAPIDO.md)
+y el [diccionario con ejemplos](DICCIONARIO-MAT1.md). Este documento conserva
+el detalle técnico y el historial de pruebas de Matemática I.
+
 Extensión de la suite a Matemática I (cátedra Barraza). Cubre el ítem 5 de
 "Programas no hechos" de AGENTS.md §7.
 

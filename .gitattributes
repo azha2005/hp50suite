@@ -1,4 +1,5 @@
 # Los .txt de programas son formato de transferencia HP: CRLF obligatorio
 # (AGENTS.md seccion 1). Git NO debe tocarles las terminaciones de linea.
 *.txt -text
+# La documentacion usa LF; esta regla no afecta los objetos de transferencia.
 *.md  text eol=lf

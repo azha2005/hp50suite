@@ -1,5 +1,9 @@
 # Diccionario de programas — Laboratorio de Datos (y Micro I)
 
+[Primera prueba e instalación](INICIO-RAPIDO.md) ·
+[Descargas](https://github.com/azha2005/hp50suite/releases) ·
+[Reportar una prueba](https://github.com/azha2005/hp50suite/issues/new?template=prueba.yml)
+
 Referencia rápida para usar la suite en la HP 50g. Todos se corren desde la
 carpeta donde se cargaron (`LAB.txt` los deja juntos en un mismo `DIR`).
 Piden los datos con un formulario (`INFORM`) y muestran el resultado en cajas
