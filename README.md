@@ -85,6 +85,12 @@ running the ROM test batteries separately requires the setup in `harness/`.
 | Real hardware | the older programs, yes; the latest ones only in the emulator |
 | Pending | macroeconomic model, monopoly, Cobb-Douglas, nonlinear fitting, area between curves, improper integrals |
 
+## Contributing / Contribuir
+
+HP 50g owners can help by trying a worked example and reporting the result.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for testing and code contributions
+(English and Spanish).
+
 ## Credits
 
 `Graf/` holds a third-party graphing suite (author `au777fait@gmail.com`), kept
