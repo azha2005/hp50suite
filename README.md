@@ -1,5 +1,11 @@
 # hp50suite
 
+[![Format and distribution](https://github.com/azha2005/hp50suite/actions/workflows/verificar.yml/badge.svg)](https://github.com/azha2005/hp50suite/actions/workflows/verificar.yml)
+
+**[Download / Descargar](https://github.com/azha2005/hp50suite/releases/latest/download/hp50suite.zip)** ·
+[Releases](https://github.com/azha2005/hp50suite/releases) ·
+[First run / Primera prueba](INICIO-RAPIDO.md)
+
 **English** · [Español](#español)
 
 **UserRPL programs for the HP 50g that solve university exercises the way the
@@ -33,6 +39,9 @@ Full reference, with a worked example for each program (in Spanish):
 
 ## Install
 
+Start with the [Spanish/English first-run guide](INICIO-RAPIDO.md), including
+a small example with expected results. [Report a test or a bug](https://github.com/azha2005/hp50suite/issues/new?template=prueba.yml).
+
 1. Install [Conn4x](https://www.hpcalc.org/) and connect the 50g over USB.
 2. Send `programas/LAB.txt` (statistics and economics) and/or
    `programas/MAT1.txt` (calculus). Each one arrives as a single folder holding
@@ -44,6 +53,11 @@ Full reference, with a worked example for each program (in Spanish):
 for asymptotes, and how to load single programs.
 
 ## How it is built
+
+`./herramientas/preparar-release.ps1` checks sources, rebuilds the compact
+packages and creates `dist/hp50suite.zip` with guides, license and SHA256 hashes.
+The GitHub Actions workflow performs these **static and packaging checks**;
+running the ROM test batteries separately requires the setup in `harness/`.
 
 - **A calculation core and an interface for each program.** `DSTATSC`
   computes and `DSTATS` shows the form and the boxes. The core goes in and out
@@ -101,6 +115,8 @@ resultados coinciden con los de la cátedra.
   Cada uno llega como una carpeta con todos los programas adentro. Los datos de
   la cátedra están en `programas/datos/`. El detalle está en
   [`programas/README.md`](programas/README.md).
+- **Primera prueba:** [guía breve con resultados esperados](INICIO-RAPIDO.md).
+  Para contar cómo salió, [abrir un reporte](https://github.com/azha2005/hp50suite/issues/new?template=prueba.yml).
 - **Usar:** cada programa pide sus datos en un formulario y responde en cajas.
   Apretar OK para pasar de una caja a la siguiente.
 - **Ojo:** está probado en un emulador con la ROM de la 50g, que no es la

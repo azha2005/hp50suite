@@ -1,0 +1,32 @@
+name: Prueba de usuario / User test
+description: Contar una prueba real, exitosa o fallida / Report a successful or failed test
+title: '[Prueba] '
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version o commit / Version or commit
+      description: Enlace a la descarga o commit probado / Link to the download or tested commit
+    validations:
+      required: true
+  - type: input
+    id: entorno
+    attributes:
+      label: Modelo y entorno / Model and environment
+      placeholder: HP 50g real + Conn4x, o Emu48 + ROM 50g
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Programa y datos / Program and inputs
+      description: Incluir pasos, modos relevantes y datos reproducibles / Include steps, relevant modes and reproducible inputs
+    validations:
+      required: true
+  - type: textarea
+    id: resultado
+    attributes:
+      label: Esperado y obtenido / Expected and actual result
+      description: Tambien sirve confirmar que funciono. Foto opcional sin datos personales. / Successful tests welcome; optional photo without personal data.
+    validations:
+      required: true

@@ -10,6 +10,11 @@ Matemática I está en `../SUITE-MAT1.md`, que también se subordina a AGENTS.md
 
 ## Orden de carga (importante)
 
+**Instalación recomendada para empezar:** usar los paquetes compactos `LAB.txt`
+y/o `MAT1.txt`, siguiendo [la guía de primera prueba](../INICIO-RAPIDO.md).
+LAB ya incluye SIGFIG y sus datasets. El orden siguiente describe la carga de
+archivos individuales y la configuración de INF para Matemática I.
+
 1. **`SIGFIG.txt` primero, y guardarlo en `HOME`** (no dentro de una subcarpeta).
    No tiene envoltorio `DIR` a propósito: se guarda con `'SIGFIG' STO` en HOME.
    `DOLS` y `DCOVCORR` lo llaman por nombre y no lo encuentran si está en una

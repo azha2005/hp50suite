@@ -19,6 +19,7 @@ function Test-ArchivoRPL {
 
     if (-not (Test-Path $Ruta)) {
         Write-Host "NO EXISTE: $Ruta" -ForegroundColor Red
+        $script:fallos++
         return
     }
 
@@ -162,10 +163,12 @@ function Test-ArchivoRPL {
         Write-Host ("{0,-20} OK   (depth max {1}, {2}/{3} bloques, {4} FOR, {5} IFERR)" -f $nombre, $maxd, $ab, $ce, $for, $nIfErr) -ForegroundColor Green
     } else {
         Write-Host ("{0,-20} PROBLEMAS:" -f $nombre) -ForegroundColor Red
+        $script:fallos++
         foreach ($p in $problemas) { Write-Host "    - $p" -ForegroundColor Yellow }
     }
 }
 
+$script:fallos = 0
 foreach ($patron in $Archivos) {
     $encontrados = Get-ChildItem -Path $patron -ErrorAction SilentlyContinue
     if ($encontrados) {
@@ -174,3 +177,5 @@ foreach ($patron in $Archivos) {
         Test-ArchivoRPL $patron
     }
 }
+if ($script:fallos -gt 0) { exit 1 }
+exit 0

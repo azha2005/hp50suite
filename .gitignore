@@ -7,3 +7,4 @@ harness/*.bin
 harness/fuente-*.json
 harness/pantallas/
 __pycache__/
+dist/

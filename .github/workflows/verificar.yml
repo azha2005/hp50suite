@@ -1,0 +1,20 @@
+name: Format and distribution
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  distribution:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check sources and build distribution (no ROM)
+        shell: pwsh
+        run: ./herramientas/preparar-release.ps1
+      - name: Check generated packages match the committed sources
+        shell: pwsh
+        run: git diff --exit-code -- programas/LAB.txt programas/MAT1.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hp50suite-distribution
+          path: dist/*
+          if-no-files-found: error
