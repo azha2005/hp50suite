@@ -26,7 +26,7 @@ Conn4x. Nothing to compile and nothing to install on the PC.
 | Descriptive statistics | 12 | mean/variance/CV, mode, percentiles (three methods), frequency table, histogram, boxplot, z-scores, Chebyshev, weighted mean |
 | Two variables | 3 | covariance and Pearson's r with scatter plot, OLS regression, deviation table with column sums |
 | Economics | 6 | market equilibrium, taxes and subsidies (incidence, deadweight loss, price controls), the competitive firm, PPP GDP, CAGR, real variation |
-| Calculus I | 25 | domain, inequalities, inverse functions, parity, continuity, asymptotes, derivative by definition, tangent and normal lines, Ruffini, Bolzano (bisection), Weierstrass, l'Hôpital, separable ODEs, Lagrange multipliers |
+| Calculus I | 30 | domain, inequalities, inverse functions, parity, continuity, asymptotes, derivative by definition, tangent and normal lines, implicit derivatives, Ruffini, Bolzano (bisection), Weierstrass, l'Hôpital, integrals, definite integrals, area between curves, separable ODEs, Lagrange multipliers |
 | Other | 2 | step through a `while` loop (exam question), plot a piecewise function |
 
 Each program asks for its inputs with an `INFORM` form and answers in
@@ -83,7 +83,7 @@ running the ROM test batteries separately requires the setup in `harness/`.
 | Statistics and economics | 259 cases passing in the emulator |
 | Calculus I | every program has an emulator test battery |
 | Real hardware | the older programs, yes; the latest ones only in the emulator |
-| Pending | macroeconomic model, monopoly, Cobb-Douglas, nonlinear fitting, area between curves, improper integrals |
+| Pending | macroeconomic model, monopoly, Cobb-Douglas, nonlinear fitting, improper integrals |
 
 ## Contributing / Contribuir
 
