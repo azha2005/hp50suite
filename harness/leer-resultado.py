@@ -16,6 +16,8 @@ abierto.
 import os
 import re
 import sys
+import json
+from bateria import comparar
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "..", "herramientas"))
@@ -73,7 +75,7 @@ def extraer_strings(data):
         L.nib = nib
         try:
             fin = L.objeto(0, 0)
-        except IndexError:
+        except (IndexError, ValueError):
             continue
         # El objeto se rellena a byte par, asi que puede sobrar un nibble.
         if fin < len(nib) - 1:
@@ -129,9 +131,12 @@ def main():
         print(__doc__)
         return 1
     binario = sys.argv[1]
-    casos = leer_casos(sys.argv[2] if len(sys.argv) > 2
+    meta = None
+    if "--meta" in sys.argv:
+        meta = json.load(open(sys.argv[sys.argv.index("--meta") + 1], encoding="ascii"))
+    casos = ([(c["nombre"], c["esperado"]) for c in meta["casos"]] if meta else leer_casos(sys.argv[2] if len(sys.argv) > 2
                        else os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                         "casos.txt"))
+                                         "casos.txt")))
     data = open(binario, "rb").read()
     obtenidos, salto = extraer_strings(data)
     if obtenidos is None:
@@ -139,30 +144,27 @@ def main():
         print("Probe los desplazamientos 0, 4 y 8. Primeros bytes: %r" % data[:16])
         return 1
 
+    if "--comprobar-fin" in sys.argv:
+        return 0 if meta and obtenidos and obtenidos[-1] == meta["marca"] else 2
+    try:
+        valores = comparar(obtenidos, casos, meta["marca"] if meta else None)
+    except ValueError as error:
+        print(str(error))
+        return 1
+
     print("Decodificado con desplazamiento %d: %d resultados, %d casos.\n"
-          % (salto, len(obtenidos), len(casos)))
+          % (salto, len(valores), len(casos)))
     print("%-16s %-28s %-28s %s" % ("CASO", "ESPERADO", "OBTENIDO", ""))
     print("-" * 82)
-    # Si los resultados vienen etiquetados ("NOMBRE|valor"), se emparejan por
-    # nombre; si no, por posicion, que es fragil pero sirve para baterias viejas.
-    porNombre = {}
-    for r in obtenidos:
-        if "|" in r:
-            k, v = r.split("|", 1)
-            porNombre[k.strip()] = v.strip()
-
     fallos = 0
     for i, (nombre, esperado) in enumerate(casos):
-        if porNombre:
-            got = porNombre.get(nombre, "(falta)")
-        else:
-            got = obtenidos[i] if i < len(obtenidos) else "(falta)"
+        got = valores[i]
         bien = normalizar(got) == normalizar(esperado)
         if not bien:
             fallos += 1
         print("%-16s %-28s %-28s %s"
               % (nombre, esperado[:28], got[:28], "ok" if bien else "FALLA"))
-    sobran = len(obtenidos) - len(casos)
+    sobran = len(valores) - len(casos)
     if sobran > 0:
         print("\nOjo: volvieron %d resultados de mas." % sobran)
     print("\n%d de %d bien, %d fallan." % (len(casos) - fallos, len(casos), fallos))

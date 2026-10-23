@@ -1,0 +1,42 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ List of expressions -> { sorted union of real roots warning }.
+  \-> EL
+  \<<
+    { } { } "" \-> PE PN AV
+    \<<
+      IF EL SIZE 0 > THEN
+        1 EL SIZE FOR I
+          EL I GET DROOTC OBJ\-> DROP \-> RT MSG
+          \<<
+            IF MSG SIZE THEN MSG 'AV' STO END
+            IF RT SIZE 0 > THEN
+              1 RT SIZE FOR J
+                RT J GET DUP \->NUM \-> R RN
+                \<<
+                  0 \-> REP
+                  \<<
+                    IF PN SIZE 0 > THEN
+                      1 PN SIZE FOR K IF PN K GET RN - ABS .000000001 < THEN 1 'REP' STO END NEXT
+                    END
+                    IF REP NOT THEN PE R 1 \->LIST + 'PE' STO PN RN 1 \->LIST + 'PN' STO END
+                  \>>
+                \>>
+              NEXT
+            END
+          \>>
+        NEXT
+      END
+      PN SORT \-> PS
+      \<<
+        { } \-> RS
+        \<<
+          IF PS SIZE 0 > THEN
+            1 PS SIZE FOR I RS PE PN PS I GET POS GET 1 \->LIST + 'RS' STO NEXT
+          END
+          RS AV 2 \->LIST
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

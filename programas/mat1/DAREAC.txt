@@ -1,0 +1,109 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F G V A B -> { area cuts segments trace status }.
+  @ Curves y=F(X),y=G(X), or x=F(Y),x=G(Y). A/B finite, or both "AUTO".
+  @ AUTO covers ALL bounded regions between the first and last intersection.
+  @ Each segment = { left right upper lower positiveIntegral } (in V).
+  \-> F0 G0 V A0 B0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } { } { } "ERROR" \-> TOTAL PT SG TR AV
+        \<<
+          IFERR
+            IF { X Y U } DFREEC THEN "X/Y/U ASIGNADA" DOERR END
+            IF V 'X' SAME V 'Y' SAME OR NOT THEN "VARIABLE: X O Y" DOERR END
+            F0 DREADC G0 DREADC \-> FF GG
+            \<<
+              FF GG IF V 'Y' SAME THEN SWAP 'Y' 'X' = SUBST SWAP 'Y' 'X' = SUBST END
+              \-> F G
+              \<<
+                F G - \-> DIF
+                \<<
+                  DIF DROOTC OBJ\-> DROP \-> RT MSG
+                  \<<
+                    TR "Resolver intersecciones F-G=0 (CAS)" RT 2 \->LIST 1 \->LIST + 'TR' STO
+                    IF MSG SIZE THEN MSG DOERR END
+                    IF A0 "AUTO" SAME B0 "AUTO" SAME AND THEN
+                      IF RT SIZE 2 < THEN "AUTO: FALTAN DOS INTERSECCIONES" DOERR END
+                      RT 1 GET RT RT SIZE GET
+                      TR "AUTO: todas las regiones entre cortes extremos" RT 2 \->LIST 1 \->LIST + 'TR' STO
+                    ELSE A0 'X' 0 DVALC B0 'X' 0 DVALC END
+                    \-> AA BB
+                    \<<
+                      IF AA TYPE 2 == BB TYPE 2 == OR THEN "LIMITES FINITOS REALES" DOERR END
+                      IF AA \->NUM BB \->NUM > THEN BB AA ELSE AA BB END \-> A B
+                      \<<
+                        F A B DCLOSEC G A B DCLOSEC \-> CF CG
+                        \<<
+                          TR "Continuidad de F en [a,b]" CF 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                          TR "Continuidad de G en [a,b]" CG 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                          IF CF 1 GET "OK" == NOT THEN CF 1 GET DOERR END
+                          IF CG 1 GET "OK" == NOT THEN CG 1 GET DOERR END
+                          A B 2 \->LIST 'PT' STO
+                          IF RT SIZE 0 > THEN
+                            1 RT SIZE FOR I
+                              RT I GET \-> R
+                              \<<
+                                IF R \->NUM A \->NUM > R \->NUM B \->NUM < AND THEN
+                                  PT R 1 \->LIST + 'PT' STO
+                                END
+                              \>>
+                            NEXT
+                          END
+                          PT DORDC 'PT' STO 0 'TOTAL' STO
+                          IF A B == NOT THEN
+                            1 PT SIZE 1 - FOR I
+                              PT I GET PT I 1 + GET \-> L R
+                              \<<
+                                L R + 2 / \-> M
+                                \<<
+                                  DIF 'X' M DVALC \-> DV
+                                  \<<
+                                    IF DV TYPE 2 == THEN "SIGNO SIN RESOLVER" DOERR END
+                                    IF DV \->NUM 0 < THEN G F ELSE F G END \-> TOP BOT
+                                    \<<
+                                      TR "Tramo: desde,hasta,punto de prueba" L R M 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+                                      TR "Valor F-G en el punto de prueba" DV 2 \->LIST 1 \->LIST + 'TR' STO
+                                      TR "Techo/derecha" TOP 2 \->LIST 1 \->LIST + 'TR' STO
+                                      TR "Piso/izquierda" BOT 2 \->LIST 1 \->LIST + 'TR' STO
+                                      TOP BOT - 'X' L R DINTDEFC \-> IR
+                                      \<<
+                                        TR IR 5 GET + 'TR' STO
+                                        IF IR 6 GET "OK" == NOT THEN IR 6 GET DOERR END
+                                        IR 1 GET \-> AR
+                                        \<<
+                                          IF AR \->NUM 0 < THEN "AREA NEGATIVA: REVISAR CORTES" DOERR END
+                                          SG L R TOP BOT AR 5 \->LIST 1 \->LIST + 'SG' STO
+                                          TOTAL AR + SIMPLIFY 'TOTAL' STO
+                                          TR "Area positiva del tramo" AR 2 \->LIST 1 \->LIST + 'TR' STO
+                                        \>>
+                                      \>>
+                                    \>>
+                                  \>>
+                                \>>
+                              \>>
+                            NEXT
+                          END
+                          TR "Sumar areas positivas" TOTAL 2 \->LIST 1 \->LIST + 'TR' STO
+                          "OK" 'AV' STO
+                        \>>
+                      \>>
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          THEN "" 'TOTAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          TOTAL PT SG TR AV 5 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN RES \>>
+        \>>
+      \>>
+      FL STOF
+    \>>
+  \>>
+\>>

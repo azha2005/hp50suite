@@ -1,0 +1,29 @@
+# Guided integrals: original regression examples and structural checks.
+USAR: DFREEC DREADC DPOWC DREALC DVALC DABRC DINSUMC DINPRC DINTEGC DINPVIC DPAGC DPANTC DPASOS DINTEG
+sum | 'X^2+X' 0 0 0 DINTEGC 1 GET 'X' DERIV 'X^2+X' - SIMPLIFY | 0
+sum-trace | 'X^2+X' 0 0 0 DINTEGC 2 GET 3 GET 2 GET 'X^2' - SIMPLIFY | 0
+subst | '2*X*SIN(X^2)' 1 'X^2' 'SIN(U)' DINTEGC 1 GET 'X' DERIV '2*X*SIN(X^2)' - SIMPLIFY | 0
+subst-bad | '2*X*SIN(X^2)' 1 'X^2' 'U' DINTEGC 1 GET TYPE 2 == | 1
+parts | 'X^2*COS(X)' 2 'X^2' 0 DINTEGC 1 GET 'X' DERIV 'X^2*COS(X)' - SIMPLIFY | 0
+parts-steps | 'X^2*COS(X)' 2 'X^2' 0 DINTEGC 2 GET 9 GET 2 GET '2*X' - SIMPLIFY | 0
+parts-ln | 'X*LN(X)' 2 'LN(X)' 0 DINTEGC 1 GET 'X' DERIV 'X*LN(X)' - SIMPLIFY | 0
+# Check on each real component: resolve ABS before differentiating LN(ABS()).
+# A rigorous CAS may leave ABS(X-a)^2 unsimplified in the global identity.
+frac | '(2*X+2)/(X^2-4)' 3 0 0 DINTEGC 1 GET 3 DABRC 'X' DERIV '(2*X+2)/(X^2-4)' - EXPAND SIMPLIFY | 0
+frac-left | '(2*X+2)/(X^2-4)' 3 0 0 DINTEGC 1 GET -3 DABRC 'X' DERIV '(2*X+2)/(X^2-4)' - EXPAND SIMPLIFY | 0
+frac-middle | '(2*X+2)/(X^2-4)' 3 0 0 DINTEGC 1 GET 0 DABRC 'X' DERIV '(2*X+2)/(X^2-4)' - EXPAND SIMPLIFY | 0
+pvi | '2*X' 0 0 0 DINTEGC 0 3 DINPVIC 1 GET | X^2+3
+unresolved | 'EXP(X^2)' 0 0 0 DINTEGC 1 GET TYPE 2 == | 1
+guard | DEPTH 'DD' STO 'EXP(X^2)' 0 0 0 DINTEGC DROP DEPTH DD - | 0
+flags | RCLF 'FLTEST' STO 'X^2' 0 0 0 DINTEGC DROP RCLF FLTEST SAME | 1
+bad-mode | 'X' 7 0 0 DINTEGC 1 GET TYPE 2 == | 1
+frac-check | '(2*X+2)/(X^2-4)' 3 0 0 DINTEGC 3 GET "OK:" POS | 1
+negative | '1/X' 0 0 0 DINTEGC -2 0 DINPVIC 1 GET 'X' -2 = SUBST EVAL | 0
+pvi-pole | '1/X' 0 0 0 DINTEGC 0 0 DINPVIC 1 GET TYPE 2 == | 1
+keep-x | 23 'X' STO 'X^2' 0 0 0 DINTEGC DROP X 23 == { X } PURGE | 1
+keep-u | 17 'U' STO '2*X' 0 0 0 DINTEGC 3 GET "ASIGNADA" POS 0 > U 17 == AND { U } PURGE | 1
+flags-fail | RCLF 'FLTEST' STO 'EXP(X^2)' 0 0 0 DINTEGC DROP RCLF FLTEST SAME | 1
+sum-minus | 'X^3-X+2' 0 0 0 DINTEGC 1 GET 'X' DERIV 'X^3-X+2' - EXPAND SIMPLIFY | 0
+string-input | "X^2" 0 0 0 DINTEGC 1 GET 'X' DERIV 'X^2' - EXPAND SIMPLIFY | 0
+fraction-repeated | '1/(X^2*(X+2))' 3 0 0 DINTEGC 1 GET 'X' DERIV '1/(X^2*(X+2))' - EXPAND SIMPLIFY | 0
+bad-parts | 'X^2' 2 0 0 DINTEGC 1 GET TYPE 2 == | 1

@@ -1,0 +1,40 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ {PR TR AV} x0 y0 -> {particular TR AV}; no new integration.
+  \-> RES X0 Y0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        RES 1 GET RES 2 GET RES 3 GET \-> PR TR AV
+        \<<
+          IFERR
+            IF { X } DFREEC THEN "X ASIGNADA: usar DIR sin valores" DOERR END
+            IF PR TYPE 2 == THEN "NO HAY PRIMITIVA" DOERR END
+            PR 'X' X0 = SUBST EVAL \-> V0
+            \<<
+              V0 \->NUM IF DUP TYPE 0 == NOT THEN DROP "PUNTO NO REAL" DOERR END
+              IF ABS 1E100 > THEN "VALOR NO FINITO" DOERR END
+              Y0 V0 - SIMPLIFY \-> KK
+              \<<
+                TR "F(x0) sin C" V0 2 \->LIST 1 \->LIST + 'TR' STO
+                TR "C = y0-F(x0)" KK 2 \->LIST 1 \->LIST + 'TR' STO
+                PR KK + SIMPLIFY 'PR' STO
+                PR 'X' X0 = SUBST EVAL Y0 - SIMPLIFY \-> CK
+                \<<
+                  TR "Control F(x0)-y0" CK 2 \->LIST 1 \->LIST + 'TR' STO
+                  IF CK 0 SAME NOT THEN "PVI NO VERIFICADO" DOERR END
+                \>>
+              \>>
+            \>>
+          THEN ERRM 'AV' STO "" 'PR' STO END
+          TR "Estado del PVI" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          PR TR AV 3 \->LIST
+          \-> R \<< DEPTH D0 - DROPN FL STOF R \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

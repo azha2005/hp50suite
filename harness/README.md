@@ -1,4 +1,106 @@
-# Harness: probar la suite contra una 50g de verdad
+# Harness: probar la suite contra la ROM de 50g
+
+## Lotes compactos y recepción segura (23/10/2026)
+
+El generador carga fuentes actuales una sola vez y permite unir tablas,
+seleccionar casos y reducir dependencias. No usa una caché residente.
+
+```powershell
+python harness/construir.py harness/casos-integ.txt harness/BMOD.txt --mas harness/casos-impl.txt --mas harness/casos-integ-sonda.txt --mas harness/casos-integ-sonda2.txt --sin-inf --min-carga
+python harness/construir.py harness/casos-p2-intervalos.txt harness/BINTERVALOS.txt --sin-inf --min-carga
+python harness/test_bateria.py
+```
+
+`--solo` filtra nombres por expresión regular; `--min-carga` conserva el cierre
+transitivo de los objetos declarados en `USAR:` que utilizan esos casos.
+También busca nombres en algebraicos y strings compilados en ejecución. Todos
+los helpers deben estar declarados: no descubre dependencias fuera de `USAR:`.
+`--sin-inf` sólo corresponde a tablas que no necesitan el global INF.
+
+La reducción de una selección de 13 casos pasó de 41 a 28 objetos (50.490 a
+37.860 bytes de fuente). Es una medición de tamaño, no de tiempo total. Conviene
+separar familias cuando el texto y el objeto compilado juntos consumen la RAM.
+
+Cada lote genera un manifiesto JSON con casos, hashes y una marca única. El
+comparador rechaza resultados incompletos, duplicados, sobrantes o de otra
+corrida. `HPTSTATE` guarda un diagnóstico y `HPTRESULT` sólo se escribe después
+de terminar todos los casos y limpiar los objetos del lote. Esos dos globales
+son propios del banco y permanecen para diagnóstico.
+
+### Emu48 instalado: dos fases
+
+DDE POKE y REQUEST pueden corromper memoria si UserRPL está ejecutándose
+(advertencia de `Emu48.txt`, sección DDE SERVER). Por eso **no se sondea la pila
+en vivo**. ON tampoco demuestra cancelación: un IFERR interno puede capturarlo
+y continuar la batería.
+
+```powershell
+# Con la calculadora en reposo, sin programa ni diálogo pendiente:
+powershell -NoProfile -File harness/correr-emu.ps1 -Fuente harness/BMOD.txt -SoloPreparar
+# Ejecutar EVAL; resolver las consultas del CAS y confirmar que terminó.
+powershell -NoProfile -File harness/correr-emu.ps1 -Fuente harness/BMOD.txt -SoloRecibir -Bin harness/BMOD.bin
+```
+
+El modo normal envía EVAL y espera con ENTER periódico (`-EnterCadaMs 0` lo
+desactiva), pero **ya no recibe automáticamente al vencer el tiempo**. Hace
+falta confirmar reposo y usar `-SoloRecibir`, que verifica la marca final antes
+de comparar. Un archivo sin marca no autoriza recargar otra tanda. No ejecutar
+lotes en paralelo; se rechazan varios procesos EMU48 ambiguos.
+
+El runner de Windows conserva su envío de teclas por ventana; el controlador
+de escritorio usado durante esta sesión necesita foco y puede interferir con
+el teclado humano. Ninguno equivale a un motor headless. El Emu48 instalado
+sólo ofrece archivos de estado en su CLI y CONNECT/POKE/REQUEST por DDE. La
+[adaptación WebAssembly de Emu48](https://github.com/Claudio-ymt/emu48android-web-version/tree/master/web)
+es una candidata para un adaptador aislado; aún no está integrado ni validado.
+
+### Visor y banderas
+
+`armar-visor.py` construye páginas con el mismo `DPANTC` que usa `DPASOS`.
+Devuelve GROBs obtenidos por `LCD->` antes del redibujado de pila. Con
+`--interactivo` añade dos pasos: OK, tecla, OK, tecla, CANCEL. La salida completa
+termina en `VISOR-FIN`. No recibir por DDE mientras esté en INFORM o WAIT.
+
+```powershell
+python harness/armar-visor.py harness/BVISOR.txt
+python harness/armar-visor.py harness/BVISORUI.txt --interactivo
+```
+
+Se revisó una LCD nativa de 131×80 con dos líneas de 20 caracteres completas.
+La captura de ventana de Windows falla y la navegación completa del visor
+sigue pendiente. Renderizar una página no prueba todos los formularios.
+
+En esta ROM `-100 CF` permite que RISCH termine sin pedir una tecla por paso;
+`-100 SF` abrió los pasos nativos. La tabla de banderas del apéndice del
+[manual HP](https://www.ele.uri.edu/faculty/vetter/Other-stuff/HP-calculators/HP-50g/HP_50g_advanced_users_reference_manual.pdf)
+contradice las entradas de comandos que describen esa bandera. Se usó el
+comportamiento medido; los núcleos nuevos conservan y restauran RCLF/STOF.
+
+### Evidencia actual
+
+- Cinco pruebas del comparador/generador en PC: aprobadas.
+- Tanda histórica final: 83/84. Se corrigió después la representación del
+  infinito positivo en DLATC; repetición de ambos laterales: 2/2 aprobados.
+  Falta repetir los 84 juntos sobre esa revisión.
+- Tanda previa de 101 casos del módulo: 100/101. El control de fracciones
+  racionales se corrigió para verificar cada componente real: 5/5 en su sonda.
+  La tanda ampliada de 116 aún no tiene marca final válida; está pendiente,
+  no aprobada. No atribuir los resultados anteriores a los últimos fuentes.
+- La cúspide compuesta X^(2/3)+X devuelve CEROS NO RESUELTOS y no afirma
+  extremos. Ese límite del CAS queda explícito en los casos de borde.
+- Conn4x y hardware físico siguen sin validar esta ampliación.
+
+Para comparar un resultado nuevo, siempre pasar el manifiesto de su corrida:
+
+```powershell
+python harness/leer-resultado.py harness/BMOD.bin --meta harness/BMOD.json
+```
+
+Los lotes antiguos sin manifiesto conservan comparación por tabla, con rechazo
+de nombres y cantidades inconsistentes. `armar-mat1.py` conserva la interfaz
+anterior y utiliza el mismo generador.
+
+---
 
 Sí se puede. La pieza que faltaba era poder **leer el resultado como dato** en
 vez de a ojo en la pantalla, y eso ya está resuelto: `DDE48 r` trae el objeto de

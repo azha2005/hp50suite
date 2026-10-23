@@ -71,7 +71,7 @@
                         FOR Q
                           IF DUP NOT
                           THEN
-                            IF EN Q * DUP IP - ABS .000000001 <
+                            IF EN Q * DUP 0 RND - ABS .000000001 <
                             THEN DROP Q END
                           END
                         NEXT

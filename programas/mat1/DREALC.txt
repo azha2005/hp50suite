@@ -1,0 +1,51 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ E V P -> evaluate a tree with V=P, keeping exact objects where possible.
+  @ Odd rational powers use the REAL convention, before the CAS sees them.
+  \-> EE VV PP
+  \<<
+    IF EE TYPE 9 == THEN
+      EE OBJ\-> \->STR \-> NN OP
+      \<<
+        { } \-> AL
+        \<<
+          IF NN 0 > THEN
+            1 NN FOR I
+              VV PP DREALC AL SWAP 1 \->LIST SWAP + 'AL' STO
+            NEXT
+          END
+          AL OBJ\-> DROP
+          CASE
+            OP "+" == THEN + END
+            OP "-" == THEN - END
+            OP "*" == THEN * END
+            OP "/" == THEN / END
+            OP "^" == THEN DPOWC END
+            OP "XROOT" == THEN SWAP INV DPOWC END
+            OP "NEG" == THEN NEG END
+            OP "INV" == THEN INV END
+            OP "SQ" == THEN SQ END
+            OP "ABS" == THEN ABS END
+            OP "SIGN" == THEN SIGN END
+            OP "EXP" == THEN EXP END
+            OP "LN" == THEN LN END
+            OP "LOG" == THEN LOG END
+            OP "SIN" == THEN SIN END
+            OP "COS" == THEN COS END
+            OP "TAN" == THEN TAN END
+            OP "ASIN" == THEN ASIN END
+            OP "ACOS" == THEN ACOS END
+            OP "ATAN" == THEN ATAN END
+            OP 131 CHR == THEN \v/ END
+            NN DROPN "FUNCION NUMERICA NO SOPORTADA" DOERR
+          END
+        \>>
+      \>>
+    ELSE
+      IF EE VV SAME THEN PP
+      ELSE
+        IF EE TYPE 6 == THEN "PARAMETRO SIN RESOLVER" DOERR ELSE EE EVAL END
+      END
+    END
+  \>>
+\>>

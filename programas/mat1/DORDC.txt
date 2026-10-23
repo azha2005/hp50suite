@@ -1,0 +1,31 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Exact finite real points -> sorted unique exact points.
+  \-> LL
+  \<<
+    { } { } \-> PE PN
+    \<<
+      IF LL SIZE 0 > THEN
+        1 LL SIZE FOR I
+          LL I GET DUP \->NUM \-> P N
+          \<<
+            0 \-> REP
+            \<<
+              IF PN SIZE 0 > THEN
+                1 PN SIZE FOR J IF PN J GET N - ABS .000000001 < THEN 1 'REP' STO END NEXT
+              END
+              IF REP NOT THEN PE P 1 \->LIST + 'PE' STO PN N 1 \->LIST + 'PN' STO END
+            \>>
+          \>>
+        NEXT
+      END
+      PN SORT \-> PS
+      \<<
+        { }
+        IF PS SIZE 0 > THEN
+          1 PS SIZE FOR I PE PN PS I GET POS GET 1 \->LIST + NEXT
+        END
+      \>>
+    \>>
+  \>>
+\>>

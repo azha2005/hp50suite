@@ -1,39 +1,14 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DWEIER - teorema de Weierstrass: extremos absolutos en [a,b].
-  @ Interfaz: el calculo esta en DWEIERC, que toma 'f(X)' a b de la pila
-  @ y devuelve { CAND VALORES XMAX FMAX XMIN FMIN AVISO }.
-  @ La lista entera queda en la pila.
-  @ El aviso sale SOLO si la hipotesis de continuidad no se verifica, que
-  @ es cuando el teorema no se puede aplicar y el ejercicio tiene gracia.
-  "Weierstrass: extremos absolutos"
-  {
-    { "f(X), ej 'X^3-3*X':" "'X^3-3*X'" }
-    { "a:" "-2" 0 }
-    { "b:" "3" 0 }
-  }
-  { } { } { }
-  INFORM
-  IF THEN
-    OBJ\-> DROP DWEIERC
-    DUP OBJ\-> DROP \-> RES CN VL XMX FMX XMN FMN AV
-    \<<
-      IF AV "OK" == NOT
-      THEN AV MSGBOX
-      END
-      "Candidatos (a, criticos, b):" 10 CHR +
-      CN \->STR +
-      MSGBOX
-      "f en cada candidato:" 10 CHR +
-      VL \->STR +
-      MSGBOX
-      "MAXIMO absoluto" 10 CHR +
-      "f=" + FMX \->STR + " en X=" + XMX \->STR +
-      MSGBOX
-      "MINIMO absoluto" 10 CHR +
-      "f=" + FMN \->STR + " en X=" + XMN \->STR +
-      MSGBOX
-      RES
-    \>>
-  END
+  RCLF \-> FLUI
+  \<<
+    -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+    IFERR
+      "Weierstrass: hipotesis y pasos"
+      { { "f(X):" "Comillas simples" } { "a:" "Extremo cerrado" 0 } { "b:" "Extremo cerrado" 0 } }
+      { } { 'X^3-3*X' -2 3 } { 'X^3-3*X' -2 3 } INFORM
+      IF THEN OBJ\-> DROP DWEIERC DUP 10 GET DPASOS END
+    THEN FLUI STOF ERRM DOERR END
+    FLUI STOF
+  \>>
 \>>

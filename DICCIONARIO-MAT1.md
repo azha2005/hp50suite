@@ -1,5 +1,9 @@
 # Diccionario de programas — Matemática I
 
+**Módulo nuevo en desarrollo:** integración guiada `DINTEG`, implícita `DIMPL`
+y visor `DPASOS`, en un paquete separado. Alcance, ejemplos y limitaciones en
+[programas/P2.md](programas/P2.md). No reemplaza todavía la distribución estable.
+
 [Primera prueba e instalación](INICIO-RAPIDO.md) ·
 [Descargas](https://github.com/azha2005/hp50suite/releases) ·
 [Reportar una prueba](https://github.com/azha2005/hp50suite/issues/new?template=prueba.yml)
@@ -182,20 +186,28 @@ programa que se vaya a usar.
 - **Ejemplos:** `'X^2'`, 1 → tangente `Y=2*X-1`, normal `Y=-X/2+3/2` ·
   `'X^2'`, 0 → tangente `Y=0`, normal **`X=0`** (vertical)
 
-### DESTFUN — Estudio de función
-- **Pide:** f(X), un candidato a asíntota vertical, si probarlo (1 sí, 0 no).
-  **Necesita el `INF` guardado** (ver al final).
-- **Da:** f' y sus ceros, f'' y sus ceros, asíntotas en ±∞ y el veredicto de la
-  vertical.
-- **Ejemplo:** `'X^3-3*X'` → críticos {−1, 1}, inflexión {0}, sin asíntotas
-- No calcula dominio ni imagen: para eso, `DDOM` y `DASVT`.
+### DESTFUN — Estudio de función con pasos
+- **Pide:** f(X), candidato vertical adicional y si probarlo (1/0).
+- **Da:** dominio de la expresión original, derivadas, tablas de signos,
+  extremos e inflexiones con coordenadas, puntos no derivables, asíntotas y
+  bosquejo opcional. El visor permite releer cada paso y pagina texto largo.
+- **Ejemplo:** `'X^3-3*X'` → máximo (−1,2), mínimo (1,−2), inflexión (0,0).
+- Las asíntotas en ±∞ necesitan `INF`; las verticales se prueban también en
+  los candidatos del dominio. Un cero de f'' no se declara inflexión sin
+  cambio de concavidad y continuidad. No calcula la imagen completa.
+- Si el CAS no resuelve los separadores, avisa; no certifica una tabla completa.
+  Contratos y límites en [programas/P2.md](programas/P2.md).
 
-### DWEIER — Weierstrass: extremos absolutos en [a, b]
-- **Pide:** f(X), a, b.
-- **Da:** la tabla de candidatos (extremos del intervalo y críticos de
-  adentro), el máximo y el mínimo absolutos. Sondea si f es continua en [a, b].
-- **Ejemplos:** `'X^3-3*X'`, [−2, 3] → máx 18 en x = 3, mín −2 ·
-  `'X^2-2*X'`, [0, 3] → mín −1 en x = 1, máx 3
+### DWEIER — Weierstrass: extremos absolutos con pasos
+- **Pide:** f(X), a, b, finitos.
+- **Da:** condiciones de continuidad en el cerrado, extremos del intervalo,
+  ceros de f' y puntos no derivables donde existe f; evalúa candidatos y
+  compara valores, incluyendo todos los empates. Para una constante devuelve
+  todo [a,b]. Rechaza polos y huecos de la expresión original.
+- **Ejemplos:** `'X^3-3*X'`, [−2,3] → máximo 18 en 3; mínimo −2 en −2 y 1.
+  `'X^2-2*X'`, [0,3] → mínimo −1 en 1 y máximo 3 en 3.
+- Requiere que el CAS resuelva todos los candidatos. Por ejemplo,
+  `'X^(2/3)+X'` devuelve `CEROS NO RESUELTOS`, sin extremos afirmados.
 
 ### DBOLZ — Bolzano: ¿hay raíz en [a, b]?
 - **Pide:** f(X), a, b.

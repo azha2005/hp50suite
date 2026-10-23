@@ -1,0 +1,87 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F V A B -> { value primitives upperValues lowerValues trace status }.
+  @ V = X or Y. Finite proper integral; split ABS, preserve orientation.
+  \-> F0 V A0 B0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } { } { } { } "ERROR" \-> VAL PR FB FA TR AV
+        \<<
+          IFERR
+            IF { X Y U } DFREEC THEN "X/Y/U ASIGNADA" DOERR END
+            IF V 'X' SAME V 'Y' SAME OR NOT THEN "VARIABLE: X O Y" DOERR END
+            F0 DREADC \-> FF
+            \<<
+              FF IF V 'Y' SAME THEN 'Y' 'X' = SUBST END \-> F
+              \<<
+                A0 'X' 0 DVALC B0 'X' 0 DVALC \-> AA BB
+                \<<
+                  IF AA TYPE 2 == BB TYPE 2 == OR THEN "LIMITES FINITOS REALES" DOERR END
+                  IF AA BB > THEN BB AA -1 ELSE AA BB 1 END
+                  \-> A B SG
+                  \<<
+                    TR "Integral orientada: variable,a,b" V AA BB 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+                    F A B DCLOSEC OBJ\-> DROP \-> CS PT CL
+                    \<<
+                      TR "Condiciones del integrando original" CL 2 \->LIST 1 \->LIST + 'TR' STO
+                      TR "Continuidad en el cerrado" CS 2 \->LIST 1 \->LIST + 'TR' STO
+                      IF CS "OK" == NOT THEN CS DOERR END
+                      0 'VAL' STO
+                      IF A B == THEN
+                        TR "Limites iguales: integral =" 0 2 \->LIST 1 \->LIST + 'TR' STO
+                      ELSE
+                        1 PT SIZE 1 - FOR I
+                          PT I GET PT I 1 + GET \-> L R
+                          \<<
+                            F L R + 2 / DABRC \-> G
+                            \<<
+                              TR "Tramo: variable,desde,hasta" V L R 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+                              TR "Integrando en este tramo" G 2 \->LIST 1 \->LIST + 'TR' STO
+                              G 0 0 0 DINTEGC \-> IR
+                              \<<
+                                TR IR 2 GET + 'TR' STO
+                                IF IR 3 GET "OK:" POS 1 == NOT THEN IR 3 GET DOERR END
+                                IR 1 GET \-> P
+                                \<<
+                                  P 'X' R DVALC P 'X' L DVALC \-> U D
+                                  \<<
+                                    IF U TYPE 2 == D TYPE 2 == OR THEN "PRIMITIVA NO REAL EN EXTREMOS" DOERR END
+                                    PR P IF V 'Y' SAME THEN 'X' 'Y' = SUBST END 1 \->LIST + 'PR' STO
+                                    FB U 1 \->LIST + 'FB' STO FA D 1 \->LIST + 'FA' STO
+                                    TR "Barrow: F(hasta)" U 2 \->LIST 1 \->LIST + 'TR' STO
+                                    TR "Barrow: F(desde)" D 2 \->LIST 1 \->LIST + 'TR' STO
+                                    U D - SIMPLIFY \-> DIF
+                                    \<<
+                                      TR "Restar F(hasta)-F(desde)" DIF 2 \->LIST 1 \->LIST + 'TR' STO
+                                      VAL DIF + SIMPLIFY 'VAL' STO
+                                    \>>
+                                  \>>
+                                \>>
+                              \>>
+                            \>>
+                          \>>
+                        NEXT
+                      END
+                      VAL SG * SIMPLIFY 'VAL' STO
+                      TR "Aplicar orientacion y sumar" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+                      TR "Integral con signo; no es area" SG 2 \->LIST 1 \->LIST + 'TR' STO
+                      "OK" 'AV' STO
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL PR FB FA TR AV 6 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN RES \>>
+        \>>
+      \>>
+      FL STOF
+    \>>
+  \>>
+\>>

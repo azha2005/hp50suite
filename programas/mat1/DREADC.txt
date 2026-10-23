@@ -1,0 +1,9 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Input expression, including a text field -> mathematical object.
+  IF DUP TYPE 2 == THEN
+    IF DUP SIZE 0 == THEN "EXPRESION VACIA" DOERR END
+    IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+    STR\->
+  END
+\>>

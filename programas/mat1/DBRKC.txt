@@ -1,0 +1,73 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F mode -> { zeros1 zeros2 allCuts nondiffCandidates warning branchTrace }.
+  @ mode=1: only critical points; mode=2: include concavity candidates.
+  @ Resolve ABS on each original component BEFORE differentiating.
+  \-> F MODE
+  \<<
+    F DINFOC \-> FI
+    \<<
+      FI 2 GET DCUTSC OBJ\-> DROP \-> BASE AV
+      \<<
+        { } { } BASE BASE { } \-> Z1 Z2 PT ND BT
+        \<<
+          IF FI 3 GET SIZE THEN FI 3 GET 'AV' STO END
+          0 BASE SIZE FOR I
+            IF BASE SIZE 0 == THEN .3183 ELSE
+              IF I 0 == THEN BASE 1 GET 1 - ELSE
+                IF I BASE SIZE == THEN BASE I GET 1 + ELSE BASE I GET BASE I 1 + GET + 2 / END
+              END
+            END \-> M
+            \<<
+              F M DABRC \-> BF
+              \<<
+                BF 'X' DERIV \-> B1
+                \<<
+                  IF MODE 2 == THEN B1 'X' DERIV SIMPLIFY ELSE 0 END \-> B2
+                  \<<
+                    BT M BF B1 B2 4 \->LIST 1 \->LIST + 'BT' STO
+                    B1 DROOTC B2 DROOTC
+                    B1 DINFOC 2 GET B2 DINFOC 2 GET + DCUTSC
+                    \-> R1 R2 RC
+                    \<<
+                      1 3 FOR K
+                        IF K 1 == THEN R1 ELSE IF K 2 == THEN R2 ELSE RC END END \-> RR
+                        \<<
+                          IF RR 2 GET SIZE THEN RR 2 GET 'AV' STO END
+                          RR 1 GET \-> RL
+                          \<<
+                            IF RL SIZE 0 > THEN
+                              1 RL SIZE FOR J
+                                RL J GET \-> P
+                                \<<
+                                  1 \-> INS
+                                  \<<
+                                    IF I 0 > THEN IF P \->NUM BASE I GET \->NUM > NOT THEN 0 'INS' STO END END
+                                    IF I BASE SIZE < THEN IF P \->NUM BASE I 1 + GET \->NUM < NOT THEN 0 'INS' STO END END
+                                    IF INS THEN
+                                      PT P 1 \->LIST + 'PT' STO
+                                      CASE
+                                        K 1 == THEN Z1 P 1 \->LIST + 'Z1' STO END
+                                        K 2 == THEN Z2 P 1 \->LIST + 'Z2' STO END
+                                        ND P 1 \->LIST + 'ND' STO
+                                      END
+                                    END
+                                  \>>
+                                \>>
+                              NEXT
+                            END
+                          \>>
+                        \>>
+                      NEXT
+                    \>>
+                  \>>
+                \>>
+              \>>
+            \>>
+          NEXT
+          Z1 DORDC Z2 DORDC PT DORDC ND DORDC AV BT 6 \->LIST
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

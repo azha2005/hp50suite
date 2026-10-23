@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F A side -> real lateral limit; side=-1 left, +1 right.
+  @ Some ROM states return unsigned infinity even for X=a-0. Only when
+  @ LIMIT itself is infinite, obtain the sign from LIMIT(SIGN(F)), not samples.
+  @ Keep unsigned infinity if that independent symbolic sign is inconclusive.
+  \-> F A SIDE
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -119 CF -120 SF -123 CF -100 CF RAD
+      DEPTH \-> D0
+      \<<
+        A \->STR
+        IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+        "'X=" SWAP + IF SIDE 0 < THEN "-0'" ELSE "+0'" END + STR\->
+        \-> EQ
+        \<<
+          DEPTH \-> D1
+          \<<
+            IFERR F EQ LIMIT THEN "INDEF" END
+            \-> L \<< DEPTH D1 - DROPN L \>>
+          \>>
+          IF DUP TYPE 12 == THEN DTAG END \-> L
+          \<<
+            IF L \->STR 159 CHR POS THEN
+              DEPTH \-> D1
+              \<<
+                IFERR F SIGN EQ LIMIT EVAL \->NUM THEN "SIN SIGNO" END
+                \-> SG \<< DEPTH D1 - DROPN SG \>>
+              \>>
+              \-> SG
+              \<<
+                IF SG TYPE 0 == THEN
+                  IF SG ABS 1 == THEN
+                    IF SG 0 < THEN "'-" ELSE "'+" END 159 CHR + "'" + STR\-> EVAL 'L' STO
+                  END
+                END
+              \>>
+            ELSE
+              IF L TYPE 2 == NOT THEN L EVAL 'L' STO END
+            END
+            L
+          \>>
+        \>>
+        \-> R \<< DEPTH D0 - DROPN FL STOF R \>>
+      \>>
+    \>>
+  \>>
+\>>

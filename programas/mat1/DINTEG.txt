@@ -1,0 +1,37 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  RCLF \-> FLUI
+  \<<
+    -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+    IFERR
+      @ Interface: four integration modes, optional point, persistent trace.
+      @ Two forms, at most four fields. Mode 0/3 ignore u,H.
+      "Integrales con pasos"
+      {
+        { "f(X):" "Comillas simples" }
+        { "Metodo (0/1/2/3):" "0 suma;1 sust;2 partes;3 frac" 0 }
+        { "u(X), para 1 o 2:" "Ej 'X^2' o 'X'" }
+        { "H(U), solo sustitucion:" "Integrando en U" }
+      }
+      { } { 'X^2*COS(X)' 2 'X^2' 'U' } { 'X^2*COS(X)' 2 'X^2' 'U' }
+      INFORM
+      IF THEN
+        OBJ\-> DROP DINTEGC \-> RES
+        \<<
+          "Primitiva particular?"
+          { { "1=si 0=no:" "Agregar condicion F(x0)=y0" 0 } { "x0:" "Punto inicial" 0 } { "y0:" "Valor inicial" 0 } }
+          { } { 0 0 0 } { 0 0 0 } INFORM
+          IF THEN
+            OBJ\-> DROP \-> SI X0 Y0
+            \<< IF SI 1 == THEN RES X0 Y0 DINPVIC 'RES' STO END \>>
+          END
+          RES
+          "Detalle en la pila" 10 CHR + "OK: elegir paso" + MSGBOX
+          @ No result is lost when the viewer exits normally via CANCEL.
+          DUP 2 GET DPASOS
+        \>>
+      END
+    THEN FLUI STOF ERRM DOERR END
+    FLUI STOF
+  \>>
+\>>

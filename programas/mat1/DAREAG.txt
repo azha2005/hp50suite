@@ -1,0 +1,60 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F G V cuts -> PICT. Finite continuous curves, confirmed by DAREAC.
+  @ True data coordinates. Horizontal stripes for integration in Y.
+  @ Like existing graph helpers, sets the graph window (PPAR).
+  \-> F0 G0 V PT
+  \<<
+    F0 DREADC G0 DREADC
+    IF V 'Y' SAME THEN SWAP 'Y' 'X' = SUBST SWAP 'Y' 'X' = SUBST END
+    \-> F G
+    \<<
+      PT 1 GET \->NUM PT PT SIZE GET \->NUM \-> A B
+      \<<
+        IF A B == THEN "GRAFICO: INTERVALO DE ANCHO CERO" DOERR END
+        0. 0. \-> MN MX
+        \<<
+          0 40 FOR I
+            A B A - I * 40. / + \-> T
+            \<<
+              F 'X' T DVALC \->NUM G 'X' T DVALC \->NUM
+              \-> FV GV
+              \<< MN FV MIN GV MIN 'MN' STO MX FV MAX GV MAX 'MX' STO \>>
+            \>>
+          NEXT
+          IF MN MX == THEN MX 1. + 'MX' STO END
+          MX MN - .1 * \-> PAD
+          \<<
+            IF V 'X' SAME THEN
+              A B XRNG MN PAD - MX PAD + YRNG
+            ELSE MN PAD - MX PAD + XRNG A B YRNG END
+            ERASE DRAX
+            0 40 FOR I
+              A B A - I * 40. / + \-> T
+              \<<
+                F 'X' T DVALC \->NUM G 'X' T DVALC \->NUM \-> FV GV
+                \<<
+                  IF V 'X' SAME THEN T FV R\->C T GV R\->C
+                  ELSE FV T R\->C GV T R\->C END LINE
+                  IF I 0 > THEN
+                    A B A - I 1 - * 40. / + \-> P
+                    \<<
+                      F 'X' P DVALC \->NUM G 'X' P DVALC \->NUM \-> FP GP
+                      \<<
+                        IF V 'X' SAME THEN P FP R\->C T FV R\->C
+                        ELSE FP P R\->C FV T R\->C END LINE
+                        IF V 'X' SAME THEN P GP R\->C T GV R\->C
+                        ELSE GP P R\->C GV T R\->C END LINE
+                      \>>
+                    \>>
+                  END
+                \>>
+              \>>
+            NEXT
+            LABEL
+          \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

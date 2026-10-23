@@ -1,0 +1,9 @@
+# CAS probes; Complex disabled explicitly for real antiderivatives.
+mode | "1" STR\-> TYPE | 28
+risch | -103 CF 'X^2*COS(X)' 'X' RISCH 'X' DERIV 'X^2*COS(X)' - EXPAND SIMPLIFY | 0
+risch-check | 'X^2*SIN(X)+2*X*COS(X)-2*SIN(X)' 'X' DERIV 'X^2*COS(X)' - SIMPLIFY | 0
+partfrac | '(2*X+2)/(X^2-4)' PARTFRAC '(3/2)/(X-2)+(1/2)/(X+2)' - SIMPLIFY | 0
+subst-guided | 'SIN(U)' 'U' 'X^2' = SUBST 'X^2' 'X' DERIV * 'SIN(X^2)*2*X' - SIMPLIFY | 0
+risch-var | 'U^2' 'U' RISCH 'U' DERIV 'U^2' - EXPAND SIMPLIFY | 0
+bad-prim | 'EXP(X^2)' 'X' RISCH \->STR "INT(" POS 0 > | 1
+factor-degree | 'X^2' DEGREE | 2

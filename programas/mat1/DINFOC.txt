@@ -1,0 +1,28 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F -> { domain conditions break expressions warning }.
+  @ Inspect ORIGINAL tree. ABS zeros are cuts even though ABS is continuous.
+  @ Certifiable continuous operations are explicitly whitelisted.
+  \-> F
+  \<<
+    F DCONDC { } "" \-> CL BR AV
+    \<<
+      IF CL SIZE 0 > THEN
+        1 CL SIZE FOR I BR CL I GET 1 GET 1 \->LIST + 'BR' STO NEXT
+      END
+      { } F
+      DO
+        IF DUP TYPE 9 == THEN
+          OBJ\-> \->STR \-> N OP
+          \<<
+            IF OP "ABS" == THEN BR OVER 1 \->LIST + 'BR' STO END
+            IF { "+" "-" "*" "/" "^" "NEG" "INV" "SQ" "ABS" "EXP" "LN" "LOG" "SIN" "COS" "ASIN" "ACOS" "ATAN" } OP POS
+               OP 131 CHR == OR NOT
+            THEN "OPERACION SIN CERTIFICAR" 'AV' STO END
+          \>>
+        ELSE DROP END
+      UNTIL DUP TYPE 5 == END
+      DROP CL BR AV 3 \->LIST
+    \>>
+  \>>
+\>>

@@ -1,0 +1,125 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F -> { D1 Z1 D2 Z2 DOM SIG1 SIG2 EXT INFL ND TRACE STATUS }.
+  @ Sign rows = { left right test value sign }; sign "?" outside real domain.
+  @ EXT = { { x y "MAX"/"MIN" } ... }; INFL = { { x y } ... }.
+  @ Include zeros, original domain boundaries, derivative singularities, ABS.
+  \-> F0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "" { } { } { } { } { } { } { } { } "ERROR" \-> D1 Z1 D2 Z2 DOM S1 S2 EX IP ND TR AV
+        \<<
+          IFERR
+            IF { X Y U } DFREEC THEN "X/Y/U ASIGNADA" DOERR END
+            F0 DREADC \-> F
+            \<<
+              F 0 DDOMC 'DOM' STO
+              F 'X' DERIV EXPAND SIMPLIFY 'D1' STO
+              D1 'X' DERIV EXPAND SIMPLIFY 'D2' STO
+              F 2 DBRKC \-> BK
+              \<<
+              BK 1 GET 'Z1' STO BK 2 GET 'Z2' STO BK 5 GET 'AV' STO
+              F DINFOC D1 DINFOC D2 DINFOC \-> IF0 IF1 IF2
+              \<<
+                IF IF0 3 GET SIZE THEN IF0 3 GET 'AV' STO END
+                IF DOM 4 GET SIZE THEN DOM 4 GET 'AV' STO END
+                BK 3 GET BK 5 GET \-> PT MSG
+                \<<
+                  IF MSG SIZE THEN MSG 'AV' STO END
+                  TR "Funcion original" F 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Dominio (original sin cancelar)" DOM 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Condiciones de dominio" DOM 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Primera derivada" D1 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Candidatos f'=0 (CAS)" Z1 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Segunda derivada" D2 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Candidatos f''=0; falta cambio de signo" Z2 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Separadores de ambas tablas" PT 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Por rama: prueba,f,f',f''" BK 6 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                  @ One test per open component, as in the shared domain table.
+                  0 PT SIZE FOR I
+                    IF I 0 == THEN "-oo" ELSE PT I GET END
+                    IF I PT SIZE == THEN "+oo" ELSE PT I 1 + GET END
+                    IF PT SIZE 0 == THEN .3183 ELSE
+                      IF I 0 == THEN PT 1 GET 1 - ELSE
+                        IF I PT SIZE == THEN PT I GET 1 + ELSE PT I GET PT I 1 + GET + 2 / END
+                      END
+                    END
+                    \-> L R M
+                    \<<
+                      F M DABRC 'X' DERIV SIMPLIFY \-> B1
+                      \<<
+                      F 'X' M DVALC B1 'X' M DVALC B1 'X' DERIV 'X' M DVALC \-> FV DV EV
+                      \<<
+                        IF FV TYPE 2 == DV TYPE 2 == OR THEN "?" ELSE DV \->NUM SIGN END \-> SD
+                        \<< S1 L R M DV SD 5 \->LIST 1 \->LIST + 'S1' STO \>>
+                        IF FV TYPE 2 == EV TYPE 2 == OR THEN "?" ELSE EV \->NUM SIGN END \-> SE
+                        \<< S2 L R M EV SE 5 \->LIST 1 \->LIST + 'S2' STO \>>
+                      \>>
+                      \>>
+                    \>>
+                  NEXT
+                  IF PT SIZE 0 > THEN
+                    1 PT SIZE FOR I
+                      PT I GET \-> P
+                      \<<
+                        IF IF0 1 GET P DSATC THEN F 'X' P DVALC ELSE "NO REAL" END \-> FV
+                        \<<
+                          IF FV TYPE 2 == NOT THEN
+                            IF BK 4 GET P POS
+                            THEN ND P 1 \->LIST + 'ND' STO
+                            ELSE
+                              IF IF1 1 GET P DSATC NOT
+                              THEN ND P 1 \->LIST + 'ND' STO
+                              ELSE
+                                IF D1 'X' P DVALC TYPE 2 == THEN ND P 1 \->LIST + 'ND' STO END
+                              END
+                            END
+                            S1 I GET 5 GET S1 I 1 + GET 5 GET \-> SL SR
+                            \<<
+                              IF SL TYPE 2 == SR TYPE 2 == OR NOT THEN
+                                IF SL 1 == SR -1 == AND THEN EX P FV "MAX" 3 \->LIST 1 \->LIST + 'EX' STO END
+                                IF SL -1 == SR 1 == AND THEN EX P FV "MIN" 3 \->LIST 1 \->LIST + 'EX' STO END
+                              END
+                            \>>
+                            S2 I GET 5 GET S2 I 1 + GET 5 GET \-> SL SR
+                            \<<
+                              IF SL TYPE 2 == SR TYPE 2 == OR NOT THEN
+                                IF SL SR * -1 == THEN
+                                  @ Composition of continuous supported operations at P.
+                                  @ No finite-difference test is presented as continuity proof.
+                                  IF IF0 3 GET SIZE NOT IF0 1 GET P DSATC AND
+                                  THEN IP P FV 2 \->LIST 1 \->LIST + 'IP' STO END
+                                END
+                              END
+                            \>>
+                          END
+                        \>>
+                      \>>
+                    NEXT
+                  END
+                  TR "Tabla f': izq,der,prueba,valor,signo" S1 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "f'>0 crece; f'<0 decrece; ? fuera" 0 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Extremos: x,y,tipo; + a - MAX; - a + MIN" EX 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Tabla f'': izq,der,prueba,valor,signo" S2 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "f''>0 convexa; f''<0 concava" 0 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Inflexiones con cambio de concavidad" IP 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Candidatos no derivables (revisar laterales)" ND 2 \->LIST 1 \->LIST + 'TR' STO
+                  IF AV SIZE NOT THEN "OK" 'AV' STO END
+                \>>
+              \>>
+              \>>
+            \>>
+          THEN ERRM 'AV' STO END
+          TR "Estado: tablas segun ceros del CAS" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          D1 Z1 D2 Z2 DOM S1 S2 EX IP ND TR AV 12 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN RES \>>
+        \>>
+      \>>
+      FL STOF
+    \>>
+  \>>
+\>>

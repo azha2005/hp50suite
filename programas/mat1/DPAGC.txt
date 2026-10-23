@@ -1,0 +1,24 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ { label object } -> pages, at most 2 lines x 20 visible characters.
+  @ Normalize embedded line breaks BEFORE wrapping (matrices, nested lists).
+  \-> PP
+  \<<
+    PP 1 GET " : " + PP 2 GET \->STR +
+    10 CHR " " SREPL DROP 13 CHR " " SREPL DROP \-> TXT
+    \<<
+      { } \-> PG
+      \<<
+        IF TXT SIZE 0 > THEN
+          1 TXT SIZE FOR P
+            TXT P P 19 + SUB
+            IF P 20 + TXT SIZE > NOT
+            THEN 10 CHR + TXT P 20 + P 39 + SUB + END
+            1 \->LIST PG SWAP + 'PG' STO
+          40 STEP
+        END
+        PG
+      \>>
+    \>>
+  \>>
+\>>

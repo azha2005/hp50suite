@@ -1,0 +1,25 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Internal: F -> list of additive terms (without distributing products).
+  @ Commands from OBJ-> are converted directly to text, never invoked as locals.
+  \-> F
+  \<<
+    IF F TYPE 9 ==
+    THEN
+      F OBJ\-> \->STR \-> OP
+      \<<
+        \-> N
+        \<<
+          N \->LIST \-> AA
+          \<<
+            IF N 2 == OP "+" == OP "-" == OR AND
+            THEN
+              AA 1 GET DINSUMC
+              AA 2 GET IF OP "-" == THEN NEG END DINSUMC +
+            ELSE F 1 \->LIST END
+          \>>
+        \>>
+      \>>
+    ELSE F 1 \->LIST END
+  \>>
+\>>

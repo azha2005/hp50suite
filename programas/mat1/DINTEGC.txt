@@ -1,0 +1,160 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Guided integration: F mode A H -> { primitive trace status }.
+  @ mode 0: additive terms; 1: u=A(X), integrand H(U); 2: parts u=A(X);
+  @ 3: partial fractions. Trace = { { label object } ... }.
+  @ Integration of each residual/term uses CAS, explicitly named in trace.
+  @ Bound to six repetitions. Every successful primitive is checked by DERIV.
+  @ Reject assigned X/U: the CAS does not support local-symbol shadows.
+  \-> F0 MET A0 H0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        { } "" "ERROR" \-> TR PR AV
+        \<<
+          IFERR
+            IF { X U } DFREEC THEN "X/U ASIGNADA: usar DIR sin valores" DOERR END
+            F0 IF DUP TYPE 2 == THEN
+              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+              STR\-> END
+            A0 IF DUP TYPE 2 == THEN
+              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+              STR\-> END
+            H0 IF DUP TYPE 2 == THEN
+              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+              STR\-> END
+            \-> F A H
+            \<<
+              TR "Integrando original" F 2 \->LIST 1 \->LIST + 'TR' STO
+              IF MET 0 < MET 3 > OR MET 0 RND MET == NOT OR
+              THEN "METODO INVALIDO" DOERR END
+              CASE
+                MET 1 == THEN
+                  A 'X' DERIV SIMPLIFY \-> DU
+                  \<<
+                    TR "u(X) =" A 2 \->LIST 1 \->LIST + 'TR' STO
+                    TR "du/dX =" DU 2 \->LIST 1 \->LIST + 'TR' STO
+                    H 'U' A = SUBST DU * F - SIMPLIFY
+                    IF DUP 0 SAME NOT THEN DROP "SUSTITUCION NO VERIFICADA" DOERR END
+                    DROP
+                    TR "H(u) * u' - f =" 0 2 \->LIST 1 \->LIST + 'TR' STO
+                    TR "Integrando en U" H 2 \->LIST 1 \->LIST + 'TR' STO
+                    H 'U' DINPRC \-> PU
+                    \<<
+                      TR "Primitiva en U (CAS)" PU 2 \->LIST 1 \->LIST + 'TR' STO
+                      PU 'U' A = SUBST SIMPLIFY 'PR' STO
+                      TR "Volver: U=u(X)" PR 2 \->LIST 1 \->LIST + 'TR' STO
+                    \>>
+                  \>>
+                END
+                MET 2 == THEN
+                  F A 0 1 0 0 \-> RR UU SUM SG FIN POL
+                  \<<
+                    DEPTH \-> DD
+                    \<<
+                      IFERR A DEGREE THEN 0 END
+                      \-> DG \<< DEPTH DD - DROPN DG \>>
+                    \>>
+                    \-> DG
+                    \<<
+                      IF DG TYPE 0 == DG TYPE 28 == OR
+                      THEN
+                        IF DG 0 > DG 5 > NOT AND DG 0 RND DG == AND
+                        THEN
+                          A \-> TEST
+                          \<<
+                            1 DG 1 + FOR JJ TEST 'X' DERIV SIMPLIFY 'TEST' STO NEXT
+                            IF TEST 0 SAME THEN 1 'POL' STO END
+                          \>>
+                        END
+                      END
+                    \>>
+                    IF UU 0 SAME THEN "u NO PUEDE SER CERO" DOERR END
+                    1 6 FOR J
+                      IF FIN 0 ==
+                      THEN
+                        RR UU / SIMPLIFY \-> DV
+                        \<<
+                          UU 'X' DERIV SIMPLIFY DV 'X' DINPRC \-> DU VV
+                          \<<
+                            TR "Por partes: u" UU 2 \->LIST 1 \->LIST + 'TR' STO
+                            TR "dv/dX = f/u" DV 2 \->LIST 1 \->LIST + 'TR' STO
+                            TR "du/dX" DU 2 \->LIST 1 \->LIST + 'TR' STO
+                            TR "v (CAS)" VV 2 \->LIST 1 \->LIST + 'TR' STO
+                            SUM SG UU VV * * + SIMPLIFY 'SUM' STO
+                            DU VV * SIMPLIFY 'RR' STO
+                            SG NEG 'SG' STO
+                            TR "Acumulado; I=acum+..." SUM 2 \->LIST 1 \->LIST + 'TR' STO
+                            TR "Resto: signo" SG 2 \->LIST 1 \->LIST + 'TR' STO
+                            TR "Resto: integrando" RR 2 \->LIST 1 \->LIST + 'TR' STO
+                            IF RR 0 SAME
+                            THEN SUM 'PR' STO 1 'FIN' STO
+                            ELSE
+                              IF POL 1 ==
+                              THEN DU 'UU' STO
+                              ELSE
+                                RR 'X' DINPRC \-> PP
+                                \<<
+                                  TR "Integral restante (CAS)" PP 2 \->LIST 1 \->LIST + 'TR' STO
+                                  SUM SG PP * + SIMPLIFY 'PR' STO 1 'FIN' STO
+                                \>>
+                              END
+                            END
+                          \>>
+                        \>>
+                      END
+                    NEXT
+                    IF FIN 0 == THEN "LIMITE DE 6 PARTES" DOERR END
+                  \>>
+                END
+                F \-> FF
+                \<<
+                  IF MET 3 ==
+                  THEN
+                    F PARTFRAC 'FF' STO
+                    TR "Fracciones simples (CAS)" FF 2 \->LIST 1 \->LIST + 'TR' STO
+                  ELSE
+                    TR "Linealidad: integrar suma" F 2 \->LIST 1 \->LIST + 'TR' STO
+                  END
+                  FF DINSUMC \-> TERMS
+                  \<<
+                    0 'PR' STO
+                    1 TERMS SIZE FOR J
+                      TERMS J GET \-> TT
+                      \<<
+                        TR "Termino a integrar" TT 2 \->LIST 1 \->LIST + 'TR' STO
+                        TT 'X' DINPRC \-> PP
+                        \<<
+                          TR "Primitiva del termino (CAS)" PP 2 \->LIST 1 \->LIST + 'TR' STO
+                          PR PP + 'PR' STO
+                        \>>
+                      \>>
+                    NEXT
+                    PR SIMPLIFY 'PR' STO
+                  \>>
+                \>>
+              END
+              TR "Primitiva sin C" PR 2 \->LIST 1 \->LIST + 'TR' STO
+              PR 'X' DERIV F - EXPAND SIMPLIFY \-> CK
+              \<<
+                TR "Control: F' - f" CK 2 \->LIST 1 \->LIST + 'TR' STO
+                IF CK 0 SAME
+                THEN "OK: agregar C; revisar dominio" 'AV' STO
+                ELSE "NO VERIFICADA: revisar control" 'AV' STO END
+              \>>
+            \>>
+          THEN
+            ERRM 'AV' STO "" 'PR' STO
+            TR "No se completo" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          PR TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

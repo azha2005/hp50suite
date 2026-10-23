@@ -40,9 +40,14 @@
             IF MP \->STR 159 CHR POS 0 >
             THEN "sin asintota (m infinita)"
             ELSE
+              IF BP \->STR 159 CHR POS 0 >
+              THEN "sin asintota (b infinita)"
+              ELSE
+              BP \->NUM DROP
               IF MP \->NUM ABS .0000001 <
               THEN "HORIZONTAL y = " BP \->STR +
               ELSE "OBLICUA y = " MP \->STR + "X + " + BP \->STR +
+              END
               END
             END
           THEN
@@ -53,9 +58,14 @@
             IF MN \->STR 159 CHR POS 0 >
             THEN "sin asintota (m infinita)"
             ELSE
+              IF BN \->STR 159 CHR POS 0 >
+              THEN "sin asintota (b infinita)"
+              ELSE
+              BN \->NUM DROP
               IF MN \->NUM ABS .0000001 <
               THEN "HORIZONTAL y = " BN \->STR +
               ELSE "OBLICUA y = " MN \->STR + "X + " + BN \->STR +
+              END
               END
             END
           THEN

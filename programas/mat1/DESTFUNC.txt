@@ -1,60 +1,72 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DESTFUNC - nucleo de DESTFUN. Estudio de funcion.
-  @ Uso:  'f(X)' AV PV DESTFUNC       (AV = candidato vertical, PV = 1 probar)
-  @ Deja: n1 = { D1 Z1 D2 Z2 TP TN TV }
-  @         D1/Z1 = f' y sus ceros, D2/Z2 = f'' y sus ceros,
-  @         TP/TN = asintotas en +oo y -oo, TV = veredicto de la vertical.
-  @
-  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DESTFUN.
-  @
-  @ Cada bloque va en su propio IFERR: si el CAS no puede con uno, los
-  @ demas se calculan igual.
-  @ NO calcula dominio ni imagen: decision tomada, requiere matematica
-  @ simbolica fragil y el resultado no seria el dominio real. Ver ademas
-  @ analisis/domain49 en el fork: un programa dedicado a eso se equivoca
-  @ en las raices y en las discontinuidades evitables.
-  @
-  @ Las asintotas las calcula DASHOC, no este programa. Antes estaban
-  @ escritas dos veces y el bug del infinito hubo que arreglarlo dos
-  @ veces; la segunda copia se habia quedado sin arreglar.
-  @ REQUIERE el global INF, por DASHOC.
+  @ F AV PV -> seven legacy fields plus the full DANAC result in field 8.
   \-> F0 AV PV
   \<<
+    RCLF \-> FL
+    \<<
+    -105 CF -103 CF -3 CF -119 CF -120 SF -123 CF -100 CF RAD
     DEPTH \-> D0
     \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+      F0 DANAC \-> ST
       \<<
-        0 0 0 0 "" "" "" \-> D1 Z1 D2 Z2 TP TN TV
+        "INF requerido para asintotas" "INF requerido para asintotas" "no probada" ST 11 GET \-> TP TN TV TR
         \<<
-          IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
-          IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
-          IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
-          IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
-          IFERR
-            F DASHOC
-          THEN
-            { 0 0 0 0 "no se pudo" "no se pudo" }
-          END
-          DUP 5 GET 'TP' STO
-          6 GET 'TN' STO
-          IF PV 1 ==
-          THEN
-            IFERR
-              F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
-              F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
-              IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
-            THEN
-              "no se pudo evaluar"
-            END
+          IF ST 12 GET "OK" == THEN
+          IF { INF } DFREEC THEN
+            IFERR F0 DREADC DASHOC THEN { 0 0 0 0 "no se pudo" "no se pudo" } END
+            \-> ASY
+            \<<
+              ASY 5 GET 'TP' STO ASY 6 GET 'TN' STO
+              TR "m(+oo)=lim f(X)/X" ASY 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+              TR "b(+oo)=lim (f(X)-m*X)" ASY 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+              TR "En +oo" TP 2 \->LIST 1 \->LIST + 'TR' STO
+              TR "m(-oo)=lim f(X)/X" ASY 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+              TR "b(-oo)=lim (f(X)-m*X)" ASY 4 GET 2 \->LIST 1 \->LIST + 'TR' STO
+              TR "En -oo" TN 2 \->LIST 1 \->LIST + 'TR' STO
+            \>>
           ELSE
-            "no probada"
+            TR "Asintotas horizontales/oblicuas" TP 2 \->LIST 1 \->LIST + 'TR' STO
           END
-          'TV' STO
-          D1 Z1 D2 Z2 TP TN TV 7 \->LIST
-          \-> R \<< DEPTH D0 - DROPN R \>>
+          ST 5 GET 3 GET
+          IF PV 1 == THEN AV 1 \->LIST + END DORDC \-> CP
+          \<<
+            IF CP SIZE 0 > THEN
+              1 CP SIZE FOR I
+                CP I GET \-> P
+                \<<
+                  DEPTH \-> D1
+                  \<<
+                    IFERR F0 DREADC P DCONTFC THEN { "?" "?" "?" -1 } END
+                    \-> CR \<< DEPTH D1 - DROPN CR \>>
+                  \>>
+                  \-> CR
+                  \<<
+                    TR "Candidato vertical x=" P 2 \->LIST 1 \->LIST + 'TR' STO
+                    TR "Limite izquierdo (real)" CR 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                    TR "Limite derecho (real)" CR 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+                    IF CR 4 GET 4 == THEN "HAY ASINT. VERTICAL"
+                    ELSE IF CR 4 GET -1 == THEN "no se pudo decidir" ELSE "sin lateral infinito" END END
+                    \-> VER
+                    \<<
+                      TR "Conclusion vertical" VER 2 \->LIST 1 \->LIST + 'TR' STO
+                      IF PV 1 == THEN IF P \->NUM AV \->NUM == THEN VER 'TV' STO END END
+                    \>>
+                  \>>
+                \>>
+              NEXT
+            END
+          \>>
+          ELSE
+            "Estudio no completado: revisar estado" 'TP' STO TP 'TN' STO
+          END
+          ST 11 TR PUT 'ST' STO
+          ST 1 GET ST 2 GET ST 3 GET ST 4 GET TP TN TV ST 8 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN RES \>>
         \>>
       \>>
+    \>>
+    FL STOF
     \>>
   \>>
 \>>

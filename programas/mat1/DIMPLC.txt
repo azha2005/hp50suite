@@ -1,0 +1,76 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Left Right x0 y0 -> { derivative tangent normal trace status }.
+  @ Explicit partials and total differential; checks point before forming lines.
+  @ Regular vertical/horizontal cases supported; singular points reported.
+  \-> L0 R0 X0 Y0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" "" "" { } "ERROR" \-> DY TG NR TR AV
+        \<<
+          IFERR
+            IF { X Y YP } DFREEC THEN "X/Y/YP ASIGNADA: usar DIR sin valores" DOERR END
+            L0 IF DUP TYPE 2 == THEN
+              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END STR\-> END
+            R0 IF DUP TYPE 2 == THEN
+              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END STR\-> END
+            - \-> F
+            \<<
+              F 'X' DERIV SIMPLIFY F 'Y' DERIV SIMPLIFY \-> FX FY
+              \<<
+                TR "F=izquierda-derecha" F 2 \->LIST 1 \->LIST + 'TR' STO
+                TR "Fx: Y constante" FX 2 \->LIST 1 \->LIST + 'TR' STO
+                TR "Fy: X constante" FY 2 \->LIST 1 \->LIST + 'TR' STO
+                TR "Derivar: YP es y'" FX FY 'YP' * + 0 = 2 \->LIST 1 \->LIST + 'TR' STO
+                TR "Agrupar y'" FY 'YP' * FX NEG = 2 \->LIST 1 \->LIST + 'TR' STO
+                IF FY 0 SAME NOT THEN FX NEG FY / SIMPLIFY 'DY' STO END
+                TR "y'=-Fx/Fy si Fy<>0" DY 2 \->LIST 1 \->LIST + 'TR' STO
+                F 'X' X0 = SUBST 'Y' Y0 = SUBST EVAL SIMPLIFY \-> CK
+                \<<
+                  TR "Punto: F(x0,y0)" CK 2 \->LIST 1 \->LIST + 'TR' STO
+                  IF CK 0 SAME NOT THEN "EL PUNTO NO VERIFICA F=0" DOERR END
+                \>>
+                FX 'X' X0 = SUBST 'Y' Y0 = SUBST EVAL SIMPLIFY
+                FY 'X' X0 = SUBST 'Y' Y0 = SUBST EVAL SIMPLIFY \-> VX VY
+                \<<
+                  VX \->NUM TYPE 0 == VY \->NUM TYPE 0 == AND
+                  IF NOT THEN "PARCIALES NO REALES" DOERR END
+                  TR "Fx(x0,y0)" VX 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Fy(x0,y0)" VY 2 \->LIST 1 \->LIST + 'TR' STO
+                  CASE
+                    VY 0 SAME THEN
+                      IF VX 0 SAME
+                      THEN "PUNTO SINGULAR: tangente no determinada" 'AV' STO
+                      ELSE 'X' X0 = 'TG' STO 'Y' Y0 = 'NR' STO
+                        "OK: tangente vertical" 'AV' STO END
+                    END
+                    VX NEG VY / SIMPLIFY \-> MM
+                    \<<
+                      TR "m=-Fx(P)/Fy(P)" MM 2 \->LIST 1 \->LIST + 'TR' STO
+                      'Y' Y0 - MM 'X' X0 - * = 'TG' STO
+                      IF MM 0 SAME THEN 'X' X0 = 'NR' STO
+                      ELSE 'Y' Y0 - -1 MM / 'X' X0 - * = 'NR' STO END
+                      "OK: punto regular" 'AV' STO
+                    \>>
+                  END
+                  TR "Tangente" TG 2 \->LIST 1 \->LIST + 'TR' STO
+                  TR "Normal" NR 2 \->LIST 1 \->LIST + 'TR' STO
+                \>>
+              \>>
+            \>>
+          THEN
+            ERRM 'AV' STO "" 'TG' STO "" 'NR' STO
+            TR "No se completo" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          DY TG NR TR AV 5 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

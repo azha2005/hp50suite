@@ -1,0 +1,45 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  RCLF \-> FLUI
+  \<<
+    -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+    IFERR
+      "Area entre curvas / eje: G=0"
+      { { "F:" "y=F(X) o x=F(Y)" } { "G:" "Segunda curva, 0 para eje" } { "Variable 0=X 1=Y:" "0 o 1" 0 } { "Region 0=limites 1=todas:" "1: entre cortes extremos" 0 } }
+      { } { 'X' 'X^2' 0 0 } { 'X' 'X^2' 0 0 } INFORM
+      IF THEN
+        OBJ\-> DROP \-> F G K MD
+        \<<
+          IF K 0 == K 1 == OR NOT THEN "VARIABLE INVALIDA" DOERR END
+          IF MD 0 == MD 1 == OR NOT THEN "REGION INVALIDA" DOERR END
+          IF MD 1 == THEN "AUTO" "AUTO" 2 \->LIST 1
+          ELSE
+            "Elegir region: limites finitos"
+            { { "a:" "Desde" 0 } { "b:" "Hasta" 0 } }
+            { } { 0 1 } { 0 1 } INFORM
+          END
+          IF THEN
+            OBJ\-> DROP \-> A B
+            \<<
+              F G IF K 0 == THEN 'X' ELSE 'Y' END A B DAREAC \-> RES
+              \<<
+                RES
+                IF RES 5 GET "OK" == THEN
+                  "Dibujar region?"
+                  { { "1=si 0=no:" "Curvas y sombreado" 0 } } { } { 1 } { 1 } INFORM
+                  IF THEN
+                    1 GET IF 1 == THEN
+                      F G IF K 0 == THEN 'X' ELSE 'Y' END RES 2 GET DAREAG PICTURE
+                    END
+                  END
+                END
+                RES 4 GET DPASOS
+              \>>
+            \>>
+          END
+        \>>
+      END
+    THEN FLUI STOF ERRM DOERR END
+    FLUI STOF
+  \>>
+\>>

@@ -1,0 +1,21 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Numeric base and exact exponent -> real rational power, when q is odd.
+  \-> BA EE
+  \<<
+    EE \->NUM \-> EN
+    \<<
+      0 1 12 FOR K
+        IF DUP NOT THEN
+          IF EN K * DUP 0 RND - ABS .000000001 < THEN DROP K END
+        END
+      NEXT \-> DEN
+      \<<
+        IF DEN 1 > DEN 2 MOD 1 == AND BA \->NUM 0 < AND THEN
+          BA ABS EE ^
+          IF EN DEN * 0 RND 2 MOD ABS THEN NEG END
+        ELSE BA EE ^ END
+      \>>
+    \>>
+  \>>
+\>>

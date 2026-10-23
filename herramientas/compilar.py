@@ -99,7 +99,10 @@ def objeto_str_eval(texto, prologo=PROLOGO_EXACTO):
     nib += a_nibbles(DOCOL, 5)
     nib += a_nibbles(XABRE, 5)
     if prologo:
-        _poner_str(nib, prologo)
+        # STR-> executes a bare command sequence immediately. The following
+        # EVAL would then execute the PREVIOUS stack object (or underflow).
+        # Compile a program object instead; EVAL consumes only that program.
+        _poner_str(nib, chr(171) + " " + prologo + " " + chr(187))
     nib += a_nibbles(DOCSTR, 5)
     nib += a_nibbles(5 + 2 * len(texto), 5)      # el largo se incluye a si mismo
     for ch in texto:

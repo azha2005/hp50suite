@@ -1,0 +1,35 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Trace viewer. Takes { {label object} ... }; keeps no globals.
+  @ Choose a step repeatedly; CANCEL exits. Full trace stays with caller.
+  @ Long text is split into pages of two lines, 20 characters each.
+  \-> TR
+  \<<
+    1 1 \-> SIG ACT
+    \<<
+      WHILE SIG 1 == REPEAT
+        "Paso 1-" TR SIZE \->STR + " / CANCEL" +
+        { { "Paso:" "Numero desde 1" 0 } }
+        { } ACT 1 \->LIST ACT 1 \->LIST INFORM
+        IF THEN
+          1 GET \-> K
+          \<<
+            IF K 1 < K TR SIZE > OR K 0 RND K == NOT OR
+            THEN "Paso fuera de rango" MSGBOX
+            ELSE
+              TR K GET DPAGC \-> PG
+              \<<
+                IF PG SIZE 0 > THEN
+                  1 PG SIZE FOR P
+                    PG P GET K P PG SIZE DPANTC DROP 7 FREEZE 0 WAIT DROP
+                  NEXT
+                END
+              \>>
+              IF K TR SIZE < THEN K 1 + ELSE K END 'ACT' STO
+            END
+          \>>
+        ELSE 0 'SIG' STO END
+      END
+    \>>
+  \>>
+\>>

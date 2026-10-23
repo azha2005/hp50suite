@@ -37,11 +37,10 @@
           IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
           \-> AS
           \<<
-          "'X=" AS + "-0'" + STR\-> "'X=" AS + "+0'" + STR\->
-          0 0 0 0 \-> EQI EQD LI LD IG ES
+          0 0 0 0 \-> LI LD IG ES
           \<<
-            IFERR FI EQI LIMIT EVAL THEN "INDEF" END 'LI' STO
-            IFERR FD EQD LIMIT EVAL THEN "INDEF" END 'LD' STO
+            IFERR FI A -1 DLATC THEN "INDEF" END 'LI' STO
+            IFERR FD A 1 DLATC THEN "INDEF" END 'LD' STO
             IFERR LI \->NUM LD \->NUM - ABS .0000001 < THEN LI LD SAME END 'IG' STO
             @ Deteccion del infinito POR EL CARACTER, no por SAME contra INF.
             @ Probado en la maquina: con rama izq '1/X' y corte 0, LIMIT

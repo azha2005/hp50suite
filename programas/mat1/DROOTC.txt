@@ -1,0 +1,70 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ E -> { sorted real roots warning }. X must be free. Constants: no cuts.
+  @ Numeric ordering retains the original exact root; duplicates use 1E-9.
+  \-> E
+  \<<
+    DEPTH \-> D0
+    \<<
+      { } { } "" \-> PE PN AV
+      \<<
+        IF E TYPE 6 == E TYPE 9 == OR
+        THEN
+          DEPTH \-> D1
+          \<<
+            IFERR E 'X' ZEROS THEN "NO RESUELTO" END
+            \-> Z \<< DEPTH D1 - DROPN Z \>>
+          \>>
+          \-> Z
+          \<<
+            IF Z TYPE 2 ==
+            THEN "CEROS NO RESUELTOS" 'AV' STO
+            ELSE
+              Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END \-> ZL
+              \<<
+                IF ZL SIZE 0 > THEN
+                  1 ZL SIZE FOR I
+                    ZL I GET \-> ZI
+                    \<<
+                      ZI 'X' 0 DVALC \-> ZV
+                      \<<
+                        IF ZV TYPE 2 ==
+                        THEN
+                          IF ZI \->STR "n1" POS THEN "RAICES PERIODICAS: DELIMITAR" 'AV' STO END
+                        ELSE
+                          ZV \->NUM \-> ZN
+                          \<<
+                            0 \-> REP
+                            \<<
+                              IF PN SIZE 0 > THEN
+                                1 PN SIZE FOR J
+                                  IF PN J GET ZN - ABS .000000001 < THEN 1 'REP' STO END
+                                NEXT
+                              END
+                              IF REP NOT THEN PE ZI 1 \->LIST + 'PE' STO PN ZN 1 \->LIST + 'PN' STO END
+                            \>>
+                          \>>
+                        END
+                      \>>
+                    \>>
+                  NEXT
+                END
+              \>>
+            END
+          \>>
+        END
+        PN SORT \-> PS
+        \<<
+          { } \-> RS
+          \<<
+            IF PS SIZE 0 > THEN
+              1 PS SIZE FOR I RS PE PN PS I GET POS GET 1 \->LIST + 'RS' STO NEXT
+            END
+            RS AV 2 \->LIST
+          \>>
+        \>>
+      \>>
+      \-> R \<< DEPTH D0 - DROPN R \>>
+    \>>
+  \>>
+\>>

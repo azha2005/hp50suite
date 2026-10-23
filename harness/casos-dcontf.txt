@@ -4,7 +4,7 @@
 #    4 lim infinito, 5 lateral no existe, 6 continua de un lado.
 # ESPERADO calculados a mano ANTES de correr.
 
-USAR: DCONTFC
+USAR: DCONTFC DLATC
 
 # Continua: polinomio.
 dcf-cont-k     | 'X^2+1' 2 DCONTFC 4 GET                      | 0

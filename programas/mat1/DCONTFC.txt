@@ -59,7 +59,7 @@
               \>>
               DEPTH \-> D1
               \<<
-                IFERR F EQ LIMIT EVAL THEN "ERR" END
+                IFERR F A S DLATC THEN "ERR" END
                 \-> L0 \<< DEPTH D1 - DROPN L0 \>>
               \>>
               \-> P L

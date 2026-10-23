@@ -1,11 +1,11 @@
-# correr-emu.ps1 - ciclo completo del harness contra el Emu48 de Debug4x,
+﻿# correr-emu.ps1 - ciclo completo del harness contra el Emu48 de Debug4x,
 #                  sin tocar el teclado.
 #
 #   1. DDE48 s   manda el objeto a la pila del emulador
 #   2. PostMessage le manda la tecla EVAL a la ventana (no roba el foco:
 #      va al handle, no al teclado del sistema)
 #   3. espera
-#   4. DDE48 r    se trae el nivel 1
+#   4. SoloRecibir, tras confirmar reposo: DDE48 r trae el nivel 1
 #   5. leer-resultado.py lo decodifica y lo compara contra los casos
 #
 # El objeto se arma con herramientas\compilar.py, que envuelve el fuente en
@@ -26,7 +26,9 @@ param(
     [int]   $Vk       = 78,        # 'N' -> tecla 42 -> EVAL
     [int]   $EsperaMs = 20000,
     [int]   $EnterCadaMs = 4000,
-    [int]   $Reintentos = 3,
+    [int]   $Reintentos = 3,      # compatibilidad; no se reintenta DDE en vivo
+    [switch]$SoloPreparar,        # compila/carga; EVAL queda a cargo del operador
+    [switch]$SoloRecibir,         # no carga ni envia teclas; requiere marca final
     [switch]$SinComparar,          # deja el objeto crudo y no compara
     [string]$Bin = '',             # donde dejarlo
     [string]$Dde48 = 'C:\Program Files (x86)\Hewlett-Packard\Debug4x\Emu\DDE48.exe'
@@ -56,8 +58,18 @@ public class EmuTecla {
 
 $proc = Get-Process -Name EMU48 -ErrorAction SilentlyContinue
 if (-not $proc) { throw "No hay ningun EMU48 abierto. Abrirlo con el estado 'Default 50g.E49'." }
+if (@($proc).Count -ne 1) { throw "Hay varios EMU48: no se puede elegir un servidor DDE de forma segura." }
 if (-not (Test-Path -LiteralPath $Dde48)) { throw "No encontre DDE48.exe en: $Dde48" }
+if ($SoloPreparar -and $SoloRecibir) { throw 'Elegir SoloPreparar o SoloRecibir' }
+$meta = [IO.Path]::ChangeExtension($Fuente, '.json')
+if (Test-Path -LiteralPath $meta) {
+    $manifest = Get-Content -LiteralPath $meta -Raw | ConvertFrom-Json
+    if ((Get-FileHash -LiteralPath $Fuente -Algorithm SHA256).Hash.ToLowerInvariant() -ne $manifest.sha256) {
+        throw 'El fuente cambio despues de generar los metadatos: reconstruir la bateria.'
+    }
+} elseif ($SoloRecibir) { throw 'SoloRecibir requiere metadatos con marca final.' }
 
+if (-not $SoloRecibir) {
 Write-Host "1. compilando $([IO.Path]::GetFileName($Fuente)) a objeto..." -ForegroundColor Cyan
 & python (Join-Path (Join-Path $aqui '..') 'herramientas\compilar.py') $Fuente $objeto
 if ($LASTEXITCODE -ne 0) { throw "compilar.py fallo" }
@@ -67,9 +79,27 @@ $r = & $Dde48 's' $objeto
 $r | ForEach-Object { Write-Host "   $_" -ForegroundColor DarkGray }
 # DDE48 devuelve 0 aunque falle: hay que mirar el texto.
 if ($r -join ' ' -notmatch 'OK') { throw "El POKE fallo. Emulador ocupado o sin responder." }
+if ($SoloPreparar) { Write-Host 'Listo para EVAL; luego usar -SoloRecibir.'; exit 0 }
 
 Write-Host "3. tecla EVAL (vk $Vk) a la ventana $($proc.MainWindowHandle)..." -ForegroundColor Cyan
 [EmuTecla]::Enviar($proc.MainWindowHandle, $Vk)
+}
+
+if ($SoloRecibir) {
+    # The operator must establish idle state BEFORE this call.
+    # ON is not proof of cancellation: an inner IFERR can catch it and keep
+    # running. Never REQUEST from a running batch or an unanswered CAS modal.
+    # DDE REQUEST while UserRPL is running may corrupt emulator memory.
+    # See Emu48.txt, DDE SERVER: applies to BOTH POKE and REQUEST.
+    if (Test-Path -LiteralPath $salida) { Remove-Item -LiteralPath $salida -Force }
+    $r = & $Dde48 'r' $salida
+    if (($r -join ' ') -notmatch 'OK') { throw 'No se recibio resultado' }
+    & python (Join-Path $aqui 'leer-resultado.py') $salida --meta $meta --comprobar-fin
+    if ($LASTEXITCODE -ne 0) { throw 'Sin marca final. No repetir DDE mientras este ejecutando.' }
+    if ($SinComparar) { exit 0 }
+    & python (Join-Path $aqui 'leer-resultado.py') $salida --meta $meta
+    exit $LASTEXITCODE
+}
 
 # El CAS abre dialogos modales en medio del calculo (visto: "Unsigned inf.
 # Solve?" con el limite de 1/X en 0). Sin contestarlos la bateria se queda
@@ -79,28 +109,15 @@ Write-Host "3. tecla EVAL (vk $Vk) a la ventana $($proc.MainWindowHandle)..." -F
 Write-Host "4. esperando $EsperaMs ms, con ENTER cada $EnterCadaMs ms por si el CAS pregunta..." -ForegroundColor Cyan
 $transcurrido = 0
 while ($transcurrido -lt $EsperaMs) {
-    Start-Sleep -Milliseconds $EnterCadaMs
-    $transcurrido += $EnterCadaMs
-    [EmuTecla]::Enviar($proc.MainWindowHandle, 13)   # ENTER
+    $pausa = if ($EnterCadaMs -gt 0) { [Math]::Min($EnterCadaMs, $EsperaMs - $transcurrido) } else { $EsperaMs - $transcurrido }
+    Start-Sleep -Milliseconds $pausa
+    $transcurrido += $pausa
+    if ($EnterCadaMs -gt 0) { [EmuTecla]::Enviar($proc.MainWindowHandle, 13) }
 }
 
-for ($i = 1; $i -le $Reintentos; $i++) {
-    if (Test-Path -LiteralPath $salida) { Remove-Item -LiteralPath $salida -Force }
-    $r = & $Dde48 'r' $salida
-    if ((Test-Path -LiteralPath $salida) -and ((Get-Item -LiteralPath $salida).Length -gt 0)) {
-        $n = (Get-Item -LiteralPath $salida).Length
-        Write-Host "5. recibidos $n bytes (intento $i)" -ForegroundColor Green
-        break
-    }
-    Write-Host "   nada todavia (intento $i de $Reintentos), espero 10 s mas..." -ForegroundColor Yellow
-    Start-Sleep -Seconds 10
-}
-if (-not (Test-Path -LiteralPath $salida)) { throw "No volvio nada de la pila." }
-
-Write-Host ""
-if ($SinComparar) {
-    Write-Host "Objeto crudo en: $salida" -ForegroundColor Green
-    exit 0
-}
-& python (Join-Path $aqui 'leer-resultado.py') $salida $Casos
-exit $LASTEXITCODE
+# Fixed time is not proof of completion. ON can be caught by IFERR, so it
+# cannot make DDE safe here. Leave reception as an explicit second phase.
+Write-Host 'Tiempo de espera cumplido. No se consulto la pila por DDE.' -ForegroundColor Yellow
+Write-Host 'Confirmar que termino (sin calculo ni dialogo CAS), luego ejecutar:'
+Write-Host "  .\correr-emu.ps1 -Fuente '$Fuente' -SoloRecibir"
+exit 0

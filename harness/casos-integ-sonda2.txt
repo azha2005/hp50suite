@@ -1,0 +1,5 @@
+# Additional independent probes for exact guided integrals.
+local-symbol | 'X' 'U' \-> X U \<< 'X^2' 'X' DERIV \>> | 2*X
+explode-sum | 'X^2+X' OBJ\-> DROP DROP 2 \->LIST | { X^2 X }
+prim-ln | -103 CF '1/X' 'X' RISCH | LN(ABS(X))
+list-flags | RCLF TYPE | 5

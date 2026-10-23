@@ -1,0 +1,47 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F M -> branch of F with each ABS resolved by its sign at M.
+  @ Caller must split at ALL zeros of ABS arguments before using this.
+  \-> F M
+  \<<
+    { } \-> AL
+    \<<
+      { } F
+      DO
+        IF DUP TYPE 9 == THEN
+          DUP \-> NODE
+          \<<
+            OBJ\-> \->STR \-> N OP
+            \<< IF OP "ABS" == THEN AL NODE 1 \->LIST + 'AL' STO END \>>
+          \>>
+        ELSE DROP END
+      UNTIL DUP TYPE 5 == END
+      DROP
+      IF AL SIZE 0 > THEN
+        1 AL SIZE FOR I
+          AL I GET \-> NODE
+          \<<
+            NODE OBJ\-> DROP DROP \-> A
+            \<<
+            A 'X' M DVALC
+            IF DUP TYPE 2 == THEN DROP "MODULO SIN SIGNO REAL" DOERR END
+            \->NUM
+            IF DUP 0 == THEN DROP 0 ELSE IF 0 < THEN -1 ELSE 1 END END
+            \-> SG
+            \<<
+              F \->STR
+              NODE \->STR DUP SIZE 1 - 2 SWAP SUB
+              A SG * \->STR
+              IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+              "(" SWAP + ")" + SREPL DROP STR\-> 'F' STO
+            \>>
+            \>>
+          \>>
+        NEXT
+      END
+      @ Do not rewrite rational powers to principal complex XROOT branches.
+      @ The caller may simplify a derivative or primitive after choosing a branch.
+      F
+    \>>
+  \>>
+\>>

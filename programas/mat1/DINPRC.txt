@@ -1,0 +1,11 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Internal: F variable -> primitive, or a real error for unresolved INT.
+  @ Caller supplies IFERR and depth guard. No global variables are changed.
+  \-> F V
+  \<<
+    F V RISCH SIMPLIFY
+    IF DUP \->STR "INT(" POS 0 >
+    THEN DROP "NO PRIMITIVA ELEMENTAL" DOERR END
+  \>>
+\>>

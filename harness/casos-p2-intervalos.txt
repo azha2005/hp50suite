@@ -1,0 +1,71 @@
+# Proper integrals, signed areas, sign study and absolute extrema.
+# Expected values derived by hand, independent of the HP output.
+USAR: DFREEC DREADC DPOWC DREALC DVALC DROOTC DCUTSC DORDC DCONDC DSATC DINTC DRELC DDOMC DINFOC DCLOSEC DABRC DINSUMC DINPRC DINTEGC DINPVIC DPAGC DPANTC DPASOS DINTEG DIMPLC DIMPL DINTDEFC DINTDEF DAREAC DAREAG DAREA DBRKC DANAC DANAG DLATC DCONTFC DASHOC DASVC DESTFUNC DESTFUN DWEIERC DWEIER
+
+int-poly | 'X^2' 'X' 0 1 DINTDEFC 1 GET | 1/3
+int-status | 'X^2' 'X' 0 1 DINTDEFC 6 GET | OK
+int-reverse | 'X^2' 'X' 1 0 DINTDEFC 1 GET | -1/3
+int-zero | 'X^2' 'X' 2 2 DINTDEFC 1 GET | 0
+int-abs | 'ABS(X)' 'X' -1 1 DINTDEFC 1 GET | 1
+int-abs-nonlinear | 'ABS(X^2-1)' 'X' -2 2 DINTDEFC 1 GET | 4
+int-abs-nested | 'ABS(ABS(X)-1)' 'X' -2 2 DINTDEFC 1 GET | 2
+int-positive | '1/X' 'X' 1 2 DINTDEFC 1 GET 'LN(2)' - SIMPLIFY | 0
+int-y | 'Y^2' 'Y' 0 1 DINTDEFC 1 GET | 1/3
+int-pole | '1/(X-1/3)' 'X' 0 1 DINTDEFC 1 GET TYPE | 2
+int-hole | '(X^2-1)/(X-1)' 'X' 0 2 DINTDEFC 1 GET TYPE | 2
+int-upper | 'X^2' 'X' 0 1 DINTDEFC 3 GET | { 1/3 }
+int-lower | 'X^2' 'X' 0 1 DINTDEFC 4 GET | { 0 }
+area-parabolas | 'X' 'X^2' 'X' 0 1 DAREAC 1 GET | 1/6
+area-status | 'X' 'X^2' 'X' 0 1 DAREAC 5 GET | OK
+area-sign-change | 'X' 0 'X' -1 1 DAREAC 1 GET | 1
+area-segments | 'X' 0 'X' -1 1 DAREAC 3 GET SIZE | 2
+area-auto | 'X' 'X^2' 'X' "AUTO" "AUTO" DAREAC 1 GET | 1/6
+area-y | 'Y' 'Y^2' 'Y' 0 1 DAREAC 1 GET | 1/6
+area-reverse | 'X' 'X^2' 'X' 1 0 DAREAC 1 GET | 1/6
+area-pole | '1/X' 0 'X' -1 1 DAREAC 1 GET TYPE | 2
+study-d1 | 'X^3-3*X' DANAC 1 GET '3*X^2-3' - SIMPLIFY | 0
+study-ext | 'X^3-3*X' DANAC 8 GET | { { -1 2 "MAX" } { 1 -2 "MIN" } }
+study-inf | 'X^3' DANAC 9 GET | { { 0 0 } }
+study-no-inf | 'X^4' DANAC 9 GET | { }
+study-pole-inf | '1/X' DANAC 9 GET | { }
+study-abs | 'ABS(X)' DANAC 8 GET | { { 0 0 "MIN" } }
+study-cusp | 'X^(2/3)' DANAC 10 GET | { 0 }
+wei-ties | 'X^3-3*X' -2 3 DWEIERC 9 GET | { -2 1 }
+wei-cusp | 'X^(2/3)' -1 1 DWEIERC 6 GET | 0
+wei-abs | 'ABS(X)' -1 1 DWEIERC 9 GET | { 0 }
+wei-abs-branches | 'ABS(X)-X^2' -1 1 DWEIERC 8 GET | { -1/2 1/2 }
+wei-constant | 4 -1 1 DWEIERC 8 GET | TODO [a,b]
+wei-pole | '1/X' -1 1 DWEIERC 4 GET TYPE | 2
+wei-hole | '(X^2-1)/(X-1)' 0 2 DWEIERC 4 GET TYPE | 2
+int-stack | DEPTH 'ZZP' STO 'X^2' 'X' 0 1 DINTDEFC DROP DEPTH ZZP - | 0
+area-stack | DEPTH 'ZZP' STO 'X' 0 'X' -1 1 DAREAC DROP DEPTH ZZP - | 0
+study-stack | DEPTH 'ZZP' STO 'X^4' DANAC DROP DEPTH ZZP - | 0
+wei-stack | DEPTH 'ZZP' STO 'X^3-3*X' -2 3 DWEIERC DROP DEPTH ZZP - | 0
+p2-clean | { ZZP } PURGE 1 | 1
+real-cuberoot | 'X^(1/3)' 'X' -8 DVALC \->NUM | -2
+real-recip-cube | 'X^(-1/3)' 'X' -8 DVALC \->NUM | -.5
+real-even-denom | 'X^(1/2)' 'X' -1 DVALC TYPE | 2
+page-short | { "A" 123 } DPAGC 1 GET | A : 123
+page-long-count | "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" 0 2 \->LIST DPAGC SIZE | 2
+page-long-first | "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" 0 2 \->LIST DPAGC 1 GET SIZE | 41
+page-long-last | "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" 0 2 \->LIST DPAGC 2 GET SIZE | 9
+page-newlines | "A" 10 CHR + "B" + 0 2 \->LIST DPAGC 1 GET 10 CHR POS | 0
+graph-x-top | 'X' 'X^2' 'X' { 0 1 } DAREAG (.5,.5) PIX? | 1
+graph-x-outside | 'X' 'X^2' 'X' { 0 1 } DAREAG (.5,.9) PIX? | 0
+graph-y-right | 'Y' 'Y^2' 'Y' { 0 1 } DAREAG (.5,.5) PIX? | 1
+graph-y-outside | 'Y' 'Y^2' 'Y' { 0 1 } DAREAG (.9,.5) PIX? | 0
+study-graph | 'X^2' { } -2 2 -1 5 DANAG (1,1) PIX? | 1
+study-graph-outside | '1/X' { 0 } -1 1 -5 5 DANAG (.1,1) PIX? | 0
+study-log-domain | 'LN(X)' DANAC 5 GET 1 GET | (0, +\oo)
+wei-sqrt | '\v/X' 0 1 DWEIERC 6 GET | 0
+# True maximum is 2, but this ROM cannot solve all critical points. No claim.
+wei-cusp-offset | 'X^(2/3)+X' -1 1 DWEIERC DUP 7 GET SWAP 4 GET 2 \->LIST | { "CEROS NO RESUELTOS" "" }
+study-cusp-offset | 'X^(2/3)+X' DANAC 12 GET | CEROS NO RESUELTOS
+periodic-warning | 'SIN(X)' DANAC 12 GET "OK" == NOT | 1
+assigned-kernel | 12 'X' STO 'X^2' 0 0 DESTFUNC DROP X 12 == { X } PURGE | 1
+primitive-unresolved | 'EXP(X^2)' 'X' 0 1 DINTDEFC 1 GET TYPE | 2
+param-reject | 'X^2+B' 'X' 0 1 DINTDEFC 1 GET TYPE | 2
+wei-flags | -100 SF -119 SF RCLF 'ZFL' STO 'X^(2/3)' -1 1 DWEIERC DROP RCLF ZFL SAME | 1
+wei-flags-clean | { ZFL } PURGE -100 CF -119 CF 1 | 1
+int-flags | -3 SF -119 SF RCLF 'ZFL' STO 'X^2' 'X' 0 1 DINTDEFC DROP RCLF ZFL SAME | 1
+flags-clean | { ZFL } PURGE -3 CF -119 CF 1 | 1

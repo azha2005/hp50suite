@@ -22,7 +22,7 @@ $salida  = Join-Path $PSScriptRoot 'MAT1.txt'
 # Cada nucleo va antes de su interfaz, aunque dentro de un DIR el orden no
 # afecta la visibilidad de los nombres.
 $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
-           'DVFGC','DVFG','DDOMPC','DDOMP','DCONTC','DCONT','DCONTFC','DCONTF',
+           'DVFGC','DVFG','DDOMPC','DDOMP','DLATC','DCONTC','DCONT','DCONTFC','DCONTF',
            'DDEFC','DDEF','DTANORC','DTANOR','DASVC','DASV',
            'DASHOC','DASHO','DOPFUNC','DOPFUN','DESTFUNC','DESTFUN',
            'LHOPC','LHOP','DSEPC','DSEP','DSEPIC','DSEPI',
@@ -31,7 +31,9 @@ $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
            'DBOLZC','DBOLZ','DWSUSC','DWSUS',
            'DCONDC','DSATC','DINTC','DRELC','DDOMC','DDOM','DINECC','DINEC',
            'DINVC','DINV','DCONTKC','DCONTK','DPARC','DPAR',
-           'DASVTC','DASVT','DCEROC','DCERO')
+           'DASVTC','DASVT','DCEROC','DCERO',
+           'DFREEC','DREADC','DPOWC','DREALC','DVALC','DROOTC','DCUTSC','DORDC','DINFOC','DCLOSEC','DABRC',
+           'DINSUMC','DINPRC','DINTEGC','DINPVIC','DPAGC','DPANTC','DPASOS','DBRKC','DANAC','DANAG')
 
 $lineas = New-Object System.Collections.Generic.List[string]
 $lineas.Add('%%HP: T(3)A(R)F(.);')

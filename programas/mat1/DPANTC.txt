@@ -1,0 +1,14 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Page text, step, page number, page count -> native LCD GROB.
+  @ Same renderer for the interactive viewer and visual ROM fixtures.
+  @ No WAIT here: the caller owns navigation; LCD-> is captured before redraw.
+  \-> TXT K P N
+  \<<
+    CLLCD
+    "Paso " K \->STR + "  " + P \->STR + "/" + N \->STR + 1 DISP
+    TXT 3 DISP
+    "Tecla: continuar" 7 DISP
+    LCD\->
+  \>>
+\>>

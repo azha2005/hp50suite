@@ -1,6 +1,13 @@
 MEGA_TODOS_LOS_TPS*.txt
+# Material de catedra y planes de estudio: solo locales, no publicar.
+/MEGATXT_*.txt
+/PLAN-PARCIAL-*.md
+/FRECUENCIAS-PARCIAL-*.md
+/PROGRAMAS-PARCIAL-*.md
+/analisis/parcial2/
 CLAUDE.md
 harness/B*.txt
+harness/B*.json
 harness/UI-*.txt
 harness/*.hp
 harness/*.bin

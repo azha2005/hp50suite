@@ -2,11 +2,11 @@
 #   nombre | expresion UserRPL | esperado
 # Predicciones hechas a mano ANTES de correr.
 
-USAR: DWEIERC DBOLZC DWSUSC
+USAR: DWEIERC DBOLZC DWSUSC DFREEC DREADC DPOWC DREALC DVALC DROOTC DCUTSC DORDC DCONDC DSATC DINTC DRELC DDOMC DINFOC DCLOSEC DABRC DBRKC DANAC
 
 # ---------- DWEIERC: { CAND VAL XMAX FMAX XMIN FMIN AVISO } ----------
 # f=X^3-3X en [-2,3]: criticos -1 y 1; f(-2)=-2, f(-1)=2, f(1)=-2, f(3)=18.
-# Maximo 18 en X=3; minimo -2, que se alcanza en DOS puntos (se informa uno).
+# Maximo 18 en X=3; minimo -2, que se alcanza en DOS puntos (los dos en el campo 9).
 wei-cand-cant   | 'X^3-3*X' -2 3 DWEIERC 1 GET SIZE           | 4.
 wei-fmax        | 'X^3-3*X' -2 3 DWEIERC 4 GET                | 18.
 wei-xmax        | 'X^3-3*X' -2 3 DWEIERC 3 GET                | 3.
@@ -19,7 +19,7 @@ wei-parab-fmax  | 'X^2-2*X' 0 3 DWEIERC 4 GET                 | 3.
 # Monotona sin criticos: solo los dos extremos.
 wei-monot-cant  | 'EXP(X)' 0 1 DWEIERC 1 GET SIZE             | 2.
 # El caso que importa: hipotesis rota. 1/X en [-1,1] NO es continua.
-wei-rota        | '1/X' -1 1 DWEIERC 7 GET                    | HIPOTESIS NO VERIFICADA: f no parece continua en todo [a,b]
+wei-rota        | '1/X' -1 1 DWEIERC 7 GET                    | NO CONTINUA EN EL CERRADO
 # Intervalo dado al reves: se ordena solo.
 wei-alreves     | 'X^3-3*X' 3 -2 DWEIERC 4 GET                | 18.
 # Guardian de profundidad.

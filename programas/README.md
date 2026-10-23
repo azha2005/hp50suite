@@ -1,5 +1,9 @@
 # Programas — últimas versiones funcionales
 
+**Desarrollo separado:** `MAT1-P2.txt` contiene los nuevos `DINTEG` y `DIMPL`
+con visor de pasos. Ver [P2.md](P2.md) para alcance, pruebas y límites; todavía
+requiere revisión visual y pruebas de transferencia/hardware.
+
 Archivos listos para transferir con Conn4x. Ya están con header `%%HP:`, CRLF y
 ASCII puro verificados.
 

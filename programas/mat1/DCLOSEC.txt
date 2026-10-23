@@ -1,0 +1,43 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F A B -> { status cuts conditions }. Finite CLOSED interval only.
+  @ Continuity by composition of supported continuous operations and domain
+  @ conditions, split at ALL roots returned by CAS. Warnings block Barrow.
+  \-> F A B
+  \<<
+    F DINFOC OBJ\-> DROP \-> CL BE AV
+    \<<
+      BE DCUTSC OBJ\-> DROP \-> PT MSG
+      \<<
+        IF MSG SIZE THEN MSG 'AV' STO END
+        A B 2 \->LIST \-> PP
+        \<<
+          IF PT SIZE 0 > THEN
+            1 PT SIZE FOR I
+              PT I GET \-> P
+              \<< IF P \->NUM A \->NUM > P \->NUM B \->NUM < AND THEN PP P 1 \->LIST + 'PP' STO END \>>
+            NEXT
+          END
+          PP DORDC 'PP' STO
+          1 PP SIZE FOR I
+            IF CL PP I GET DSATC NOT THEN "NO CONTINUA EN EL CERRADO" 'AV' STO
+            ELSE
+              IF F 'X' PP I GET DVALC TYPE 2 == THEN "NO REAL EN EL CERRADO" 'AV' STO END
+            END
+            IF I PP SIZE < THEN
+              PP I GET PP I 1 + GET + 2 / \-> M
+              \<<
+                IF CL M DSATC NOT THEN "DOMINIO NO CUBRE EL INTERVALO" 'AV' STO
+                ELSE
+                  IF F 'X' M DVALC TYPE 2 == THEN "NO REAL EN EL INTERVALO" 'AV' STO END
+                END
+              \>>
+            END
+          NEXT
+          IF AV SIZE NOT THEN "OK" 'AV' STO END
+          AV PP CL 3 \->LIST
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

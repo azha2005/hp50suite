@@ -166,6 +166,52 @@ RES
 \>>
 END
 \>>
+  DLATC
+\<<
+\-> F A SIDE
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -119 CF -120 SF -123 CF -100 CF RAD
+DEPTH \-> D0
+\<<
+A \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+"'X=" SWAP + IF SIDE 0 < THEN "-0'" ELSE "+0'" END + STR\->
+\-> EQ
+\<<
+DEPTH \-> D1
+\<<
+IFERR F EQ LIMIT THEN "INDEF" END
+\-> L \<< DEPTH D1 - DROPN L \>>
+\>>
+IF DUP TYPE 12 == THEN DTAG END \-> L
+\<<
+IF L \->STR 159 CHR POS THEN
+DEPTH \-> D1
+\<<
+IFERR F SIGN EQ LIMIT EVAL \->NUM THEN "SIN SIGNO" END
+\-> SG \<< DEPTH D1 - DROPN SG \>>
+\>>
+\-> SG
+\<<
+IF SG TYPE 0 == THEN
+IF SG ABS 1 == THEN
+IF SG 0 < THEN "'-" ELSE "'+" END 159 CHR + "'" + STR\-> EVAL 'L' STO
+END
+END
+\>>
+ELSE
+IF L TYPE 2 == NOT THEN L EVAL 'L' STO END
+END
+L
+\>>
+\>>
+\-> R \<< DEPTH D0 - DROPN FL STOF R \>>
+\>>
+\>>
+\>>
+\>>
   DCONTC
 \<<
 \-> FI0 FD0 A
@@ -180,11 +226,10 @@ A \->STR
 IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
 \-> AS
 \<<
-"'X=" AS + "-0'" + STR\-> "'X=" AS + "+0'" + STR\->
-0 0 0 0 \-> EQI EQD LI LD IG ES
+0 0 0 0 \-> LI LD IG ES
 \<<
-IFERR FI EQI LIMIT EVAL THEN "INDEF" END 'LI' STO
-IFERR FD EQD LIMIT EVAL THEN "INDEF" END 'LD' STO
+IFERR FI A -1 DLATC THEN "INDEF" END 'LI' STO
+IFERR FD A 1 DLATC THEN "INDEF" END 'LD' STO
 IFERR LI \->NUM LD \->NUM - ABS .0000001 < THEN LI LD SAME END 'IG' STO
 LI \->STR 159 CHR POS LD \->STR 159 CHR POS + 'ES' STO
 IF ES 0 ==
@@ -262,7 +307,7 @@ IFERR F 'X' A S .000001 * + = SUBST EVAL \->NUM THEN "ERR" END
 \>>
 DEPTH \-> D1
 \<<
-IFERR F EQ LIMIT EVAL THEN "ERR" END
+IFERR F A S DLATC THEN "ERR" END
 \-> L0 \<< DEPTH D1 - DROPN L0 \>>
 \>>
 \-> P L
@@ -603,9 +648,14 @@ IFERR
 IF MP \->STR 159 CHR POS 0 >
 THEN "sin asintota (m infinita)"
 ELSE
+IF BP \->STR 159 CHR POS 0 >
+THEN "sin asintota (b infinita)"
+ELSE
+BP \->NUM DROP
 IF MP \->NUM ABS .0000001 <
 THEN "HORIZONTAL y = " BP \->STR +
 ELSE "OBLICUA y = " MP \->STR + "X + " + BP \->STR +
+END
 END
 END
 THEN
@@ -616,9 +666,14 @@ IFERR
 IF MN \->STR 159 CHR POS 0 >
 THEN "sin asintota (m infinita)"
 ELSE
+IF BN \->STR 159 CHR POS 0 >
+THEN "sin asintota (b infinita)"
+ELSE
+BN \->NUM DROP
 IF MN \->NUM ABS .0000001 <
 THEN "HORIZONTAL y = " BN \->STR +
 ELSE "OBLICUA y = " MN \->STR + "X + " + BN \->STR +
+END
 END
 END
 THEN
@@ -740,82 +795,106 @@ END
 \<<
 \-> F0 AV PV
 \<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -119 CF -120 SF -123 CF -100 CF RAD
 DEPTH \-> D0
 \<<
-F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+F0 DANAC \-> ST
 \<<
-0 0 0 0 "" "" "" \-> D1 Z1 D2 Z2 TP TN TV
+"INF requerido para asintotas" "INF requerido para asintotas" "no probada" ST 11 GET \-> TP TN TV TR
 \<<
-IFERR F DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D1' STO
-IFERR D1 'X' ZEROS THEN { } END 'Z1' STO
-IFERR D1 DERVX EXPAND SIMPLIFY THEN "EL CAS NO PUDO" END 'D2' STO
-IFERR D2 'X' ZEROS THEN { } END 'Z2' STO
-IFERR
-F DASHOC
-THEN
-{ 0 0 0 0 "no se pudo" "no se pudo" }
-END
-DUP 5 GET 'TP' STO
-6 GET 'TN' STO
-IF PV 1 ==
-THEN
-IFERR
-F 'X' AV .000001 - = SUBST EVAL \->NUM ABS 100000 >
-F 'X' AV .000001 + = SUBST EVAL \->NUM ABS 100000 > OR
-IF THEN "HAY ASINT. VERTICAL" ELSE "no hay, queda acotada" END
-THEN
-"no se pudo evaluar"
-END
+IF ST 12 GET "OK" == THEN
+IF { INF } DFREEC THEN
+IFERR F0 DREADC DASHOC THEN { 0 0 0 0 "no se pudo" "no se pudo" } END
+\-> ASY
+\<<
+ASY 5 GET 'TP' STO ASY 6 GET 'TN' STO
+TR "m(+oo)=lim f(X)/X" ASY 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "b(+oo)=lim (f(X)-m*X)" ASY 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "En +oo" TP 2 \->LIST 1 \->LIST + 'TR' STO
+TR "m(-oo)=lim f(X)/X" ASY 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "b(-oo)=lim (f(X)-m*X)" ASY 4 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "En -oo" TN 2 \->LIST 1 \->LIST + 'TR' STO
+\>>
 ELSE
-"no probada"
+TR "Asintotas horizontales/oblicuas" TP 2 \->LIST 1 \->LIST + 'TR' STO
 END
-'TV' STO
-D1 Z1 D2 Z2 TP TN TV 7 \->LIST
-\-> R \<< DEPTH D0 - DROPN R \>>
+ST 5 GET 3 GET
+IF PV 1 == THEN AV 1 \->LIST + END DORDC \-> CP
+\<<
+IF CP SIZE 0 > THEN
+1 CP SIZE FOR I
+CP I GET \-> P
+\<<
+DEPTH \-> D1
+\<<
+IFERR F0 DREADC P DCONTFC THEN { "?" "?" "?" -1 } END
+\-> CR \<< DEPTH D1 - DROPN CR \>>
+\>>
+\-> CR
+\<<
+TR "Candidato vertical x=" P 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Limite izquierdo (real)" CR 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Limite derecho (real)" CR 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+IF CR 4 GET 4 == THEN "HAY ASINT. VERTICAL"
+ELSE IF CR 4 GET -1 == THEN "no se pudo decidir" ELSE "sin lateral infinito" END END
+\-> VER
+\<<
+TR "Conclusion vertical" VER 2 \->LIST 1 \->LIST + 'TR' STO
+IF PV 1 == THEN IF P \->NUM AV \->NUM == THEN VER 'TV' STO END END
 \>>
 \>>
+\>>
+NEXT
+END
+\>>
+ELSE
+"Estudio no completado: revisar estado" 'TP' STO TP 'TN' STO
+END
+ST 11 TR PUT 'ST' STO
+ST 1 GET ST 2 GET ST 3 GET ST 4 GET TP TN TV ST 8 \->LIST
+\-> RES \<< DEPTH D0 - DROPN RES \>>
+\>>
+\>>
+\>>
+FL STOF
 \>>
 \>>
 \>>
   DESTFUN
 \<<
-IF INF TYPE 9 == NOT
-THEN
-"Falta el global INF" 10 CHR +
-"Correr DINF primero" +
-MSGBOX
-ELSE
-"Estudio de funcion"
-{
-{ "f(X):" "'X^3-3*X'" }
-{ "Candidato asint. vertical:" "0" 0 }
-{ "Probar vertical? 1=si 0=no:" "0" 0 }
-}
-{ } { } { }
-INFORM
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Estudio con dominio y signos"
+{ { "f(X):" "Expresion original" } { "Candidato vertical:" "Finito" 0 } { "Probar vertical 1=si:" "0 no, 1 si" 0 } }
+{ } { 'X^3-3*X' 0 0 } { 'X^3-3*X' 0 0 } INFORM
 IF THEN
-OBJ\-> DROP \-> F0 AV PV
+OBJ\-> DROP \-> F AV PV
 \<<
-F0 AV PV DESTFUNC OBJ\-> DROP \-> D1 Z1 D2 Z2 TP TN TV
+F AV PV DESTFUNC
+DUP \-> RES
 \<<
-"f'(X) =" 10 CHR + D1 \->STR + MSGBOX
-"Criticos (f'=0):" 10 CHR + Z1 \->STR + MSGBOX
-"f''(X) =" 10 CHR + D2 \->STR + MSGBOX
-"Inflexion (f''=0):" 10 CHR + Z2 \->STR + MSGBOX
-"En +oo:" 10 CHR + TP + MSGBOX
-"En -oo:" 10 CHR + TN + MSGBOX
-IF PV 1 ==
-THEN
-"En X=" AV \->STR + ":" + 10 CHR + TV + MSGBOX
-END
-"Detalle completo" 10 CHR +
-"en la pila (4 niveles)" +
-MSGBOX
-D1 Z1 D2 Z2
-\>>
+RES 8 GET 11 GET DPASOS
+IF RES 8 GET 12 GET "OK" == THEN
+"Bosquejo: definir ventana"
+{ { "X min:" "Desde" 0 } { "X max:" "Hasta" 0 } { "Y min:" "Desde" 0 } { "Y max:" "Hasta" 0 } }
+{ } { -3 3 -5 5 } { -3 3 -5 5 } INFORM
+IF THEN
+OBJ\-> DROP \-> A B C D
+\<<
+F RES 8 GET 5 GET 3 GET A B C D DANAG PICTURE
 \>>
 END
 END
+\>>
+\>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
 \>>
   LHOPC
 \<<
@@ -1214,114 +1293,100 @@ END
 \<<
 \-> F0 A0 B0
 \<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
 DEPTH \-> D0
 \<<
-F0 IF DUP TYPE 2 == THEN STR\-> END
-A0 \->NUM B0 \->NUM
-\-> F AA BB
+{ } { } "" "" "" "" "ERROR" { } { } { } \-> CN VL XMX FMX XMN FMN AV AM AX TR
 \<<
-IF AA BB >
-THEN BB AA
-ELSE AA BB
-END
-\-> A B
+IFERR
+IF { X Y U } DFREEC THEN "X/Y/U ASIGNADA" DOERR END
+F0 DREADC A0 'X' 0 DVALC B0 'X' 0 DVALC \-> F AA BB
 \<<
-IFERR F DERVX 'X' ZEROS THEN { } END
-IF DUP TYPE 5 == NOT THEN 1 \->LIST END
-\-> Z
+IF AA TYPE 2 == BB TYPE 2 == OR THEN "EXTREMOS FINITOS REALES" DOERR END
+IF AA \->NUM BB \->NUM > THEN BB AA ELSE AA BB END \-> A B
 \<<
-{ } { } 0 0 0 0 "OK" \-> CN VL XMX FMX XMN FMN AV
+TR "Cerrado y acotado [a,b]" A B 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+F A B DCLOSEC \-> HC
 \<<
-0 20 FOR k
-A B A - k * 20 / +
-\-> XK
+TR "Condiciones de dominio original" HC 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Continuidad por composicion y condiciones" HC 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+IF HC 1 GET "OK" == NOT THEN HC 1 GET DOERR END
+F 1 DBRKC \-> ST
 \<<
-IFERR F 'X' XK = SUBST EVAL \->NUM THEN 1000000000000 END
-IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
-ABS 1000000000 >
-IF THEN "HIPOTESIS NO VERIFICADA: f no parece continua en todo [a,b]" 'AV' STO END
+IF ST 5 GET SIZE THEN ST 5 GET DOERR END
+TR "f'(X)" F 'X' DERIV SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Ceros de f'" ST 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "No derivables: incluir si f existe" ST 4 GET 2 \->LIST 1 \->LIST + 'TR' STO
+A B 2 \->LIST 'CN' STO
+ST 1 GET ST 4 GET + \-> ROWS
+\<<
+IF ROWS SIZE 0 > THEN
+1 ROWS SIZE FOR I
+ROWS I GET \-> P
+\<<
+IF P \->NUM A \->NUM > P \->NUM B \->NUM < AND THEN CN P 1 \->LIST + 'CN' STO END
 \>>
 NEXT
-CN A 1 \->LIST + 'CN' STO
-IF Z SIZE 0 >
-THEN
-1 Z SIZE FOR i
-IFERR Z i GET \->NUM THEN 1000000000000 END
-IF DUP TYPE 0 ==
-THEN
-\-> V
+END
+\>>
+CN DORDC 'CN' STO
+1 CN SIZE FOR I
+CN I GET \-> P
 \<<
-IF V A > V B < AND
-THEN CN V 1 \->LIST + 'CN' STO
-END
+F 'X' P DVALC \-> FV
+\<<
+IF FV TYPE 2 == THEN "CANDIDATO FUERA DE DOMINIO" DOERR END
+VL FV 1 \->LIST + 'VL' STO
+TR "Evaluar candidato: x,f(x)" P FV 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+IF I 1 == THEN P 'XMX' STO FV 'FMX' STO P 'XMN' STO FV 'FMN' STO END
+IF FV \->NUM FMX \->NUM > THEN P 'XMX' STO FV 'FMX' STO END
+IF FV \->NUM FMN \->NUM < THEN P 'XMN' STO FV 'FMN' STO END
 \>>
-ELSE DROP
-END
+\>>
 NEXT
-END
-CN B 1 \->LIST + 'CN' STO
-1 CN SIZE FOR i
-IFERR F 'X' CN i GET = SUBST EVAL \->NUM THEN 1000000000000 END
-IF DUP TYPE 0 == NOT THEN DROP 1000000000000 END
-1 \->LIST VL SWAP + 'VL' STO
+1 CN SIZE FOR I
+IF VL I GET FMX - SIMPLIFY 0 == THEN AX CN I GET 1 \->LIST + 'AX' STO END
+IF VL I GET FMN - SIMPLIFY 0 == THEN AM CN I GET 1 \->LIST + 'AM' STO END
 NEXT
-CN 1 GET 'XMX' STO
-VL 1 GET 'FMX' STO
-CN 1 GET 'XMN' STO
-VL 1 GET 'FMN' STO
-1 VL SIZE FOR i
-IF VL i GET FMX >
+IF F 'X' DERIV SIMPLIFY 0 SAME A B == NOT AND THEN
+"TODO [a,b]" 'AX' STO "TODO [a,b]" 'AM' STO
+END
+TR "Comparar valores: maximo" FMX 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Todos los puntos de maximo" AX 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Comparar valores: minimo" FMN 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Todos los puntos de minimo" AM 2 \->LIST 1 \->LIST + 'TR' STO
+"OK" 'AV' STO
+\>>
+\>>
+\>>
+\>>
 THEN
-VL i GET 'FMX' STO
-CN i GET 'XMX' STO
+ERRM 'AV' STO "" 'XMX' STO "" 'FMX' STO "" 'XMN' STO "" 'FMN' STO { } 'AX' STO { } 'AM' STO
 END
-IF VL i GET FMN <
-THEN
-VL i GET 'FMN' STO
-CN i GET 'XMN' STO
-END
-NEXT
-CN VL XMX FMX XMN FMN AV 7 \->LIST
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+CN VL XMX FMX XMN FMN AV AX AM TR 10 \->LIST
+\-> RES \<< DEPTH D0 - DROPN RES \>>
 \>>
 \>>
-\>>
-\>>
-\-> R \<< DEPTH D0 - DROPN R \>>
+FL STOF
 \>>
 \>>
 \>>
   DWEIER
 \<<
-"Weierstrass: extremos absolutos"
-{
-{ "f(X), ej 'X^3-3*X':" "'X^3-3*X'" }
-{ "a:" "-2" 0 }
-{ "b:" "3" 0 }
-}
-{ } { } { }
-INFORM
-IF THEN
-OBJ\-> DROP DWEIERC
-DUP OBJ\-> DROP \-> RES CN VL XMX FMX XMN FMN AV
+RCLF \-> FLUI
 \<<
-IF AV "OK" == NOT
-THEN AV MSGBOX
-END
-"Candidatos (a, criticos, b):" 10 CHR +
-CN \->STR +
-MSGBOX
-"f en cada candidato:" 10 CHR +
-VL \->STR +
-MSGBOX
-"MAXIMO absoluto" 10 CHR +
-"f=" + FMX \->STR + " en X=" + XMX \->STR +
-MSGBOX
-"MINIMO absoluto" 10 CHR +
-"f=" + FMN \->STR + " en X=" + XMN \->STR +
-MSGBOX
-RES
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Weierstrass: hipotesis y pasos"
+{ { "f(X):" "Comillas simples" } { "a:" "Extremo cerrado" 0 } { "b:" "Extremo cerrado" 0 } }
+{ } { 'X^3-3*X' -2 3 } { 'X^3-3*X' -2 3 } INFORM
+IF THEN OBJ\-> DROP DWEIERC DUP 10 GET DPASOS END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
 \>>
-END
 \>>
   DBOLZC
 \<<
@@ -1508,7 +1573,7 @@ E \->NUM \-> EN
 FOR Q
 IF DUP NOT
 THEN
-IF EN Q * DUP IP - ABS .000000001 <
+IF EN Q * DUP 0 RND - ABS .000000001 <
 THEN DROP Q END
 END
 NEXT
@@ -3303,5 +3368,893 @@ H CZ
 \>>
 \>>
 END
+\>>
+  DFREEC
+\<<
+\-> NAMES
+\<<
+0 \-> BOUND
+\<<
+IF NAMES SIZE 0 >
+THEN
+1 NAMES SIZE FOR NN
+DEPTH \-> DD
+\<<
+IFERR NAMES NN GET RCL DROP 1 THEN 0 END
+\-> VV \<< DEPTH DD - DROPN VV \>>
+\>>
+IF THEN 1 'BOUND' STO END
+NEXT
+END
+BOUND
+\>>
+\>>
+\>>
+  DREADC
+\<<
+IF DUP TYPE 2 == THEN
+IF DUP SIZE 0 == THEN "EXPRESION VACIA" DOERR END
+IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+STR\->
+END
+\>>
+  DPOWC
+\<<
+\-> BA EE
+\<<
+EE \->NUM \-> EN
+\<<
+0 1 12 FOR K
+IF DUP NOT THEN
+IF EN K * DUP 0 RND - ABS .000000001 < THEN DROP K END
+END
+NEXT \-> DEN
+\<<
+IF DEN 1 > DEN 2 MOD 1 == AND BA \->NUM 0 < AND THEN
+BA ABS EE ^
+IF EN DEN * 0 RND 2 MOD ABS THEN NEG END
+ELSE BA EE ^ END
+\>>
+\>>
+\>>
+\>>
+  DREALC
+\<<
+\-> EE VV PP
+\<<
+IF EE TYPE 9 == THEN
+EE OBJ\-> \->STR \-> NN OP
+\<<
+{ } \-> AL
+\<<
+IF NN 0 > THEN
+1 NN FOR I
+VV PP DREALC AL SWAP 1 \->LIST SWAP + 'AL' STO
+NEXT
+END
+AL OBJ\-> DROP
+CASE
+OP "+" == THEN + END
+OP "-" == THEN - END
+OP "*" == THEN * END
+OP "/" == THEN / END
+OP "^" == THEN DPOWC END
+OP "XROOT" == THEN SWAP INV DPOWC END
+OP "NEG" == THEN NEG END
+OP "INV" == THEN INV END
+OP "SQ" == THEN SQ END
+OP "ABS" == THEN ABS END
+OP "SIGN" == THEN SIGN END
+OP "EXP" == THEN EXP END
+OP "LN" == THEN LN END
+OP "LOG" == THEN LOG END
+OP "SIN" == THEN SIN END
+OP "COS" == THEN COS END
+OP "TAN" == THEN TAN END
+OP "ASIN" == THEN ASIN END
+OP "ACOS" == THEN ACOS END
+OP "ATAN" == THEN ATAN END
+OP 131 CHR == THEN \v/ END
+NN DROPN "FUNCION NUMERICA NO SOPORTADA" DOERR
+END
+\>>
+\>>
+ELSE
+IF EE VV SAME THEN PP
+ELSE
+IF EE TYPE 6 == THEN "PARAMETRO SIN RESOLVER" DOERR ELSE EE EVAL END
+END
+END
+\>>
+\>>
+  DVALC
+\<<
+\-> E V P
+\<<
+RCLF \-> FLV
+\<<
+-105 CF -103 CF -3 CF RAD -120 SF -123 CF -119 CF -100 CF -99 CF
+DEPTH \-> D0
+\<<
+IFERR
+E V P DREALC
+DUP \->NUM
+IF DUP TYPE 0 ==
+THEN
+IF ABS 1.E400 > THEN DROP "NO REAL" END
+ELSE DROP DROP "NO REAL" END
+THEN "NO REAL" END
+\-> R \<< DEPTH D0 - DROPN FLV STOF R \>>
+\>>
+\>>
+\>>
+\>>
+  DROOTC
+\<<
+\-> E
+\<<
+DEPTH \-> D0
+\<<
+{ } { } "" \-> PE PN AV
+\<<
+IF E TYPE 6 == E TYPE 9 == OR
+THEN
+DEPTH \-> D1
+\<<
+IFERR E 'X' ZEROS THEN "NO RESUELTO" END
+\-> Z \<< DEPTH D1 - DROPN Z \>>
+\>>
+\-> Z
+\<<
+IF Z TYPE 2 ==
+THEN "CEROS NO RESUELTOS" 'AV' STO
+ELSE
+Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END \-> ZL
+\<<
+IF ZL SIZE 0 > THEN
+1 ZL SIZE FOR I
+ZL I GET \-> ZI
+\<<
+ZI 'X' 0 DVALC \-> ZV
+\<<
+IF ZV TYPE 2 ==
+THEN
+IF ZI \->STR "n1" POS THEN "RAICES PERIODICAS: DELIMITAR" 'AV' STO END
+ELSE
+ZV \->NUM \-> ZN
+\<<
+0 \-> REP
+\<<
+IF PN SIZE 0 > THEN
+1 PN SIZE FOR J
+IF PN J GET ZN - ABS .000000001 < THEN 1 'REP' STO END
+NEXT
+END
+IF REP NOT THEN PE ZI 1 \->LIST + 'PE' STO PN ZN 1 \->LIST + 'PN' STO END
+\>>
+\>>
+END
+\>>
+\>>
+NEXT
+END
+\>>
+END
+\>>
+END
+PN SORT \-> PS
+\<<
+{ } \-> RS
+\<<
+IF PS SIZE 0 > THEN
+1 PS SIZE FOR I RS PE PN PS I GET POS GET 1 \->LIST + 'RS' STO NEXT
+END
+RS AV 2 \->LIST
+\>>
+\>>
+\>>
+\-> R \<< DEPTH D0 - DROPN R \>>
+\>>
+\>>
+\>>
+  DCUTSC
+\<<
+\-> EL
+\<<
+{ } { } "" \-> PE PN AV
+\<<
+IF EL SIZE 0 > THEN
+1 EL SIZE FOR I
+EL I GET DROOTC OBJ\-> DROP \-> RT MSG
+\<<
+IF MSG SIZE THEN MSG 'AV' STO END
+IF RT SIZE 0 > THEN
+1 RT SIZE FOR J
+RT J GET DUP \->NUM \-> R RN
+\<<
+0 \-> REP
+\<<
+IF PN SIZE 0 > THEN
+1 PN SIZE FOR K IF PN K GET RN - ABS .000000001 < THEN 1 'REP' STO END NEXT
+END
+IF REP NOT THEN PE R 1 \->LIST + 'PE' STO PN RN 1 \->LIST + 'PN' STO END
+\>>
+\>>
+NEXT
+END
+\>>
+NEXT
+END
+PN SORT \-> PS
+\<<
+{ } \-> RS
+\<<
+IF PS SIZE 0 > THEN
+1 PS SIZE FOR I RS PE PN PS I GET POS GET 1 \->LIST + 'RS' STO NEXT
+END
+RS AV 2 \->LIST
+\>>
+\>>
+\>>
+\>>
+\>>
+  DORDC
+\<<
+\-> LL
+\<<
+{ } { } \-> PE PN
+\<<
+IF LL SIZE 0 > THEN
+1 LL SIZE FOR I
+LL I GET DUP \->NUM \-> P N
+\<<
+0 \-> REP
+\<<
+IF PN SIZE 0 > THEN
+1 PN SIZE FOR J IF PN J GET N - ABS .000000001 < THEN 1 'REP' STO END NEXT
+END
+IF REP NOT THEN PE P 1 \->LIST + 'PE' STO PN N 1 \->LIST + 'PN' STO END
+\>>
+\>>
+NEXT
+END
+PN SORT \-> PS
+\<<
+{ }
+IF PS SIZE 0 > THEN
+1 PS SIZE FOR I PE PN PS I GET POS GET 1 \->LIST + NEXT
+END
+\>>
+\>>
+\>>
+\>>
+  DINFOC
+\<<
+\-> F
+\<<
+F DCONDC { } "" \-> CL BR AV
+\<<
+IF CL SIZE 0 > THEN
+1 CL SIZE FOR I BR CL I GET 1 GET 1 \->LIST + 'BR' STO NEXT
+END
+{ } F
+DO
+IF DUP TYPE 9 == THEN
+OBJ\-> \->STR \-> N OP
+\<<
+IF OP "ABS" == THEN BR OVER 1 \->LIST + 'BR' STO END
+IF { "+" "-" "*" "/" "^" "NEG" "INV" "SQ" "ABS" "EXP" "LN" "LOG" "SIN" "COS" "ASIN" "ACOS" "ATAN" } OP POS
+OP 131 CHR == OR NOT
+THEN "OPERACION SIN CERTIFICAR" 'AV' STO END
+\>>
+ELSE DROP END
+UNTIL DUP TYPE 5 == END
+DROP CL BR AV 3 \->LIST
+\>>
+\>>
+\>>
+  DCLOSEC
+\<<
+\-> F A B
+\<<
+F DINFOC OBJ\-> DROP \-> CL BE AV
+\<<
+BE DCUTSC OBJ\-> DROP \-> PT MSG
+\<<
+IF MSG SIZE THEN MSG 'AV' STO END
+A B 2 \->LIST \-> PP
+\<<
+IF PT SIZE 0 > THEN
+1 PT SIZE FOR I
+PT I GET \-> P
+\<< IF P \->NUM A \->NUM > P \->NUM B \->NUM < AND THEN PP P 1 \->LIST + 'PP' STO END \>>
+NEXT
+END
+PP DORDC 'PP' STO
+1 PP SIZE FOR I
+IF CL PP I GET DSATC NOT THEN "NO CONTINUA EN EL CERRADO" 'AV' STO
+ELSE
+IF F 'X' PP I GET DVALC TYPE 2 == THEN "NO REAL EN EL CERRADO" 'AV' STO END
+END
+IF I PP SIZE < THEN
+PP I GET PP I 1 + GET + 2 / \-> M
+\<<
+IF CL M DSATC NOT THEN "DOMINIO NO CUBRE EL INTERVALO" 'AV' STO
+ELSE
+IF F 'X' M DVALC TYPE 2 == THEN "NO REAL EN EL INTERVALO" 'AV' STO END
+END
+\>>
+END
+NEXT
+IF AV SIZE NOT THEN "OK" 'AV' STO END
+AV PP CL 3 \->LIST
+\>>
+\>>
+\>>
+\>>
+\>>
+  DABRC
+\<<
+\-> F M
+\<<
+{ } \-> AL
+\<<
+{ } F
+DO
+IF DUP TYPE 9 == THEN
+DUP \-> NODE
+\<<
+OBJ\-> \->STR \-> N OP
+\<< IF OP "ABS" == THEN AL NODE 1 \->LIST + 'AL' STO END \>>
+\>>
+ELSE DROP END
+UNTIL DUP TYPE 5 == END
+DROP
+IF AL SIZE 0 > THEN
+1 AL SIZE FOR I
+AL I GET \-> NODE
+\<<
+NODE OBJ\-> DROP DROP \-> A
+\<<
+A 'X' M DVALC
+IF DUP TYPE 2 == THEN DROP "MODULO SIN SIGNO REAL" DOERR END
+\->NUM
+IF DUP 0 == THEN DROP 0 ELSE IF 0 < THEN -1 ELSE 1 END END
+\-> SG
+\<<
+F \->STR
+NODE \->STR DUP SIZE 1 - 2 SWAP SUB
+A SG * \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+"(" SWAP + ")" + SREPL DROP STR\-> 'F' STO
+\>>
+\>>
+\>>
+NEXT
+END
+F
+\>>
+\>>
+\>>
+  DINSUMC
+\<<
+\-> F
+\<<
+IF F TYPE 9 ==
+THEN
+F OBJ\-> \->STR \-> OP
+\<<
+\-> N
+\<<
+N \->LIST \-> AA
+\<<
+IF N 2 == OP "+" == OP "-" == OR AND
+THEN
+AA 1 GET DINSUMC
+AA 2 GET IF OP "-" == THEN NEG END DINSUMC +
+ELSE F 1 \->LIST END
+\>>
+\>>
+\>>
+ELSE F 1 \->LIST END
+\>>
+\>>
+  DINPRC
+\<<
+\-> F V
+\<<
+F V RISCH SIMPLIFY
+IF DUP \->STR "INT(" POS 0 >
+THEN DROP "NO PRIMITIVA ELEMENTAL" DOERR END
+\>>
+\>>
+  DINTEGC
+\<<
+\-> F0 MET A0 H0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+{ } "" "ERROR" \-> TR PR AV
+\<<
+IFERR
+IF { X U } DFREEC THEN "X/U ASIGNADA: usar DIR sin valores" DOERR END
+F0 IF DUP TYPE 2 == THEN
+IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+STR\-> END
+A0 IF DUP TYPE 2 == THEN
+IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+STR\-> END
+H0 IF DUP TYPE 2 == THEN
+IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+STR\-> END
+\-> F A H
+\<<
+TR "Integrando original" F 2 \->LIST 1 \->LIST + 'TR' STO
+IF MET 0 < MET 3 > OR MET 0 RND MET == NOT OR
+THEN "METODO INVALIDO" DOERR END
+CASE
+MET 1 == THEN
+A 'X' DERIV SIMPLIFY \-> DU
+\<<
+TR "u(X) =" A 2 \->LIST 1 \->LIST + 'TR' STO
+TR "du/dX =" DU 2 \->LIST 1 \->LIST + 'TR' STO
+H 'U' A = SUBST DU * F - SIMPLIFY
+IF DUP 0 SAME NOT THEN DROP "SUSTITUCION NO VERIFICADA" DOERR END
+DROP
+TR "H(u) * u' - f =" 0 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Integrando en U" H 2 \->LIST 1 \->LIST + 'TR' STO
+H 'U' DINPRC \-> PU
+\<<
+TR "Primitiva en U (CAS)" PU 2 \->LIST 1 \->LIST + 'TR' STO
+PU 'U' A = SUBST SIMPLIFY 'PR' STO
+TR "Volver: U=u(X)" PR 2 \->LIST 1 \->LIST + 'TR' STO
+\>>
+\>>
+END
+MET 2 == THEN
+F A 0 1 0 0 \-> RR UU SUM SG FIN POL
+\<<
+DEPTH \-> DD
+\<<
+IFERR A DEGREE THEN 0 END
+\-> DG \<< DEPTH DD - DROPN DG \>>
+\>>
+\-> DG
+\<<
+IF DG TYPE 0 == DG TYPE 28 == OR
+THEN
+IF DG 0 > DG 5 > NOT AND DG 0 RND DG == AND
+THEN
+A \-> TEST
+\<<
+1 DG 1 + FOR JJ TEST 'X' DERIV SIMPLIFY 'TEST' STO NEXT
+IF TEST 0 SAME THEN 1 'POL' STO END
+\>>
+END
+END
+\>>
+IF UU 0 SAME THEN "u NO PUEDE SER CERO" DOERR END
+1 6 FOR J
+IF FIN 0 ==
+THEN
+RR UU / SIMPLIFY \-> DV
+\<<
+UU 'X' DERIV SIMPLIFY DV 'X' DINPRC \-> DU VV
+\<<
+TR "Por partes: u" UU 2 \->LIST 1 \->LIST + 'TR' STO
+TR "dv/dX = f/u" DV 2 \->LIST 1 \->LIST + 'TR' STO
+TR "du/dX" DU 2 \->LIST 1 \->LIST + 'TR' STO
+TR "v (CAS)" VV 2 \->LIST 1 \->LIST + 'TR' STO
+SUM SG UU VV * * + SIMPLIFY 'SUM' STO
+DU VV * SIMPLIFY 'RR' STO
+SG NEG 'SG' STO
+TR "Acumulado; I=acum+..." SUM 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Resto: signo" SG 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Resto: integrando" RR 2 \->LIST 1 \->LIST + 'TR' STO
+IF RR 0 SAME
+THEN SUM 'PR' STO 1 'FIN' STO
+ELSE
+IF POL 1 ==
+THEN DU 'UU' STO
+ELSE
+RR 'X' DINPRC \-> PP
+\<<
+TR "Integral restante (CAS)" PP 2 \->LIST 1 \->LIST + 'TR' STO
+SUM SG PP * + SIMPLIFY 'PR' STO 1 'FIN' STO
+\>>
+END
+END
+\>>
+\>>
+END
+NEXT
+IF FIN 0 == THEN "LIMITE DE 6 PARTES" DOERR END
+\>>
+END
+F \-> FF
+\<<
+IF MET 3 ==
+THEN
+F PARTFRAC 'FF' STO
+TR "Fracciones simples (CAS)" FF 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE
+TR "Linealidad: integrar suma" F 2 \->LIST 1 \->LIST + 'TR' STO
+END
+FF DINSUMC \-> TERMS
+\<<
+0 'PR' STO
+1 TERMS SIZE FOR J
+TERMS J GET \-> TT
+\<<
+TR "Termino a integrar" TT 2 \->LIST 1 \->LIST + 'TR' STO
+TT 'X' DINPRC \-> PP
+\<<
+TR "Primitiva del termino (CAS)" PP 2 \->LIST 1 \->LIST + 'TR' STO
+PR PP + 'PR' STO
+\>>
+\>>
+NEXT
+PR SIMPLIFY 'PR' STO
+\>>
+\>>
+END
+TR "Primitiva sin C" PR 2 \->LIST 1 \->LIST + 'TR' STO
+PR 'X' DERIV F - EXPAND SIMPLIFY \-> CK
+\<<
+TR "Control: F' - f" CK 2 \->LIST 1 \->LIST + 'TR' STO
+IF CK 0 SAME
+THEN "OK: agregar C; revisar dominio" 'AV' STO
+ELSE "NO VERIFICADA: revisar control" 'AV' STO END
+\>>
+\>>
+THEN
+ERRM 'AV' STO "" 'PR' STO
+TR "No se completo" AV 2 \->LIST 1 \->LIST + 'TR' STO
+END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+PR TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+  DINPVIC
+\<<
+\-> RES X0 Y0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+RES 1 GET RES 2 GET RES 3 GET \-> PR TR AV
+\<<
+IFERR
+IF { X } DFREEC THEN "X ASIGNADA: usar DIR sin valores" DOERR END
+IF PR TYPE 2 == THEN "NO HAY PRIMITIVA" DOERR END
+PR 'X' X0 = SUBST EVAL \-> V0
+\<<
+V0 \->NUM IF DUP TYPE 0 == NOT THEN DROP "PUNTO NO REAL" DOERR END
+IF ABS 1E100 > THEN "VALOR NO FINITO" DOERR END
+Y0 V0 - SIMPLIFY \-> KK
+\<<
+TR "F(x0) sin C" V0 2 \->LIST 1 \->LIST + 'TR' STO
+TR "C = y0-F(x0)" KK 2 \->LIST 1 \->LIST + 'TR' STO
+PR KK + SIMPLIFY 'PR' STO
+PR 'X' X0 = SUBST EVAL Y0 - SIMPLIFY \-> CK
+\<<
+TR "Control F(x0)-y0" CK 2 \->LIST 1 \->LIST + 'TR' STO
+IF CK 0 SAME NOT THEN "PVI NO VERIFICADO" DOERR END
+\>>
+\>>
+\>>
+THEN ERRM 'AV' STO "" 'PR' STO END
+TR "Estado del PVI" AV 2 \->LIST 1 \->LIST + 'TR' STO
+PR TR AV 3 \->LIST
+\-> R \<< DEPTH D0 - DROPN FL STOF R \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+  DPAGC
+\<<
+\-> PP
+\<<
+PP 1 GET " : " + PP 2 GET \->STR +
+10 CHR " " SREPL DROP 13 CHR " " SREPL DROP \-> TXT
+\<<
+{ } \-> PG
+\<<
+IF TXT SIZE 0 > THEN
+1 TXT SIZE FOR P
+TXT P P 19 + SUB
+IF P 20 + TXT SIZE > NOT
+THEN 10 CHR + TXT P 20 + P 39 + SUB + END
+1 \->LIST PG SWAP + 'PG' STO
+40 STEP
+END
+PG
+\>>
+\>>
+\>>
+\>>
+  DPANTC
+\<<
+\-> TXT K P N
+\<<
+CLLCD
+"Paso " K \->STR + "  " + P \->STR + "/" + N \->STR + 1 DISP
+TXT 3 DISP
+"Tecla: continuar" 7 DISP
+LCD\->
+\>>
+\>>
+  DPASOS
+\<<
+\-> TR
+\<<
+1 1 \-> SIG ACT
+\<<
+WHILE SIG 1 == REPEAT
+"Paso 1-" TR SIZE \->STR + " / CANCEL" +
+{ { "Paso:" "Numero desde 1" 0 } }
+{ } ACT 1 \->LIST ACT 1 \->LIST INFORM
+IF THEN
+1 GET \-> K
+\<<
+IF K 1 < K TR SIZE > OR K 0 RND K == NOT OR
+THEN "Paso fuera de rango" MSGBOX
+ELSE
+TR K GET DPAGC \-> PG
+\<<
+IF PG SIZE 0 > THEN
+1 PG SIZE FOR P
+PG P GET K P PG SIZE DPANTC DROP 7 FREEZE 0 WAIT DROP
+NEXT
+END
+\>>
+IF K TR SIZE < THEN K 1 + ELSE K END 'ACT' STO
+END
+\>>
+ELSE 0 'SIG' STO END
+END
+\>>
+\>>
+\>>
+  DBRKC
+\<<
+\-> F MODE
+\<<
+F DINFOC \-> FI
+\<<
+FI 2 GET DCUTSC OBJ\-> DROP \-> BASE AV
+\<<
+{ } { } BASE BASE { } \-> Z1 Z2 PT ND BT
+\<<
+IF FI 3 GET SIZE THEN FI 3 GET 'AV' STO END
+0 BASE SIZE FOR I
+IF BASE SIZE 0 == THEN .3183 ELSE
+IF I 0 == THEN BASE 1 GET 1 - ELSE
+IF I BASE SIZE == THEN BASE I GET 1 + ELSE BASE I GET BASE I 1 + GET + 2 / END
+END
+END \-> M
+\<<
+F M DABRC \-> BF
+\<<
+BF 'X' DERIV \-> B1
+\<<
+IF MODE 2 == THEN B1 'X' DERIV SIMPLIFY ELSE 0 END \-> B2
+\<<
+BT M BF B1 B2 4 \->LIST 1 \->LIST + 'BT' STO
+B1 DROOTC B2 DROOTC
+B1 DINFOC 2 GET B2 DINFOC 2 GET + DCUTSC
+\-> R1 R2 RC
+\<<
+1 3 FOR K
+IF K 1 == THEN R1 ELSE IF K 2 == THEN R2 ELSE RC END END \-> RR
+\<<
+IF RR 2 GET SIZE THEN RR 2 GET 'AV' STO END
+RR 1 GET \-> RL
+\<<
+IF RL SIZE 0 > THEN
+1 RL SIZE FOR J
+RL J GET \-> P
+\<<
+1 \-> INS
+\<<
+IF I 0 > THEN IF P \->NUM BASE I GET \->NUM > NOT THEN 0 'INS' STO END END
+IF I BASE SIZE < THEN IF P \->NUM BASE I 1 + GET \->NUM < NOT THEN 0 'INS' STO END END
+IF INS THEN
+PT P 1 \->LIST + 'PT' STO
+CASE
+K 1 == THEN Z1 P 1 \->LIST + 'Z1' STO END
+K 2 == THEN Z2 P 1 \->LIST + 'Z2' STO END
+ND P 1 \->LIST + 'ND' STO
+END
+END
+\>>
+\>>
+NEXT
+END
+\>>
+\>>
+NEXT
+\>>
+\>>
+\>>
+\>>
+\>>
+NEXT
+Z1 DORDC Z2 DORDC PT DORDC ND DORDC AV BT 6 \->LIST
+\>>
+\>>
+\>>
+\>>
+\>>
+  DANAC
+\<<
+\-> F0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "" { } { } { } { } { } { } { } { } "ERROR" \-> D1 Z1 D2 Z2 DOM S1 S2 EX IP ND TR AV
+\<<
+IFERR
+IF { X Y U } DFREEC THEN "X/Y/U ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+F 0 DDOMC 'DOM' STO
+F 'X' DERIV EXPAND SIMPLIFY 'D1' STO
+D1 'X' DERIV EXPAND SIMPLIFY 'D2' STO
+F 2 DBRKC \-> BK
+\<<
+BK 1 GET 'Z1' STO BK 2 GET 'Z2' STO BK 5 GET 'AV' STO
+F DINFOC D1 DINFOC D2 DINFOC \-> IF0 IF1 IF2
+\<<
+IF IF0 3 GET SIZE THEN IF0 3 GET 'AV' STO END
+IF DOM 4 GET SIZE THEN DOM 4 GET 'AV' STO END
+BK 3 GET BK 5 GET \-> PT MSG
+\<<
+IF MSG SIZE THEN MSG 'AV' STO END
+TR "Funcion original" F 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Dominio (original sin cancelar)" DOM 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Condiciones de dominio" DOM 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Primera derivada" D1 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Candidatos f'=0 (CAS)" Z1 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Segunda derivada" D2 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Candidatos f''=0; falta cambio de signo" Z2 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Separadores de ambas tablas" PT 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Por rama: prueba,f,f',f''" BK 6 GET 2 \->LIST 1 \->LIST + 'TR' STO
+0 PT SIZE FOR I
+IF I 0 == THEN "-oo" ELSE PT I GET END
+IF I PT SIZE == THEN "+oo" ELSE PT I 1 + GET END
+IF PT SIZE 0 == THEN .3183 ELSE
+IF I 0 == THEN PT 1 GET 1 - ELSE
+IF I PT SIZE == THEN PT I GET 1 + ELSE PT I GET PT I 1 + GET + 2 / END
+END
+END
+\-> L R M
+\<<
+F M DABRC 'X' DERIV SIMPLIFY \-> B1
+\<<
+F 'X' M DVALC B1 'X' M DVALC B1 'X' DERIV 'X' M DVALC \-> FV DV EV
+\<<
+IF FV TYPE 2 == DV TYPE 2 == OR THEN "?" ELSE DV \->NUM SIGN END \-> SD
+\<< S1 L R M DV SD 5 \->LIST 1 \->LIST + 'S1' STO \>>
+IF FV TYPE 2 == EV TYPE 2 == OR THEN "?" ELSE EV \->NUM SIGN END \-> SE
+\<< S2 L R M EV SE 5 \->LIST 1 \->LIST + 'S2' STO \>>
+\>>
+\>>
+\>>
+NEXT
+IF PT SIZE 0 > THEN
+1 PT SIZE FOR I
+PT I GET \-> P
+\<<
+IF IF0 1 GET P DSATC THEN F 'X' P DVALC ELSE "NO REAL" END \-> FV
+\<<
+IF FV TYPE 2 == NOT THEN
+IF BK 4 GET P POS
+THEN ND P 1 \->LIST + 'ND' STO
+ELSE
+IF IF1 1 GET P DSATC NOT
+THEN ND P 1 \->LIST + 'ND' STO
+ELSE
+IF D1 'X' P DVALC TYPE 2 == THEN ND P 1 \->LIST + 'ND' STO END
+END
+END
+S1 I GET 5 GET S1 I 1 + GET 5 GET \-> SL SR
+\<<
+IF SL TYPE 2 == SR TYPE 2 == OR NOT THEN
+IF SL 1 == SR -1 == AND THEN EX P FV "MAX" 3 \->LIST 1 \->LIST + 'EX' STO END
+IF SL -1 == SR 1 == AND THEN EX P FV "MIN" 3 \->LIST 1 \->LIST + 'EX' STO END
+END
+\>>
+S2 I GET 5 GET S2 I 1 + GET 5 GET \-> SL SR
+\<<
+IF SL TYPE 2 == SR TYPE 2 == OR NOT THEN
+IF SL SR * -1 == THEN
+IF IF0 3 GET SIZE NOT IF0 1 GET P DSATC AND
+THEN IP P FV 2 \->LIST 1 \->LIST + 'IP' STO END
+END
+END
+\>>
+END
+\>>
+\>>
+NEXT
+END
+TR "Tabla f': izq,der,prueba,valor,signo" S1 2 \->LIST 1 \->LIST + 'TR' STO
+TR "f'>0 crece; f'<0 decrece; ? fuera" 0 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Extremos: x,y,tipo; + a - MAX; - a + MIN" EX 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Tabla f'': izq,der,prueba,valor,signo" S2 2 \->LIST 1 \->LIST + 'TR' STO
+TR "f''>0 convexa; f''<0 concava" 0 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Inflexiones con cambio de concavidad" IP 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Candidatos no derivables (revisar laterales)" ND 2 \->LIST 1 \->LIST + 'TR' STO
+IF AV SIZE NOT THEN "OK" 'AV' STO END
+\>>
+\>>
+\>>
+\>>
+THEN ERRM 'AV' STO END
+TR "Estado: tablas segun ceros del CAS" AV 2 \->LIST 1 \->LIST + 'TR' STO
+D1 Z1 D2 Z2 DOM S1 S2 EX IP ND TR AV 12 \->LIST
+\-> RES \<< DEPTH D0 - DROPN RES \>>
+\>>
+\>>
+FL STOF
+\>>
+\>>
+\>>
+  DANAG
+\<<
+\-> F0 PT A B C D
+\<<
+IF A B < C D < AND NOT THEN "VENTANA: MIN < MAX" DOERR END
+F0 DREADC \-> F
+\<<
+A \->NUM B \->NUM XRNG C \->NUM D \->NUM YRNG
+ERASE DRAX
+0 0 0 \-> PREV PX PY
+\<<
+0 100 FOR I
+A B A - I * 100. / + \-> XX
+\<<
+F 'X' XX DVALC \-> YY
+\<<
+IF YY TYPE 2 == THEN 0 'PREV' STO
+ELSE
+YY \->NUM 'YY' STO
+IF YY C < YY D > OR THEN 0 'PREV' STO
+ELSE
+0 \-> CUT
+\<<
+IF PT SIZE 0 > THEN
+1 PT SIZE FOR J
+PT J GET \->NUM \-> P
+\<< IF P PX > NOT P XX < NOT OR NOT THEN 1 'CUT' STO END \>>
+NEXT
+END
+XX YY R\->C PIXON
+IF PREV CUT NOT AND THEN PX PY R\->C XX YY R\->C LINE END
+XX 'PX' STO YY 'PY' STO 1 'PREV' STO
+\>>
+END
+END
+\>>
+\>>
+NEXT
+LABEL
+\>>
+\>>
+\>>
 \>>
 END

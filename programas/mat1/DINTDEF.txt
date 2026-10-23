@@ -1,0 +1,21 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  RCLF \-> FLUI
+  \<<
+    -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+    IFERR
+      "Integral definida con pasos"
+      { { "f:" "Comillas simples" } { "Variable 0=X 1=Y:" "0 o 1" 0 } { "Desde a:" "Finito" 0 } { "Hasta b:" "Finito" 0 } }
+      { } { 'X^2' 0 0 1 } { 'X^2' 0 0 1 } INFORM
+      IF THEN
+        OBJ\-> DROP \-> F K A B
+        \<<
+          IF K 0 == K 1 == OR NOT THEN "VARIABLE INVALIDA" DOERR END
+          F IF K 0 == THEN 'X' ELSE 'Y' END A B DINTDEFC
+          DUP 5 GET DPASOS
+        \>>
+      END
+    THEN FLUI STOF ERRM DOERR END
+    FLUI STOF
+  \>>
+\>>

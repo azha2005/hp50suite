@@ -6,7 +6,7 @@
 # Dependencias: DDOMC (DCONDC DRELC DINTC DSATC), DCONTFC (decide por
 # laterales del CAS) y DASVC (control y respaldo por sondeo).
 
-USAR: DCONDC DSATC DINTC DRELC DDOMC DCONTFC DASVC DASVTC
+USAR: DCONDC DSATC DINTC DRELC DDOMC DCONTFC DASVC DASVTC DLATC
 
 # --- polos simples y dobles ---
 asvt-1x        | '1/X' DASVTC 1 GET                         | { 0 }

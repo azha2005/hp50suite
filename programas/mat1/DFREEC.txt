@@ -1,0 +1,23 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ Names list -> 1 if any name is assigned in current or parent directories.
+  @ Only reads user values. RCL failure cannot leak its argument to the stack.
+  \-> NAMES
+  \<<
+    0 \-> BOUND
+    \<<
+      IF NAMES SIZE 0 >
+      THEN
+        1 NAMES SIZE FOR NN
+          DEPTH \-> DD
+          \<<
+            IFERR NAMES NN GET RCL DROP 1 THEN 0 END
+            \-> VV \<< DEPTH DD - DROPN VV \>>
+          \>>
+          IF THEN 1 'BOUND' STO END
+        NEXT
+      END
+      BOUND
+    \>>
+  \>>
+\>>

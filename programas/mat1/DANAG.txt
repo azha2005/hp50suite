@@ -1,0 +1,45 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ F cuts xmin xmax ymin ymax -> PICT, no PICTURE. True data coordinates.
+  @ No line across a known cut, undefined endpoint, or outside the window.
+  \-> F0 PT A B C D
+  \<<
+    IF A B < C D < AND NOT THEN "VENTANA: MIN < MAX" DOERR END
+    F0 DREADC \-> F
+    \<<
+      A \->NUM B \->NUM XRNG C \->NUM D \->NUM YRNG
+      ERASE DRAX
+      0 0 0 \-> PREV PX PY
+      \<<
+        0 100 FOR I
+          A B A - I * 100. / + \-> XX
+          \<<
+            F 'X' XX DVALC \-> YY
+            \<<
+              IF YY TYPE 2 == THEN 0 'PREV' STO
+              ELSE
+                YY \->NUM 'YY' STO
+                IF YY C < YY D > OR THEN 0 'PREV' STO
+                ELSE
+                  0 \-> CUT
+                  \<<
+                    IF PT SIZE 0 > THEN
+                      1 PT SIZE FOR J
+                        PT J GET \->NUM \-> P
+                        \<< IF P PX > NOT P XX < NOT OR NOT THEN 1 'CUT' STO END \>>
+                      NEXT
+                    END
+                    XX YY R\->C PIXON
+                    IF PREV CUT NOT AND THEN PX PY R\->C XX YY R\->C LINE END
+                    XX 'PX' STO YY 'PY' STO 1 'PREV' STO
+                  \>>
+                END
+              END
+            \>>
+          \>>
+        NEXT
+        LABEL
+      \>>
+    \>>
+  \>>
+\>>

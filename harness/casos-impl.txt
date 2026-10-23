@@ -1,0 +1,15 @@
+# Independent implicit-curve tests; exact point and differential checks.
+USAR: DFREEC DIMPLC DPAGC DPANTC DPASOS DIMPL
+circle-dy | 'X^2+Y^2' 4 0 2 DIMPLC 1 GET 'X/Y' + SIMPLIFY | 0
+circle-h | 'X^2+Y^2' 4 0 2 DIMPLC 2 GET | Y-2=0
+circle-n | 'X^2+Y^2' 4 0 2 DIMPLC 3 GET | X=0
+circle-v | 'X^2+Y^2' 4 2 0 DIMPLC 2 GET | X=2
+circle-vn | 'X^2+Y^2' 4 2 0 DIMPLC 3 GET | Y=0
+point-reject | 'X^2+Y^2' 4 0 0 DIMPLC 2 GET TYPE 2 == | 1
+singular | 'Y^2' 'X^2' 0 0 DIMPLC 5 GET "SINGULAR" POS 0 > | 1
+line | 'Y' '3*X+2' 1 5 DIMPLC 2 GET | Y-5=3*(X-1)
+string | "X^2+Y^2" 4 0 2 DIMPLC 2 GET | Y-2=0
+trace | 'X^2+Y^2' 4 0 2 DIMPLC 4 GET 4 GET 1 GET | Derivar: YP es y'
+flags-impl | RCLF 'FLTEST' STO 'X^2+Y^2' 4 0 2 DIMPLC DROP RCLF FLTEST SAME | 1
+guard-impl | DEPTH 'DD' STO 'X^2+Y^2' 4 0 0 DIMPLC DROP DEPTH DD - | 0
+keep-y | 12 'Y' STO 'X^2+Y^2' 4 0 2 DIMPLC DROP Y 12 == { Y } PURGE | 1

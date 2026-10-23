@@ -1,0 +1,23 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  @ E V P -> exact real value, or "NO REAL". No global substitutions.
+  \-> E V P
+  \<<
+    RCLF \-> FLV
+    \<<
+    -105 CF -103 CF -3 CF RAD -120 SF -123 CF -119 CF -100 CF -99 CF
+    DEPTH \-> D0
+    \<<
+      IFERR
+        E V P DREALC
+        DUP \->NUM
+        IF DUP TYPE 0 ==
+        THEN
+          IF ABS 1.E400 > THEN DROP "NO REAL" END
+        ELSE DROP DROP "NO REAL" END
+      THEN "NO REAL" END
+      \-> R \<< DEPTH D0 - DROPN FLV STOF R \>>
+    \>>
+    \>>
+  \>>
+\>>
