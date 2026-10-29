@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Cadena desde datos"
+ { {"Tabla f:" "Filas {x f f'}; ? como string"} {"Tabla g:" "Filas {x g g'}"} {"a:" "Punto" 0} {"Modo:" "0 f(g),1 g(f),2 inversa f" 0} }
+ { } { {{1 2 3} {4 5 6}} {{1 4 2}} 1 0 } { {{1 2 3} {4 5 6}} {{1 4 2}} 1 0 } INFORM
+ IF THEN
+  OBJ\-> DROP DDERTABC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

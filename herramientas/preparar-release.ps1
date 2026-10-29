@@ -11,12 +11,14 @@ try {
         & $motor -NoProfile -File (Join-Path 'programas' $script)
         if ($LASTEXITCODE -ne 0) { throw "Build failed: $script" }
     }
-    & $motor -NoProfile -File ./verificar.ps1 ./programas/LAB.txt ./programas/MAT1.txt
+    & $motor -NoProfile -File ./verificar.ps1 './programas/LAB.txt' './programas/MAT1*.txt'
     if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
     $destinoSuite = Join-Path $raizSuite 'dist'
     New-Item -ItemType Directory -Force $destinoSuite | Out-Null
     $archivosSuite = @('programas/LAB.txt', 'programas/MAT1.txt', 'programas/DINF.txt',
-        'INICIO-RAPIDO.md', 'DICCIONARIO-LAB.md', 'DICCIONARIO-MAT1.md', 'LICENSE')
+        'programas/MAT1-P2.txt', 'programas/MAT1-DER.txt', 'programas/MAT1-EST.txt',
+        'programas/MAT1-EDO.txt', 'programas/MAT1-MULTI.txt', 'programas/MAT1-TEORIA.txt',
+        'programas/P2.md', 'INICIO-RAPIDO.md', 'DICCIONARIO-LAB.md', 'DICCIONARIO-MAT1.md', 'LICENSE')
     $hashesSuite = foreach ($rutaSuite in $archivosSuite) {
         '{0}  {1}' -f (Get-FileHash -Algorithm SHA256 $rutaSuite).Hash.ToLowerInvariant(), (Split-Path $rutaSuite -Leaf)
     }
@@ -24,7 +26,7 @@ try {
     [IO.File]::WriteAllLines($manifiestoSuite, $hashesSuite, [Text.Encoding]::ASCII)
     Compress-Archive -LiteralPath ($archivosSuite + $manifiestoSuite) -DestinationPath (Join-Path $destinoSuite 'hp50suite.zip') -Force
     # The external manifest also verifies the downloadable ZIP. The manifest
-    # inside the archive covers its seven payload files (no circular hash).
+    # inside the archive covers the payload files (no circular hash).
     $hashZipSuite = (Get-FileHash -Algorithm SHA256 (Join-Path $destinoSuite 'hp50suite.zip')).Hash.ToLowerInvariant()
     [IO.File]::AppendAllText($manifiestoSuite, "$hashZipSuite  hp50suite.zip`r`n", [Text.Encoding]::ASCII)
     Write-Host "Ready: $destinoSuite/hp50suite.zip (static checks only; no emulator run)"

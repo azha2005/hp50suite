@@ -1,0 +1,8 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ DCRITC \-> R
+ \<<
+  IF R 3 GET "OK" == THEN R 1 GET "" R 2 GET 3 \->LIST
+  ELSE {} R 3 GET R 2 GET 3 \->LIST END
+ \>>
+\>>

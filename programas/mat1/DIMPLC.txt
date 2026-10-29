@@ -14,13 +14,21 @@
         \<<
           IFERR
             IF { X Y YP } DFREEC THEN "X/Y/YP ASIGNADA: usar DIR sin valores" DOERR END
-            L0 IF DUP TYPE 2 == THEN
-              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END STR\-> END
-            R0 IF DUP TYPE 2 == THEN
-              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END STR\-> END
+            L0 DREADC R0 DREADC
             - \-> F
             \<<
-              F 'X' DERIV SIMPLIFY F 'Y' DERIV SIMPLIFY \-> FX FY
+              F 'X' DDERC \-> RR
+                    \<<
+                      TR RR 2 GET + 'TR' STO
+                      IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+                      RR 1 GET
+                    \>>
+F 'Y' DDERC \-> RR
+                    \<<
+                      TR RR 2 GET + 'TR' STO
+                      IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+                      RR 1 GET
+                    \>> \-> FX FY
               \<<
                 TR "F=izquierda-derecha" F 2 \->LIST 1 \->LIST + 'TR' STO
                 TR "Fx: Y constante" FX 2 \->LIST 1 \->LIST + 'TR' STO

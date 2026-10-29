@@ -1,0 +1,57 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF E TYPE 9 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+E OBJ\-> \->STR \-> N OP
+\<<
+ N \->LIST \-> AR
+ \<<
+  IF N 2 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+  AR 1 GET AR 2 GET \-> F T
+  \<<
+   IF OP "+" == THEN T NEG 'T' STO ELSE IF OP "-" == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END END
+   IF T V DERIV SIMPLIFY 0 SAME NOT THEN "DOS MIEMBROS VARIABLES" DOERR END
+   IF F TYPE 9 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+   F OBJ\-> \->STR \-> NF OF
+   \<<
+    NF \->LIST \-> AF
+    \<<
+     IF NF 1 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+     CASE
+      OF "EXP" == THEN
+       IF T \->NUM 0 > NOT THEN { } 'VAL' STO "OK" 'AV' STO ELSE
+        TR "EXP(h)=k, k>0; aplicar LN a ambos miembros" T 2 \->LIST 1 \->LIST + 'TR' STO
+        AF 1 GET T LN - V DZEROC \-> R
+        \<< TR R 2 GET + 'TR' STO R 1 GET 'VAL' STO R 3 GET 'AV' STO \>>
+       END
+      END
+      OF "LN" == THEN
+       TR "LN(h)=k; h=EXP(k)>0" T 2 \->LIST 1 \->LIST + 'TR' STO
+       AF 1 GET T EXP - V DZEROC \-> R
+       \<< TR R 2 GET + 'TR' STO R 1 GET 'VAL' STO R 3 GET 'AV' STO \>>
+      END
+      "SIN INVERSION ELEMENTAL" DOERR
+     END
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

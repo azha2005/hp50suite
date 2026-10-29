@@ -1,0 +1,66 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> A B V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF B TYPE 9 == NOT THEN "NO HAY FUNCION COMPUESTA" DOERR END
+B OBJ\-> \->STR \-> N OP
+\<<
+ N \->LIST \-> AR
+ \<<
+  AR 1 GET \-> I
+  \<<
+   I V DERIV SIMPLIFY \-> DI
+   \<<
+    IF DI 0 SAME THEN "INTERIOR CONSTANTE" DOERR END
+    A DI / SIMPLIFY \-> K
+    \<<
+     IF K V DERIV SIMPLIFY 0 SAME NOT THEN "FACTOR NO ES PROPORCIONAL A du" DOERR END
+     CASE
+      OP "^" == THEN
+       IF AR 2 GET V DERIV SIMPLIFY 0 SAME NOT THEN "EXPONENTE VARIABLE" DOERR END
+       'U' AR 2 GET ^ END
+      OP "EXP" == THEN 'U' EXP END
+      OP "SIN" == THEN 'U' SIN END
+      OP "COS" == THEN 'U' COS END
+      OP "LN" == THEN 'U' LN END
+      OP 131 CHR == THEN 'U' \v/ END
+      "SUSTITUCION NO RECONOCIDA" DOERR
+     END \-> H
+     \<<
+      TR "Elegir u=interior" I 2 \->LIST 1 \->LIST + 'TR' STO
+      I V DDERC \-> DR
+      \<< TR DR 2 GET + 'TR' STO \>>
+      TR "du/dV" DI 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Ajuste: factor exterior/(du/dV)" K 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Integral reescrita en U" K H * 2 \->LIST 1 \->LIST + 'TR' STO
+      K H * 'U' DIPASC \-> PR
+      \<<
+       TR PR 2 GET + 'TR' STO
+       IF PR 3 GET "OK" == NOT THEN PR 3 GET DOERR END
+       PR 1 GET 'U' I = SUBST SIMPLIFY 'VAL' STO
+       TR "Volver de U a la variable original" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+       "OK" 'AV' STO
+      \>>
+     \>>
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

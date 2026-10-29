@@ -21,7 +21,7 @@
             OP "*" == THEN * END
             OP "/" == THEN / END
             OP "^" == THEN DPOWC END
-            OP "XROOT" == THEN SWAP INV DPOWC END
+            OP "XROOT" == THEN INV DPOWC END
             OP "NEG" == THEN NEG END
             OP "INV" == THEN INV END
             OP "SQ" == THEN SQ END

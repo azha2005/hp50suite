@@ -1,0 +1,112 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 V A0 B0 MET AUX
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y U } DFREEC THEN "X/Y/U ASIGNADA" DOERR END
+F0 DREADC IF V 'X' SAME NOT THEN V 'X' = SUBST END \-> F
+\<<
+ A0 DBOUNDC B0 DBOUNDC \-> RA RB
+ \<<
+  IF RA 3 GET "OK" == NOT RB 3 GET "OK" == NOT OR THEN "EXTREMOS INVALIDOS" DOERR END
+  RA 1 GET 1 GET RB 1 GET 1 GET RA 1 GET 2 GET RB 1 GET 2 GET \-> A B NA NB
+  \<<
+   1 \-> SG
+   \<<
+    IF NA NB > THEN A B NA NB \-> OA OB ON OM \<< OB 'A' STO OA 'B' STO OM 'NA' STO ON 'NB' STO -1 'SG' STO \>> END
+    IF NA NB == THEN "IMPROPIA: INTERVALO DE LONGITUD CERO" DOERR END
+    TR "Integral original y orientacion" F A0 B0 SG 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+    F DINFOC \-> FI
+    \<<
+     TR "Restricciones ANTES de simplificar" FI 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+     IF FI 3 GET SIZE THEN FI 3 GET DOERR END
+     FI 2 GET DCUTSC \-> RC
+     \<<
+      IF RC 2 GET SIZE THEN RC 2 GET DOERR END
+      A 1 \->LIST \-> PT
+      \<<
+       IF RC 1 GET SIZE 0 > THEN
+        1 RC 1 GET SIZE FOR I
+         RC 1 GET I GET \-> P
+         \<< IF P \->NUM NA > P \->NUM NB < AND THEN PT P 1 \->LIST + 'PT' STO END \>>
+        NEXT
+       END
+       PT B 1 \->LIST + 'PT' STO
+       TR "Separar en CADA singularidad y extremo infinito" PT 2 \->LIST 1 \->LIST + 'TR' STO
+       0 0 { } \-> SUM DIV SEGS
+       \<<
+        1 PT SIZE 1 - FOR I
+         PT I GET PT I 1 + GET \-> L R
+         \<<
+          L DBOUNDC 1 GET 2 GET R DBOUNDC 1 GET 2 GET \-> NL NR
+          \<<
+           IF NL -1E400 < THEN IF NR 1E400 > THEN 0 ELSE R 1 - END ELSE IF NR 1E400 > THEN L 1 + ELSE L R + 2 / END END \-> M
+           \<<
+            IF F 'X' M DVALC TYPE 2 == THEN "INTEGRANDO NO REAL EN UN TRAMO" DOERR END
+            F M DABRC \-> G
+            \<<
+             0 0 \-> UU HH
+             \<<
+              IF MET 1 == THEN
+               IF AUX TYPE 5 == NOT THEN "SUSTITUCION: AUX={u(X) H(U)}" DOERR END
+               IF AUX SIZE 2 == NOT THEN "SUSTITUCION: DOS EXPRESIONES" DOERR END
+               AUX 1 GET 'UU' STO AUX 2 GET 'HH' STO
+              ELSE IF MET 2 == THEN AUX 'UU' STO END END
+              G MET UU HH DINTEGC \-> IR
+              \<<
+               TR "Integrar rama: desde,hasta,integrando" L R G 3 \->LIST 2 \->LIST 1 \->LIST + IR 2 GET + 'TR' STO
+               IF IR 3 GET "OK:" POS 1 == NOT THEN IR 3 GET DOERR END
+               IR 1 GET \-> PR
+               \<<
+                PR L 1 DPOINTC DLIMC PR R -1 DPOINTC DLIMC \-> LL LR
+                \<<
+                 TR "Limite inferior independiente (por derecha)" L 2 \->LIST 1 \->LIST + LL 2 GET + 'TR' STO
+                 TR "Limite superior independiente (por izquierda)" R 2 \->LIST 1 \->LIST + LR 2 GET + 'TR' STO
+                 IF LL 3 GET "OK" == NOT LR 3 GET "OK" == NOT OR THEN "LIMITE IMPROPIO NO RESUELTO" DOERR END
+                 IF LL 1 GET DLKINDC 2 == LR 1 GET DLKINDC 2 == OR THEN
+                  1 'DIV' STO SEGS L R LL 1 GET LR 1 GET "DIVERGE" 5 \->LIST 1 \->LIST + 'SEGS' STO
+                  TR "Este tramo diverge: no cancelar con otro" I 2 \->LIST 1 \->LIST + 'TR' STO
+                 ELSE
+                  LR 1 GET LL 1 GET - SIMPLIFY \-> VALI
+                  \<<
+                   SUM VALI + SIMPLIFY 'SUM' STO
+                   SEGS L R LL 1 GET LR 1 GET VALI 5 \->LIST 1 \->LIST + 'SEGS' STO
+                   TR "Ambos limites finitos: restar superior-inferior" VALI 2 \->LIST 1 \->LIST + 'TR' STO
+                  \>>
+                 END
+                \>>
+               \>>
+              \>>
+             \>>
+            \>>
+           \>>
+          \>>
+         \>>
+        NEXT
+        IF DIV THEN "" SEGS 2 \->LIST 'VAL' STO "DIVERGENTE: al menos un limite no es finito" 'AV' STO
+        ELSE SUM SG * SIMPLIFY SEGS 2 \->LIST 'VAL' STO "CONVERGENTE" 'AV' STO END
+        TR "Conclusion global: todos los tramos deben converger" AV 2 \->LIST 1 \->LIST + 'TR' STO
+       \>>
+      \>>
+     \>>
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

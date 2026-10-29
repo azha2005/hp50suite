@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Diferencial y error"
+ { {"f o datos:" "f(X) o {f(a) f'(a)}"} {"a:" "Punto" 0} {"dx:" "Variacion" 0} }
+ { } { 'X^2' 2 .1 } { 'X^2' 2 .1 } INFORM
+ IF THEN
+  OBJ\-> DROP DDIFC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

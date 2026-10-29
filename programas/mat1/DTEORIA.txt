@@ -1,0 +1,7 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ "Teoria: elegir 1 a 12"
+ {{"Tema:" "1 primitivas,2 metodos,3 Rolle,4 TVM,5 extremos,6 TFC,7 promedio,8 elast,9 LH,10 EDO,11 Hess,12 Weier" 0}}
+ {} {3} {3} INFORM
+ IF THEN 1 GET DTEORC DUP DPASOS END
+\>>

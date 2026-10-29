@@ -1,0 +1,12 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> F
+ \<<
+  IF F TYPE 9 == THEN
+   F OBJ\-> \->STR \-> N OP
+   \<< N \->LIST \-> AR
+    \<< IF OP "*" == THEN AR 1 GET DMULC AR 2 GET DMULC + ELSE F 1 \->LIST END \>>
+   \>>
+  ELSE F 1 \->LIST END
+ \>>
+\>>

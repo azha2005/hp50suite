@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Recuperar desde elasticidad"
+ { {"E(X):" "Elasticidad matematica CON signo"} {"PVI:" "{} o {x0 y0}; ambos no nulos"} }
+ { } { 2 {1 3} } { 2 {1 3} } INFORM
+ IF THEN
+  OBJ\-> DROP DRECELC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

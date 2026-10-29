@@ -1,21 +1,29 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  RCLF \-> FLUI
-  \<<
-    -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
-    IFERR
-      "Integral definida con pasos"
-      { { "f:" "Comillas simples" } { "Variable 0=X 1=Y:" "0 o 1" 0 } { "Desde a:" "Finito" 0 } { "Hasta b:" "Finito" 0 } }
-      { } { 'X^2' 0 0 1 } { 'X^2' 0 0 1 } INFORM
-      IF THEN
-        OBJ\-> DROP \-> F K A B
-        \<<
-          IF K 0 == K 1 == OR NOT THEN "VARIABLE INVALIDA" DOERR END
-          F IF K 0 == THEN 'X' ELSE 'Y' END A B DINTDEFC
-          DUP 5 GET DPASOS
-        \>>
-      END
-    THEN FLUI STOF ERRM DOERR END
-    FLUI STOF
-  \>>
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Integral definida / promedio"
+ { {"f:" "Funcion original"} {"Variable:" "0 X,1 Y" 0} {"a:" "Limite inferior" 0} {"b:" "Limite superior" 0} }
+ { } { 'X^2' 0 0 1 } { 'X^2' 0 0 1 } INFORM
+ IF THEN
+  OBJ\-> DROP \-> F IV A B
+ \<<
+  "Objetivo" {{"Modo:" "0 integral,1 valor medio integral" 0}} {} {0} {0} INFORM
+  IF THEN 1 GET \-> M
+   \<<
+    IF IV 0 == THEN 'X' ELSE 'Y' END \-> V
+    \<<
+     IF M 0 == THEN F V A B DINTDEFC \-> R \<< R 1 GET R 5 GET R 6 GET 3 \->LIST \>>
+     ELSE F V A B DVMIC END
+    \>>
+   \>>
+  ELSE "" {} "CANCELADO" 3 \->LIST END
+ \>> \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

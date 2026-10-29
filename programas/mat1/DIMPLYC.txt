@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> L0 R0 X0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y YP } DFREEC THEN "X/Y/YP ASIGNADA" DOERR END
+L0 DREADC R0 DREADC - \-> F
+\<<
+ F 'X' X0 = SUBST EVAL SIMPLIFY \-> EQ
+ \<<
+  TR "F=izq-der; sustituir X=x0 para hallar ramas Y" X0 EQ 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+  EQ 'Y' DZEROC \-> R
+  \<<
+   TR R 2 GET + 'TR' STO
+   IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+   { } \-> BRANCH
+   \<<
+    IF R 1 GET SIZE 0 > THEN
+     1 R 1 GET SIZE FOR I
+      R 1 GET I GET \-> Y0
+      \<<
+       L0 R0 X0 Y0 DIMPLC \-> IR
+       \<<
+        TR "Estudiar cada rama Y0" Y0 2 \->LIST 1 \->LIST + IR 4 GET + 'TR' STO
+        BRANCH Y0 IR 2 \->LIST 1 \->LIST + 'BRANCH' STO
+       \>>
+      \>>
+     NEXT
+    END
+    BRANCH 'VAL' STO "OK: cada rama tiene su estado" 'AV' STO
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

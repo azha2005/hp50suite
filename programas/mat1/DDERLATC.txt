@@ -1,0 +1,47 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> FI FD A FA
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+TR "Valor VERDADERO f(a)" A FA 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+FI DREADC FD DREADC \-> L R
+\<<
+ L FA - 'X' A - / R FA - 'X' A - / \-> QL QR
+ \<<
+  TR "Cociente izquierdo: (f_izq(X)-f(a))/(X-a)" QL 2 \->LIST 1 \->LIST + 'TR' STO
+  TR "Cociente derecho: (f_der(X)-f(a))/(X-a)" QR 2 \->LIST 1 \->LIST + 'TR' STO
+  QL A -1 DPOINTC DLIMC QR A 1 DPOINTC DLIMC \-> DL DR
+  \<<
+   TR DL 2 GET + DR 2 GET + 'TR' STO
+   IF DL 3 GET "OK" == NOT DR 3 GET "OK" == NOT OR THEN "LATERALES NO RESUELTOS" DOERR END
+   DL 1 GET DR 1 GET \-> VL VR
+   \<<
+    VL DLKINDC 2 < VR DLKINDC 2 < AND
+    IF THEN
+     IF VL VR - SIMPLIFY 0 SAME THEN "DERIVABLE" ELSE "NO DERIVABLE: PENDIENTES DIFERENTES" END
+    ELSE "NO DERIVABLE: LATERAL NO FINITO" END \-> MSG
+    \<<
+     VL VR MSG 3 \->LIST 'VAL' STO
+     TR "Comparar derivadas laterales finitas" MSG 2 \->LIST 1 \->LIST + 'TR' STO
+     "OK" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

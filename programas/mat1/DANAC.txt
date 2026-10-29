@@ -18,8 +18,18 @@
             F0 DREADC \-> F
             \<<
               F 0 DDOMC 'DOM' STO
-              F 'X' DERIV EXPAND SIMPLIFY 'D1' STO
-              D1 'X' DERIV EXPAND SIMPLIFY 'D2' STO
+              F 'X' DDERC \-> DR1
+              \<<
+                TR DR1 2 GET + 'TR' STO
+                IF DR1 3 GET "OK" == NOT THEN DR1 3 GET DOERR END
+                DR1 1 GET 'D1' STO
+                D1 'X' DDERC \-> DR2
+                \<<
+                  TR DR2 2 GET + 'TR' STO
+                  IF DR2 3 GET "OK" == NOT THEN DR2 3 GET DOERR END
+                  DR2 1 GET 'D2' STO
+                \>>
+              \>>
               F 2 DBRKC \-> BK
               \<<
               BK 1 GET 'Z1' STO BK 2 GET 'Z2' STO BK 5 GET 'AV' STO

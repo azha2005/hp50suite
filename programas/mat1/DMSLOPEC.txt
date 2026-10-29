@@ -1,0 +1,86 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 M MODE G0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+ F 'X' DDERC \-> D
+ \<<
+  TR D 2 GET + 'TR' STO
+  IF D 3 GET "OK" == NOT THEN D 3 GET DOERR END
+  CASE
+   MODE 0 == THEN
+    TR "Paralela a pendiente m: resolver f'(a)=m" M 2 \->LIST 1 \->LIST + 'TR' STO D 1 GET M - END
+   MODE 1 == THEN
+    IF M 0 == THEN "PERPENDICULAR A HORIZONTAL: REQUIERE BUSCAR TANGENTE VERTICAL APARTE" DOERR END
+    TR "Perpendicular: m_tg=-1/m_dado" -1 M / 2 \->LIST 1 \->LIST + 'TR' STO D 1 GET -1 M / - END
+   MODE 2 == THEN
+    G0 DREADC \-> G
+    \<<
+     G 'X' DDERC \-> DG
+     \<<
+      TR DG 2 GET + 'TR' STO
+      IF DG 3 GET "OK" == NOT THEN DG 3 GET DOERR END
+      TR "Tangente comun en MISMA abscisa: exigir pendiente Y ordenada iguales" "No resuelve dos abscisas diferentes" 2 \->LIST 1 \->LIST + 'TR' STO
+      D 1 GET DG 1 GET -
+     \>>
+    \>>
+   END
+   "MODO INVALIDO" DOERR
+  END \-> EQ
+  \<<
+   EQ 'X' DZEROC \-> Z
+   \<<
+    TR Z 2 GET + 'TR' STO
+    IF Z 3 GET "OK" == NOT THEN Z 3 GET DOERR END
+    { } \-> CS
+    \<<
+     IF Z 1 GET SIZE 0 > THEN
+      1 Z 1 GET SIZE FOR I
+       Z 1 GET I GET \-> P
+       \<<
+        1 \-> OKP
+        \<<
+         IF MODE 2 == THEN
+          F 'X' P DVALC G0 DREADC 'X' P DVALC \-> FP GP
+          \<<
+           IF FP TYPE 2 == GP TYPE 2 == OR THEN 0 'OKP' STO ELSE
+            IF FP GP - SIMPLIFY 0 SAME NOT THEN 0 'OKP' STO END
+           END
+          \>>
+         END
+         IF OKP THEN
+          F P DRECTAC \-> RR
+          \<<
+           TR RR 2 GET + 'TR' STO
+           IF RR 3 GET "OK" == THEN CS P RR 1 GET 2 \->LIST 1 \->LIST + 'CS' STO END
+          \>>
+         ELSE TR "Descartar: misma pendiente pero otra ordenada" P 2 \->LIST 1 \->LIST + 'TR' STO END
+        \>>
+       \>>
+      NEXT
+     END
+     CS 'VAL' STO "OK" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

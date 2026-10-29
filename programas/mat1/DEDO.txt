@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "EDO desde y prima=R(X,Y)"
+ { {"R(X,Y):" "Segundo miembro de y'=R"} {"PVI:" "{} general o {x0 y0}"} }
+ { } { 'X*Y' {} } { 'X*Y' {} } INFORM
+ IF THEN
+  OBJ\-> DROP DEDOC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

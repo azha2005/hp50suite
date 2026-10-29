@@ -1,0 +1,58 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> N D
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF D 0 SAME THEN "DIVISION POR CERO" DOERR END
+N EXPAND D EXPAND \-> NN DD
+\<<
+ 0 NN \-> Q R
+ \<<
+  DD DEGREE DD DCOEFC DUP SIZE GET \-> GD AD
+  \<<
+   0 \-> FIN
+   \<<
+    1 21 FOR I
+     IF FIN NOT THEN
+      IF R 0 SAME THEN 1 'FIN' STO ELSE
+       R DEGREE \-> GR
+       \<<
+        IF GR GD < THEN 1 'FIN' STO ELSE
+         R DCOEFC DUP SIZE GET AD / 'X' GR GD - ^ * SIMPLIFY \-> T
+         \<<
+          TR "Dividir lideres: termino del cociente" T 2 \->LIST 1 \->LIST + 'TR' STO
+          TR "Multiplicar divisor por termino" DD T * EXPAND 2 \->LIST 1 \->LIST + 'TR' STO
+          R DD T * - EXPAND SIMPLIFY 'R' STO
+          Q T + EXPAND 'Q' STO
+          TR "Restar: nuevo resto" R 2 \->LIST 1 \->LIST + 'TR' STO
+         \>>
+        END
+       \>>
+      END
+     END
+    NEXT
+    IF FIN NOT THEN "GRADO EXCESIVO PARA DIVISION" DOERR END
+   \>>
+   TR "Identidad N=Q*D+R" Q R 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+   NN Q DD * - R - EXPAND SIMPLIFY \-> CK
+   \<< IF CK 0 SAME NOT THEN "DIVISION NO VERIFICADA" DOERR END \>>
+   Q R 2 \->LIST 'VAL' STO "OK" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

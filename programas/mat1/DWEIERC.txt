@@ -28,7 +28,9 @@
                   F 1 DBRKC \-> ST
                   \<<
                     IF ST 5 GET SIZE THEN ST 5 GET DOERR END
-                    TR "f'(X)" F 'X' DERIV SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+                    F 'X' DDERC \-> DR
+                    \<< TR DR 2 GET + 'TR' STO IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END \>>
+                    TR "Resolucion por ramas y ceros" ST 6 GET 2 \->LIST 1 \->LIST + 'TR' STO
                     TR "Ceros de f'" ST 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
                     TR "No derivables: incluir si f existe" ST 4 GET 2 \->LIST 1 \->LIST + 'TR' STO
                     A B 2 \->LIST 'CN' STO

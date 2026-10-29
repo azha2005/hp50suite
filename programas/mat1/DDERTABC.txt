@@ -1,0 +1,64 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> TF TG A MODE
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF MODE 0 < MODE 2 > OR THEN "MODO: 0 f(g), 1 g(f), 2 inversa f" DOERR END
+IF MODE 1 == THEN TG TF ELSE TF TG END \-> OUT INN
+\<<
+ IF MODE 2 == THEN
+  TF A DLKTABC \-> R
+  \<<
+   IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+   R 1 GET \-> ROW
+   \<<
+    IF ROW 3 GET TYPE 2 == THEN "FALTA f'(a)" DOERR END
+    IF ROW 3 GET 0 == THEN "DERIVADA CERO: FORMULA INVERSA NO APLICA" DOERR END
+    TR "Hipotesis aportada: existe inversa local" "No se deduce de una tabla sola" 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Dato: a,f(a),f'(a)" ROW 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "(f^-1)'(f(a))=1/f'(a)" ROW 3 GET INV 2 \->LIST 1 \->LIST + 'TR' STO
+    ROW 2 GET ROW 3 GET INV 2 \->LIST 'VAL' STO
+    "CONDICIONAL: existencia de inversa local" 'AV' STO
+   \>>
+  \>>
+ ELSE
+  INN A DLKTABC \-> RI
+  \<<
+   IF RI 3 GET "OK" == NOT THEN "FALTA DATO INTERIOR EN a" DOERR END
+   RI 1 GET \-> IR
+   \<<
+    TR "Buscar interior: a, interior(a), interior'(a)" IR 2 \->LIST 1 \->LIST + 'TR' STO
+    IF IR 2 GET TYPE 2 == IR 3 GET TYPE 2 == OR THEN "FALTA VALOR O DERIVADA INTERIOR" DOERR END
+    OUT IR 2 GET DLKTABC \-> RO
+    \<<
+     IF RO 3 GET "OK" == NOT THEN "FALTA DATO EXTERIOR EN interior(a)" DOERR END
+     RO 1 GET \-> ORW
+     \<<
+      IF ORW 3 GET TYPE 2 == THEN "FALTA DERIVADA EXTERIOR" DOERR END
+      TR "Buscar exterior EN interior(a), no EN a" ORW 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Cadena: exterior'(interior(a))*interior'(a)" ORW 3 GET IR 3 GET 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+      ORW 3 GET IR 3 GET * SIMPLIFY 'VAL' STO
+      TR "Multiplicar pendientes" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+      "OK: con los datos suministrados" 'AV' STO
+     \>>
+    \>>
+   \>>
+  \>>
+ END
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

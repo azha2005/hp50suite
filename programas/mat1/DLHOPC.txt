@@ -1,0 +1,107 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 G0 PT0 MODE
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X } DFREEC THEN "X ASIGNADA" DOERR END
+F0 DREADC G0 DREADC PT0 DREADC \-> F G PT
+\<<
+ IF MODE 0 < MODE 3 > OR THEN "MODO 0 COCIENTE,1 PRODUCTO,2 RESTA,3 POTENCIA" DOERR END
+ F PT DLIMC G PT DLIMC \-> RF RG
+ \<<
+  TR RF 2 GET + RG 2 GET + 'TR' STO
+  IF RF 3 GET "OK" == NOT RG 3 GET "OK" == NOT OR THEN "NO SE DETERMINO LA FORMA INICIAL" DOERR END
+  TR "Forma inicial: limite de cada factor/miembro" RF 1 GET RG 1 GET 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+  0 \-> EXPO
+  \<<
+   CASE
+    MODE 1 == THEN
+     TR "Producto: F*G=F/(1/G), donde G<>0" F G INV 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+     G INV 'G' STO
+    END
+    MODE 2 == THEN
+     F G + SIMPLIFY 0 SAME IF THEN "RACIONALIZACION NO VALIDA: SUMA CERO" DOERR END
+     TR "Resta: F-G=(F^2-G^2)/(F+G), si F+G<>0" F G 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+     F SQ G SQ - SIMPLIFY F G + SIMPLIFY \-> FN GN
+     \<< FN 'F' STO GN 'G' STO \>>
+    END
+    MODE 3 == THEN
+     TR "Condicion: base F>0 en el lado considerado" F 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "y=F^G; LN(y)=G*LN(F)" G F LN * 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "Transformar G*LN(F)=LN(F)/(1/G)" F LN G INV 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+     F LN 'F' STO G INV 'G' STO 1 'EXPO' STO
+    END
+   END
+   F G 2 \->LIST \-> INITIAL
+   \<<
+    "" "" 0 0 \-> FIRSTQ FINAL FIN COUNT
+    \<<
+     1 10 FOR J
+      IF FIN NOT THEN
+       F PT DLIMC G PT DLIMC \-> LF LG
+       \<<
+        TR "Iteracion: numerador,denominador" J F G 3 \->LIST 2 \->LIST 1 \->LIST + LF 2 GET + LG 2 GET + 'TR' STO
+        IF LF 3 GET "OK" == NOT LG 3 GET "OK" == NOT OR THEN "FORMA INTERMEDIA NO RESUELTA" DOERR END
+        LF 1 GET DLKINDC LG 1 GET DLKINDC \-> KF KG
+        \<<
+         IF KF 0 == KG 0 == AND KF 2 == KG 2 == AND OR THEN
+          TR "Indeterminacion verificada por separado" LF 1 GET LG 1 GET 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+          TR "Hipotesis locales de L'Hopital" "F,G derivables en entorno perforado; G'<>0; limite de F'/G' existente" 2 \->LIST 1 \->LIST + 'TR' STO
+          TR "Restricciones del numerador original" F DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
+          TR "Restricciones del denominador original" G DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
+          F 'X' DDERC G 'X' DDERC \-> DF DG
+          \<<
+           TR DF 2 GET + DG 2 GET + 'TR' STO
+           IF DF 3 GET "OK" == NOT DG 3 GET "OK" == NOT OR THEN "DERIVACION NO COMPLETADA" DOERR END
+           IF DG 1 GET 0 SAME THEN "DENOMINADOR DERIVADO IDENTICAMENTE CERO" DOERR END
+           DF 1 GET 'F' STO DG 1 GET 'G' STO
+           TR "Aplicar regla: limite F/G = limite F'/G' bajo hipotesis" F G / SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+           IF COUNT 0 == THEN F G / SIMPLIFY 'FIRSTQ' STO END
+           F G / SIMPLIFY IF DUP TYPE 9 == THEN FXND ELSE 1 END \-> NS DS
+           \<<
+            TR "Simplificar fraccion antes de reevaluar: N,D" NS DS 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+            NS 'F' STO DS 'G' STO
+           \>>
+           COUNT 1 + 'COUNT' STO
+          \>>
+         ELSE
+          IF KF 3 == KG 3 == OR THEN "LIMITE INTERMEDIO NO REAL O SIN RESOLVER" DOERR END
+          F G / SIMPLIFY PT DLIMC \-> LR
+          \<<
+           TR "Ya no hay 0/0 ni oo/oo: evaluar limite" LR 1 GET 2 \->LIST 1 \->LIST + LR 2 GET + 'TR' STO
+           IF LR 3 GET "OK" == NOT THEN LR 3 GET DOERR END
+           LR 1 GET 'FINAL' STO 1 'FIN' STO
+          \>>
+         END
+        \>>
+       \>>
+      END
+     NEXT
+     IF FIN NOT THEN "LIMITE DE DIEZ APLICACIONES; NO CONCLUIR" DOERR END
+     IF EXPO THEN
+      TR "Volver por exponencial: lim y=EXP(lim LN(y))" FINAL 2 \->LIST 1 \->LIST + 'TR' STO
+      FINAL EXP EVAL 'FINAL' STO
+     END
+     FINAL FIRSTQ FINAL COUNT 4 \->LIST 'VAL' STO
+     IF COUNT 0 == THEN "OK: NO REQUIERE L'HOPITAL" ELSE "CONDICIONAL: revisar hipotesis locales registradas" END 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

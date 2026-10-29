@@ -1,0 +1,10 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> E1 E2 PX PY
+ \<<
+  E1 PX PY DVAL2C E2 PX PY DVAL2C \-> V1 V2
+  \<<
+   IF V1 TYPE 2 == V2 TYPE 2 == OR THEN 0 ELSE V1 SIMPLIFY 0 SAME V2 SIMPLIFY 0 SAME AND END
+  \>>
+ \>>
+\>>

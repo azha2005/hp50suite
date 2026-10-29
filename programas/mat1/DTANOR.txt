@@ -1,32 +1,17 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DTANOR - recta tangente y recta normal en x0.
-  @ Este objeto es SOLO la interfaz: el calculo esta en DTANORC, que
-  @ toma 'f(X)' X0 de la pila y devuelve { M Y0 TG NR }.
-  @ La pendiente de la normal es -1/f'(x0), NO 1/f'(x0): la guia de
-  @ catedra tiene mal el signo en el punto 3c de la teoria.
-  @ Si f'(x0) = 0 la normal es vertical y sale como X = x0.
-  @ Las dos rectas quedan tambien en la pila (n2 tangente, n1 normal).
-  "Tangente y normal"
-  {
-    { "f(X), ej 'X^2':" "'X^2'" }
-    { "Punto x0:" "0" 0 }
-  }
-  { } { } { }
-  INFORM
-  IF THEN
-    OBJ\-> DROP DTANORC OBJ\-> DROP \-> M Y0 TG NR
-    \<<
-      "f'(x0) = " M \->STR + 10 CHR +
-      "f(x0) = " + Y0 \->STR +
-      MSGBOX
-      "Tangente:" 10 CHR +
-      TG \->STR +
-      MSGBOX
-      "Normal:" 10 CHR +
-      NR \->STR +
-      MSGBOX
-      TG NR
-    \>>
-  END
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Tangente y normal con pasos"
+ { {"f(X):" "Funcion original"} {"a:" "Abscisa del punto" 0} }
+ { } { 'X^2' 1 } { 'X^2' 1 } INFORM
+ IF THEN
+  OBJ\-> DROP DRECTAC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

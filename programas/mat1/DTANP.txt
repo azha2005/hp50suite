@@ -1,0 +1,20 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Buscar tangentes o parametro"
+ { {"f(X,K):" "Funcion, K si hay parametro"} {"m:" "Pendiente dada" 0} {"Modo:" "0 paralela,1 perpendicular,2 misma abscisa,3 comun general,4 parametro" 0} {"g(X) o a:" "Curva en modos2/3; punto a en modo4"} }
+ { } { 'X^2' 2 0 0 } { 'X^2' 2 0 0 } INFORM
+ IF THEN
+  OBJ\-> DROP \-> F M MD G
+ \<<
+  CASE MD 3 == THEN F G DTCOMC END MD 4 == THEN F G M DPARAMC END F M MD G DMSLOPEC END
+ \>> \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

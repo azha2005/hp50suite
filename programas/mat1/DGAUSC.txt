@@ -1,0 +1,91 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> MAT0 NAMES
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF MAT0 TYPE 5 == NOT NAMES TYPE 5 == NOT OR THEN "MATRIZ Y NOMBRES COMO LISTAS" DOERR END
+NAMES SIZE MAT0 SIZE \-> NC NF
+\<<
+ IF NC 1 < NC 10 > OR NF NC < OR THEN "SISTEMA: 1 A 10 INCOGNITAS; FILAS>=COLUMNAS" DOERR END
+ MAT0 \-> MAT
+ \<<
+  TR "Sistema: matriz ampliada inicial" MAT 2 \->LIST 1 \->LIST + 'TR' STO
+  1 NF FOR I
+   IF MAT I GET SIZE NC 1 + == NOT THEN "FILA DE LONGITUD INVALIDA" DOERR END
+  NEXT
+  1 NC FOR J
+   0 \-> PV
+   \<<
+    J NF FOR I
+     IF PV 0 == THEN IF MAT I GET J GET \->NUM 0 == NOT THEN I 'PV' STO END END
+    NEXT
+    IF PV 0 == THEN "SISTEMA SIN SOLUCION UNICA" DOERR END
+    IF PV J == NOT THEN
+     MAT J GET MAT PV GET \-> RJ RP
+     \<< MAT J RP PUT 'MAT' STO MAT PV RJ PUT 'MAT' STO \>>
+     TR "Intercambiar filas" J PV 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+    END
+    MAT J GET J GET \-> PIV
+    \<<
+     { } \-> ROW
+     \<<
+      1 NC 1 + FOR K ROW MAT J GET K GET PIV / SIMPLIFY 1 \->LIST + 'ROW' STO NEXT
+      MAT J ROW PUT 'MAT' STO
+      TR "Dividir fila por pivote: fila,pivote" J PIV 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Fila normalizada" ROW 2 \->LIST 1 \->LIST + 'TR' STO
+     \>>
+    \>>
+    1 NF FOR I
+     IF I J == NOT THEN
+      MAT I GET J GET \-> CF
+      \<<
+       IF CF \->NUM 0 == NOT THEN
+        { } \-> ROW
+        \<<
+         1 NC 1 + FOR K
+          ROW MAT I GET K GET CF MAT J GET K GET * - SIMPLIFY 1 \->LIST + 'ROW' STO
+         NEXT
+         MAT I ROW PUT 'MAT' STO
+         TR "Ri <- Ri-c*Rj: i,c,j" I CF J 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+         TR "Fila obtenida" ROW 2 \->LIST 1 \->LIST + 'TR' STO
+        \>>
+       END
+      \>>
+     END
+    NEXT
+   \>>
+  NEXT
+  { } \-> SOL
+  \<<
+   1 NC FOR I SOL MAT I GET NC 1 + GET 1 \->LIST + 'SOL' STO NEXT
+   1 NF FOR I
+    0 \-> CK
+    \<<
+     1 NC FOR J CK MAT0 I GET J GET SOL J GET * + 'CK' STO NEXT
+     CK MAT0 I GET NC 1 + GET - SIMPLIFY 'CK' STO
+     TR "Verificar ecuacion original: residual" I CK 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+     IF CK 0 SAME NOT THEN "RESIDUO NO NULO EN SISTEMA" DOERR END
+    \>>
+   NEXT
+   TR "Orden de incognitas" NAMES 2 \->LIST 1 \->LIST + 'TR' STO
+   TR "Solucion verificada" SOL 2 \->LIST 1 \->LIST + 'TR' STO
+   SOL 'VAL' STO "OK" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

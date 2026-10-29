@@ -1,0 +1,132 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+TR "Expresion racional ORIGINAL" F0 DREADC 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Restricciones antes de simplificar" F0 DREADC DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
+F0 DREADC SIMPLIFY IF DUP TYPE 9 == THEN FXND ELSE 1 END \-> N D
+\<<
+ TR "Racional: numerador y denominador" N D 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Restriccion original: denominador<>0" D 2 \->LIST 1 \->LIST + 'TR' STO
+ N D DDIVPC \-> DV
+ \<<
+  TR DV 2 GET + 'TR' STO
+  IF DV 3 GET "OK" == NOT THEN DV 3 GET DOERR END
+  DV 1 GET OBJ\-> DROP \-> Q R
+  \<<
+   Q 'VAL' STO
+   IF R 0 SAME NOT THEN
+    R D / PARTFRAC \-> PF
+    \<<
+     TR "Factores del denominador (CAS)" D FACTOR 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "CAS propone denominadores; recalcular coeficientes por sistema" PF 2 \->LIST 1 \->LIST + 'TR' STO
+     { } { } 0 \-> NMS BASES ANS
+     \<<
+      PF DINSUMC \-> TERMS
+      \<<
+       1 TERMS SIZE FOR I
+        TERMS I GET FXND \-> NI DI
+        \<<
+         IF DI 1 SAME NOT THEN
+          0 \-> GD
+          \<<
+           DI FACTOR DMULC \-> FAC
+           \<<
+            1 FAC SIZE FOR J
+             FAC J GET \-> B
+             \<<
+              IF B 'X' DERIV SIMPLIFY 0 SAME NOT THEN
+               IF GD 0 > THEN "DENOMINADOR SIN DESCOMPONER" DOERR END
+               IF B TYPE 9 == THEN
+                B OBJ\-> \->STR \-> BN BO
+                \<< BN \->LIST \-> BA
+                 \<< IF BO "^" == THEN BA 1 GET 'B' STO END \>>
+                \>>
+               END
+               B DEGREE 'GD' STO
+              END
+             \>>
+            NEXT
+           \>>
+           IF GD 1 < GD 2 > OR THEN "FACTOR DE GRADO MAYOR QUE DOS" DOERR END
+           0 GD 1 - FOR J
+            IF NMS SIZE 10 == THEN "MAS DE DIEZ COEFICIENTES" DOERR END
+            "'CA" 65 NMS SIZE + CHR + "'" + STR\-> \-> NM
+            \<<
+             NM 1 \->LIST DFREEC IF THEN "COEFICIENTE ASIGNADO: CAA..CAJ DEBEN ESTAR LIBRES" DOERR END
+             'X' J ^ DI / \-> BS
+             \<<
+              NMS NM 1 \->LIST + 'NMS' STO
+              BASES BS 1 \->LIST + 'BASES' STO
+              ANS NM BS * + 'ANS' STO
+             \>>
+            \>>
+           NEXT
+          \>>
+         END
+        \>>
+       NEXT
+      \>>
+      TR "Planteo de fracciones con coeficientes desconocidos" ANS 2 \->LIST 1 \->LIST + 'TR' STO
+      R D ANS * - EXPAND SIMPLIFY DCOEFC \-> CS
+      \<<
+       { } \-> MAT
+       \<<
+        1 CS SIZE FOR I
+         CS I GET \-> EQ
+         \<<
+          TR "Igualar coeficiente de X^j a cero: j,expresion" I 1 - EQ 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+          { } EQ \-> ROW CC
+          \<<
+           1 NMS SIZE FOR J
+            ROW EQ NMS J GET DERIV SIMPLIFY 1 \->LIST + 'ROW' STO
+            CC NMS J GET 0 = SUBST SIMPLIFY 'CC' STO
+           NEXT
+           MAT ROW CC NEG 1 \->LIST + 1 \->LIST + 'MAT' STO
+          \>>
+         \>>
+        NEXT
+        MAT NMS DGAUSC \-> GS
+        \<<
+         TR GS 2 GET + 'TR' STO
+         IF GS 3 GET "OK" == NOT THEN GS 3 GET DOERR END
+         0 \-> DEC
+         \<<
+          1 NMS SIZE FOR J
+           DEC GS 1 GET J GET BASES J GET * + 'DEC' STO
+          NEXT
+          Q DEC + 'VAL' STO
+          TR "Sustituir coeficientes: descomposicion" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL F0 DREADC - EXPAND SIMPLIFY \-> CK
+          \<<
+           TR "Control de identidad: descomp-f" CK 2 \->LIST 1 \->LIST + 'TR' STO
+           IF CK 0 SAME NOT THEN "FRACCIONES NO VERIFICADAS" DOERR END
+          \>>
+         \>>
+        \>>
+       \>>
+      \>>
+     \>>
+    \>>
+   END
+   "OK" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

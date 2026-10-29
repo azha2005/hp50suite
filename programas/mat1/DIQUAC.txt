@@ -1,0 +1,91 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> N D P V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF P 1 2 / SAME NOT THEN
+ IF P 1 < P 5 > OR P 0 RND P == NOT OR THEN "POTENCIA CUADRATICA: 1/2 O ENTERO 1 A 5" DOERR END
+END
+D V DERIV V DERIV 2 / SIMPLIFY \-> A
+\<<
+ IF A 0 SAME A V DERIV SIMPLIFY 0 SAME NOT OR THEN "DENOMINADOR NO CUADRATICO" DOERR END
+ IF N V DERIV V DERIV SIMPLIFY 0 SAME NOT THEN "NUMERADOR DEBE SER LINEAL" DOERR END
+ D V 0 = SUBST EVAL SIMPLIFY
+ D V DERIV V 0 = SUBST EVAL SIMPLIFY
+ N V DERIV SIMPLIFY N V 0 = SUBST EVAL SIMPLIFY
+ \-> C B N1 N0
+ \<<
+  B 2 A * / SIMPLIFY \-> H
+  \<<
+   C A / H SQ - SIMPLIFY V H + \-> K T
+   \<<
+    TR "Completar cuadrado: D=a*((V+h)^2+k)" A H K 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Sustitucion: t=V+h; dt=dV" T 2 \->LIST 1 \->LIST + 'TR' STO
+    N1 2 A * / SIMPLIFY \-> Q
+    \<<
+     N0 Q B * - SIMPLIFY \-> R
+     \<<
+      TR "Separar numerador: N=q*D'+r" Q D V DERIV R 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+      0 0 \-> JP PART
+      \<<
+       IF P 1 2 / SAME THEN
+        IF A \->NUM 0 > THEN
+         TR "Integral dt/sqrt(t^2+k)=LN(ABS(t+sqrt(t^2+k))); dominio real" T K 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+         T T SQ K + \v/ + ABS LN A \v/ / 'JP' STO
+        ELSE
+         IF K \->NUM 0 < NOT THEN "NO HAY INTERVALO REAL DEL RADICAL" DOERR END
+         TR "Integral dt/sqrt(s^2-t^2)=ASIN(t/s); |t|<s" K NEG \v/ 2 \->LIST 1 \->LIST + 'TR' STO
+         T K NEG \v/ / ASIN A NEG \v/ / 'JP' STO
+        END
+        2 Q * D \v/ * R JP * + SIMPLIFY 'VAL' STO
+        TR "Sustituir: 2*q*sqrt(D)+r*J" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+       ELSE
+       IF K \->NUM 0 == THEN
+        T 1 2 P * - ^ 1 2 P * - / 'JP' STO
+        TR "k=0: integrar potencia t^(-2p)" JP 2 \->LIST 1 \->LIST + 'TR' STO
+       ELSE
+        IF K \->NUM 0 > THEN
+         T K \v/ / ATAN K \v/ / 'JP' STO
+         TR "J1: integral dt/(t^2+k)=ATAN(t/sqrt(k))/sqrt(k)" JP 2 \->LIST 1 \->LIST + 'TR' STO
+        ELSE
+         K NEG \v/ \-> S
+         \<< T S - T S + / ABS LN 2 S * / 'JP' STO \>>
+         TR "J1: diferencia de cuadrados; fracciones 1/(t-s),1/(t+s)" JP 2 \->LIST 1 \->LIST + 'TR' STO
+        END
+        IF P 1 > THEN
+         2 P FOR J
+          T 2 K * J 1 - * T SQ K + J 1 - ^ * /
+          2 J * 3 - 2 K * J 1 - * / JP * + SIMPLIFY 'JP' STO
+          TR "Reduccion: Jp=t/[2k(p-1)(t^2+k)^(p-1)]+(2p-3)J(p-1)/[2k(p-1)]" J 2 \->LIST 1 \->LIST + 'TR' STO
+          TR "Sustituir en recurrencia" JP 2 \->LIST 1 \->LIST + 'TR' STO
+         NEXT
+        END
+       END
+       IF P 1 == THEN Q D ABS LN * ELSE Q D 1 P - ^ * 1 P - / END 'PART' STO
+       PART R JP * A P ^ / + SIMPLIFY 'VAL' STO
+       TR "Volver a V y aplicar factores" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+       END
+       "OK" 'AV' STO
+      \>>
+     \>>
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

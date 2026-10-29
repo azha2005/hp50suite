@@ -1,0 +1,92 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+F0 DREADC \-> F
+\<<
+ F DINSUMC \-> TT
+ \<<
+  IF TT SIZE 1 > THEN
+   0 'VAL' STO
+   1 TT SIZE FOR I
+    TT I GET V DAUTINTC \-> R
+    \<<
+     TR "Linealidad: termino" TT I GET 2 \->LIST 1 \->LIST + R 2 GET + 'TR' STO
+     IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+     VAL R 1 GET + SIMPLIFY 'VAL' STO
+    \>>
+   NEXT
+   "OK" 'AV' STO
+  ELSE
+   F V DIPASC \-> IP
+   \<<
+    IF IP 3 GET "OK" == THEN IP 1 GET 'VAL' STO TR IP 2 GET + 'TR' STO "OK" 'AV' STO ELSE
+     F IF V 'X' SAME NOT THEN V 'X' = SUBST END \-> FX
+     \<<
+      FX FACTOR DMULC \-> FM
+      \<<
+       1 0 0 \-> UP HAS PRI
+       \<<
+        1 FM SIZE FOR I
+         FM I GET \-> T
+         \<<
+          DEPTH \-> DD \<< IFERR T DEGREE THEN -1 END \-> DG \<< DEPTH DD - DROPN DG \>> \>>
+          \-> DG
+          \<< IF DG 0 > DG 5 > NOT AND PRI NOT AND THEN UP T * 'UP' STO 1 'HAS' STO END \>>
+          IF T TYPE 9 == THEN
+           T OBJ\-> \->STR \-> N OP
+           \<<
+            N DROPN
+            IF {"LN" "LOG" "ASIN" "ACOS" "ATAN"} OP POS THEN T 'UP' STO 1 'HAS' STO 1 'PRI' STO END
+            IF OP "EXP" == HAS NOT AND THEN T 'UP' STO 1 'HAS' STO END
+           \>>
+          END
+         \>>
+        NEXT
+        "" \-> PR
+        \<<
+         IF HAS THEN
+          FX 2 UP 0 DINTEGC \-> IB
+          \<<
+           IF IB 3 GET "OK:" POS 1 == THEN
+            TR "Metodo elegido: partes; u=" UP 2 \->LIST 1 \->LIST + IB 2 GET + 'TR' STO
+            IB 1 GET 'PR' STO
+           END
+          \>>
+         END
+         IF PR TYPE 2 == THEN
+          FX 3 0 0 DINTEGC \-> IR
+          \<<
+           TR "Intento de fracciones racionales" IR 3 GET 2 \->LIST 1 \->LIST + IR 2 GET + 'TR' STO
+           IF IR 3 GET "OK:" POS 1 == NOT THEN "NO SE COMPLETO: ELEGIR METODO GUIADO" DOERR END
+           IR 1 GET 'PR' STO
+          \>>
+         END
+         PR IF V 'X' SAME NOT THEN 'X' V = SUBST END 'VAL' STO
+         "OK" 'AV' STO
+        \>>
+       \>>
+      \>>
+     \>>
+    END
+   \>>
+  END
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

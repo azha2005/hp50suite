@@ -22,6 +22,12 @@
 Para instalar programas individuales, ver el README de `programas/` en el
 repositorio; sus dependencias y el orden de carga son diferentes.
 
+**Parcial 2 / programas guiados:** elegir un paquete temático de
+[programas/P2.md](programas/P2.md): DER (derivadas), EST (estudio y teoremas),
+P2 (integración), EDO, MULTI o TEORIA. Cada uno incluye sus helpers; transferir
+un tema a la vez evita duplicarlos. `MAT1.txt` conserva las entradas anteriores
+y ahora ocupa más memoria. La nueva distribución aún requiere prueba en HP real.
+
 **Matemática I:** para las asíntotas de `DASHO`/`DESTFUN`, transferir `DINF.txt`
 como programa a HOME, introducir el infinito del teclado en la pila y ejecutar
 DINF una vez. Esto crea `INF` visible desde las subcarpetas. Sigue siendo el

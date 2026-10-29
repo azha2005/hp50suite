@@ -1,0 +1,46 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 PT0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+F0 DREADC PT0 DREADC \-> F PT
+\<<
+ TR "Limite: expresion y punto/lado" F PT 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ F PT LIMIT EVAL IF DUP TYPE 12 == THEN DTAG END 'VAL' STO
+ IF VAL TYPE 2 == THEN "LIMITE SIN RESOLVER" DOERR END
+ IF VAL TYPE 6 == THEN "LIMITE SIMBOLICO SIN RESOLVER" DOERR END
+ IF VAL \->STR 159 CHR POS THEN
+  DEPTH \-> D1
+  \<<
+   IFERR F SIGN PT LIMIT EVAL \->NUM THEN "?" END
+   \-> SG \<< DEPTH D1 - DROPN SG \>>
+  \>> \-> SG
+  \<<
+   IF SG TYPE 0 == THEN
+    IF SG ABS 1 == THEN
+     IF SG 0 < THEN "'-" ELSE "'+" END 159 CHR + "'" + STR\-> EVAL 'VAL' STO
+    END
+   END
+  \>>
+ ELSE
+  IF VAL \->NUM TYPE 0 == NOT THEN "LIMITE NO REAL" DOERR END
+ END
+ TR "Resultado del limite (CAS)" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+ "OK" 'AV' STO
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

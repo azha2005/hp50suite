@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Parciales y mixtas con reglas"
+ { {"f(X,Y):" "Funcion original"} }
+ { } { 'X^2*Y+SIN(Y)' } { 'X^2*Y+SIN(Y)' } INFORM
+ IF THEN
+  OBJ\-> DROP DPARSC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

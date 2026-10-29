@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Derivadas laterales"
+ { {"Rama izquierda:" "f_izq(X)"} {"Rama derecha:" "f_der(X)"} {"a:" "Punto de corte" 0} {"f(a):" "Valor verdadero en a" 0} }
+ { } { '-X' 'X' 0 0 } { '-X' 'X' 0 0 } INFORM
+ IF THEN
+  OBJ\-> DROP DDERLATC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

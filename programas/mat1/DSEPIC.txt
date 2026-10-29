@@ -1,51 +1,12 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DSEPIC - nucleo de DSEPI. Separable con condicion inicial.
-  @ Uso:  'M(Y)' 'N(X)' X0 Y0 DSEPIC
-  @ Deja: n1 = { FY GX K SOL }
-  @         K   = F(Y0) - G(X0), la constante ya resuelta,
-  @         SOL = 'F(Y) = G(X) + K'
-  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DSEPI.
-  @
-  @ K se calcula con SUBST y NO usa STO/PURGE sobre los globales X e Y:
-  @ ese era el punto mas fragil de la suite, porque pisaba lo que
-  @ tuvieras guardado ahi. Si el CAS no puede evaluar en el punto, deja
-  @ 'C' simbolica.
-  @
-  @ Guardian de profundidad (AGENTS.md 2.11), por el mismo motivo que
-  @ DSEPC: sin el, una primitiva que falla hace que el `=` final arme la
-  @ ecuacion con basura y devuelva una respuesta equivocada sin avisar.
-  \-> MY0 NX0 X0 Y0
+ \-> M N X0 Y0
+ \<<
+  M N X0 Y0 2 \->LIST DSEPGC \-> R
   \<<
-    DEPTH \-> D0
-    \<<
-      MY0 IF DUP TYPE 2 == THEN STR\-> END \-> MY
-      \<<
-        NX0 IF DUP TYPE 2 == THEN STR\-> END \-> NX
-        \<<
-          0 0 0 \-> FY GX K
-          \<<
-            IFERR MY 'Y' RISCH EXPAND THEN "NO INTEGRA M(Y)" END
-            IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA M(Y)" END
-            'FY' STO
-            IFERR NX 'X' RISCH EXPAND THEN "NO INTEGRA N(X)" END
-            IF DUP \->STR "INT(" POS 0 > THEN DROP "NO INTEGRA N(X)" END
-            'GX' STO
-            IFERR
-              FY 'Y' Y0 = SUBST EVAL GX 'X' X0 = SUBST EVAL -
-            THEN
-              'C'
-            END
-            'K' STO
-            IFERR FY GX K + = THEN "NO SE PUDO ARMAR LA SOLUCION" END
-            \-> SOL
-            \<<
-              FY GX K SOL 4 \->LIST
-              \-> R \<< DEPTH D0 - DROPN R \>>
-            \>>
-          \>>
-        \>>
-      \>>
-    \>>
+   IF R 1 GET TYPE 5 == THEN
+    R 1 GET 1 GET R 1 GET 2 GET R 1 GET 4 GET R 1 GET 3 GET R 2 GET R 3 GET 6 \->LIST
+   ELSE "NO INTEGRA M(Y)" "NO INTEGRA N(X)" "" "" R 2 GET R 3 GET 6 \->LIST END
   \>>
+ \>>
 \>>

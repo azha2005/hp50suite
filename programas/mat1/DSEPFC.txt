@@ -1,0 +1,80 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> R0 LEV
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF LEV 8 > THEN "FACTORIZACION SEPARABLE EXCESIVA" DOERR END
+R0 DREADC \-> R
+\<<
+ TR "Partir de y'=R(X,Y)" R 2 \->LIST 1 \->LIST + 'TR' STO
+ R 'X' DERIV SIMPLIFY R 'Y' DERIV SIMPLIFY \-> DX DY
+ \<<
+  CASE
+   DY 0 SAME THEN R 1 2 \->LIST 'VAL' STO TR "Factor depende solo de X: d/dY=0" DY 2 \->LIST 1 \->LIST + 'TR' STO END
+   DX 0 SAME THEN 1 R 2 \->LIST 'VAL' STO TR "Factor depende solo de Y: d/dX=0" DX 2 \->LIST 1 \->LIST + 'TR' STO END
+   IF R TYPE 9 == NOT THEN "NO SEPARABLE" DOERR END
+   R OBJ\-> \->STR \-> N OP
+   \<<
+    N \->LIST \-> AR
+    \<<
+     IF OP "*" == OP "/" == OR THEN
+      AR 1 GET LEV 1 + DSEPFC AR 2 GET LEV 1 + DSEPFC \-> P Q
+      \<<
+       TR P 2 GET + Q 2 GET + 'TR' STO
+       IF P 3 GET "OK" == NOT Q 3 GET "OK" == NOT OR THEN "UN FACTOR NO SE PUDO SEPARAR" DOERR END
+       P 1 GET 1 GET Q 1 GET 1 GET P 1 GET 2 GET Q 1 GET 2 GET \-> A B C D
+       \<<
+        IF OP "*" == THEN A B * SIMPLIFY C D * SIMPLIFY ELSE A B / SIMPLIFY C D / SIMPLIFY END
+        2 \->LIST 'VAL' STO
+       \>>
+      \>>
+     ELSE
+      IF OP "^" == THEN
+       AR 2 GET \-> P
+       \<<
+        IF P 'X' DERIV SIMPLIFY 0 SAME NOT P 'Y' DERIV SIMPLIFY 0 SAME NOT OR THEN "EXPONENTE VARIABLE NO SEPARABLE" DOERR END
+        IF P \->NUM DUP 0 RND == NOT THEN "POTENCIA NO ENTERA: REVISAR DOMINIO" DOERR END
+        AR 1 GET LEV 1 + DSEPFC \-> T
+        \<<
+         IF T 3 GET "OK" == NOT THEN T 3 GET DOERR END
+         TR T 2 GET + 'TR' STO
+         T 1 GET 1 GET P ^ T 1 GET 2 GET P ^ 2 \->LIST 'VAL' STO
+        \>>
+       \>>
+      ELSE
+       R FACTOR \-> RF
+       \<<
+        IF RF R SAME THEN "NO ES SEPARABLE POR LOS FACTORES RECONOCIDOS" DOERR END
+        TR "Factorizar el segundo miembro (CAS)" RF 2 \->LIST 1 \->LIST + 'TR' STO
+        RF LEV 1 + DSEPFC \-> S
+        \<<
+         IF S 3 GET "OK" == NOT THEN S 3 GET DOERR END
+         TR S 2 GET + 'TR' STO S 1 GET 'VAL' STO
+        \>>
+       \>>
+      END
+     END
+    \>>
+   \>>
+  END
+  TR "R(X,Y)=N(X)*Q(Y): verificar producto" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+  VAL 1 GET VAL 2 GET * R - EXPAND SIMPLIFY 0 SAME NOT IF THEN "SEPARACION NO VERIFICADA" DOERR END
+  "OK" 'AV' STO
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

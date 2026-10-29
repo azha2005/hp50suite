@@ -5,6 +5,7 @@
   @ Long text is split into pages of two lines, 20 characters each.
   \-> TR
   \<<
+    IF TR SIZE 0 > THEN
     1 1 \-> SIG ACT
     \<<
       WHILE SIG 1 == REPEAT
@@ -31,5 +32,6 @@
         ELSE 0 'SIG' STO END
       END
     \>>
+    END
   \>>
 \>>

@@ -6,4 +6,11 @@
     IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
     STR\->
   END
+  IF DUP TYPE 0 == THEN DRATC ELSE
+   IF DUP TYPE 9 == THEN
+    IF DUP \->STR "." POS THEN
+     DEXSTRC "'" SWAP + "'" + STR\->
+    END
+   END
+  END
 \>>

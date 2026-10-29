@@ -23,10 +23,16 @@
               \<<
                 F G - \-> DIF
                 \<<
-                  DIF DROOTC OBJ\-> DROP \-> RT MSG
+                  DIF 'X' DZEROC \-> ZC
                   \<<
-                    TR "Resolver intersecciones F-G=0 (CAS)" RT 2 \->LIST 1 \->LIST + 'TR' STO
-                    IF MSG SIZE THEN MSG DOERR END
+                    TR "Intersecciones: resolver F-G=0" DIF 2 \->LIST 1 \->LIST + ZC 2 GET + 'TR' STO
+                    IF ZC 3 GET "IDENTIDAD" == THEN {} ""
+                    ELSE
+                     IF ZC 3 GET "OK" == NOT THEN ZC 3 GET DOERR END
+                     ZC 1 GET ""
+                    END
+                  \>> \-> RT MSG
+                  \<<
                     IF A0 "AUTO" SAME B0 "AUTO" SAME AND THEN
                       IF RT SIZE 2 < THEN "AUTO: FALTAN DOS INTERSECCIONES" DOERR END
                       RT 1 GET RT RT SIZE GET

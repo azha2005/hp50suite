@@ -1,0 +1,67 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 G0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END
+F0 DREADC G0 DREADC \-> F G
+\<<
+ F 'X' DDERC G 'X' DDERC \-> DF DG
+ \<<
+  TR DF 2 GET + DG 2 GET + 'TR' STO
+  IF DF 3 GET "OK" == NOT DG 3 GET "OK" == NOT OR THEN "DERIVADAS NO COMPLETADAS" DOERR END
+  G 'X' 'Y' = SUBST DG 1 GET 'X' 'Y' = SUBST \-> GY DGY
+  \<<
+   DF 1 GET DGY - SIMPLIFY
+   F 'X' DF 1 GET * - GY 'Y' DGY * - - EXPAND SIMPLIFY
+   \-> EQ1 EQ2
+   \<<
+    TR "Buscar dos abscisas a,b: X representa a; Y representa b" "No confundir b con la ordenada del grafico" 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Igualar pendientes: f'(a)-g'(b)=0" EQ1 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Igualar ordenadas al origen: f(a)-a*f'(a)-g(b)+b*g'(b)=0" EQ2 2 \->LIST 1 \->LIST + 'TR' STO
+    EQ1 EQ2 DSIS2C \-> SS
+    \<<
+     TR SS 2 GET + 'TR' STO
+     IF SS 3 GET "OK" == NOT THEN SS 3 GET DOERR END
+     {} \-> ROWS
+     \<<
+      IF SS 1 GET SIZE 0 > THEN
+       1 SS 1 GET SIZE FOR I
+        SS 1 GET I GET OBJ\-> DROP \-> A B
+        \<<
+         F A DRECTAC G B DRECTAC \-> RA RB
+         \<<
+          TR RA 2 GET + RB 2 GET + 'TR' STO
+          IF RA 3 GET "OK" == NOT RB 3 GET "OK" == NOT OR THEN "CANDIDATO SIN TANGENTE REGULAR" DOERR END
+          RA 1 GET 1 GET RB 1 GET 1 GET - \->NUM ABS 1E-10 <
+          RA 1 GET 2 GET A RA 1 GET 1 GET * - RB 1 GET 2 GET B RB 1 GET 1 GET * - - \->NUM ABS 1E-10 < AND
+          IF NOT THEN "TANGENTES NO COINCIDEN" DOERR END
+          ROWS A B RA 1 GET 3 GET 3 \->LIST 1 \->LIST + 'ROWS' STO
+          TR "Comprobar misma pendiente y misma ordenada; tangente comun" A B RA 1 GET 3 GET 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+         \>>
+        \>>
+       NEXT
+      END
+      ROWS 'VAL' STO "OK: bajo alcance del eliminador del sistema" 'AV' STO
+     \>>
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

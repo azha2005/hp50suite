@@ -17,18 +17,11 @@
         \<<
           IFERR
             IF { X U } DFREEC THEN "X/U ASIGNADA: usar DIR sin valores" DOERR END
-            F0 IF DUP TYPE 2 == THEN
-              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
-              STR\-> END
-            A0 IF DUP TYPE 2 == THEN
-              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
-              STR\-> END
-            H0 IF DUP TYPE 2 == THEN
-              IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
-              STR\-> END
+            F0 DREADC A0 DREADC H0 DREADC
             \-> F A H
             \<<
               TR "Integrando original" F 2 \->LIST 1 \->LIST + 'TR' STO
+              TR "Restricciones ANTES de simplificar" F DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
               IF MET 0 < MET 3 > OR MET 0 RND MET == NOT OR
               THEN "METODO INVALIDO" DOERR END
               CASE
@@ -42,9 +35,14 @@
                     DROP
                     TR "H(u) * u' - f =" 0 2 \->LIST 1 \->LIST + 'TR' STO
                     TR "Integrando en U" H 2 \->LIST 1 \->LIST + 'TR' STO
-                    H 'U' DINPRC \-> PU
+                    H 'U' DIPASC \-> RR
                     \<<
-                      TR "Primitiva en U (CAS)" PU 2 \->LIST 1 \->LIST + 'TR' STO
+                      TR RR 2 GET + 'TR' STO
+                      IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+                      RR 1 GET
+                    \>> \-> PU
+                    \<<
+                      TR "Primitiva en U" PU 2 \->LIST 1 \->LIST + 'TR' STO
                       PU 'U' A = SUBST SIMPLIFY 'PR' STO
                       TR "Volver: U=u(X)" PR 2 \->LIST 1 \->LIST + 'TR' STO
                     \>>
@@ -78,12 +76,23 @@
                       THEN
                         RR UU / SIMPLIFY \-> DV
                         \<<
-                          UU 'X' DERIV SIMPLIFY DV 'X' DINPRC \-> DU VV
+                          UU 'X' DDERC \-> RR
+                    \<<
+                      TR RR 2 GET + 'TR' STO
+                      IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+                      RR 1 GET
+                    \>>
+DV 'X' DIPASC \-> RR
+                    \<<
+                      TR RR 2 GET + 'TR' STO
+                      IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+                      RR 1 GET
+                    \>> \-> DU VV
                           \<<
                             TR "Por partes: u" UU 2 \->LIST 1 \->LIST + 'TR' STO
                             TR "dv/dX = f/u" DV 2 \->LIST 1 \->LIST + 'TR' STO
                             TR "du/dX" DU 2 \->LIST 1 \->LIST + 'TR' STO
-                            TR "v (CAS)" VV 2 \->LIST 1 \->LIST + 'TR' STO
+                            TR "v: formula e integracion desarrolladas" VV 2 \->LIST 1 \->LIST + 'TR' STO
                             SUM SG UU VV * * + SIMPLIFY 'SUM' STO
                             DU VV * SIMPLIFY 'RR' STO
                             SG NEG 'SG' STO
@@ -96,10 +105,25 @@
                               IF POL 1 ==
                               THEN DU 'UU' STO
                               ELSE
-                                RR 'X' DINPRC \-> PP
+                                RR F / SIMPLIFY \-> K
                                 \<<
-                                  TR "Integral restante (CAS)" PP 2 \->LIST 1 \->LIST + 'TR' STO
-                                  SUM SG PP * + SIMPLIFY 'PR' STO 1 'FIN' STO
+                                  IF K 'X' DERIV SIMPLIFY 0 SAME THEN
+                                    TR "Ciclo: I=acumulado+signo*k*I" SUM SG K 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+                                    1 SG K * - SIMPLIFY \-> CO
+                                    \<<
+                                      IF CO 0 SAME THEN "CICLO NO PERMITE DESPEJAR" DOERR END
+                                      TR "Agrupar: (1-signo*k)*I=acumulado" CO SUM 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+                                      SUM CO / SIMPLIFY 'PR' STO 1 'FIN' STO
+                                    \>>
+                                  ELSE
+                                    RR 'X' DIPASC \-> RI
+                                    \<<
+                                      IF RI 3 GET "OK" == THEN
+                                        TR RI 2 GET + 'TR' STO
+                                        SUM SG RI 1 GET * + SIMPLIFY 'PR' STO 1 'FIN' STO
+                                      ELSE DU 'UU' STO END
+                                    \>>
+                                  END
                                 \>>
                               END
                             END
@@ -114,10 +138,18 @@
                 \<<
                   IF MET 3 ==
                   THEN
-                    F PARTFRAC 'FF' STO
-                    TR "Fracciones simples (CAS)" FF 2 \->LIST 1 \->LIST + 'TR' STO
+                    F DFRPC \-> FR
+                    \<<
+                      TR FR 2 GET + 'TR' STO
+                      IF FR 3 GET "OK" == NOT THEN FR 3 GET DOERR END
+                      FR 1 GET 'FF' STO
+                    \>>
                   ELSE
-                    TR "Linealidad: integrar suma" F 2 \->LIST 1 \->LIST + 'TR' STO
+                    IF F \->STR "SIN(" POS F \->STR "COS(" POS OR F \->STR "TAN(" POS OR THEN
+                      F TLIN 'FF' STO
+                    ELSE F 'FF' STO END
+                    TR "Reescritura trigonometrica por TLIN (si cambia)" FF 2 \->LIST 1 \->LIST + 'TR' STO
+                    TR "Linealidad: integrar suma" FF 2 \->LIST 1 \->LIST + 'TR' STO
                   END
                   FF DINSUMC \-> TERMS
                   \<<
@@ -126,9 +158,14 @@
                       TERMS J GET \-> TT
                       \<<
                         TR "Termino a integrar" TT 2 \->LIST 1 \->LIST + 'TR' STO
-                        TT 'X' DINPRC \-> PP
+                        IF MET 0 == THEN TT 'X' DAUTINTC ELSE TT 'X' DIPASC END \-> RR
+                    \<<
+                      TR RR 2 GET + 'TR' STO
+                      IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+                      RR 1 GET
+                    \>> \-> PP
                         \<<
-                          TR "Primitiva del termino (CAS)" PP 2 \->LIST 1 \->LIST + 'TR' STO
+                          TR "Primitiva del termino" PP 2 \->LIST 1 \->LIST + 'TR' STO
                           PR PP + 'PR' STO
                         \>>
                       \>>
@@ -138,11 +175,10 @@
                 \>>
               END
               TR "Primitiva sin C" PR 2 \->LIST 1 \->LIST + 'TR' STO
-              PR 'X' DERIV F - EXPAND SIMPLIFY \-> CK
+              PR F 'X' DIPRVC \-> VR
               \<<
-                TR "Control: F' - f" CK 2 \->LIST 1 \->LIST + 'TR' STO
-                IF CK 0 SAME
-                THEN "OK: agregar C; revisar dominio" 'AV' STO
+                TR VR 2 GET + 'TR' STO
+                IF VR 3 GET "OK" == THEN "OK: agregar C; revisar dominio" 'AV' STO
                 ELSE "NO VERIFICADA: revisar control" 'AV' STO END
               \>>
             \>>

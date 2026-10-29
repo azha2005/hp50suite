@@ -1,0 +1,129 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E0 V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+E0 DREADC IF V 'X' SAME NOT THEN V 'X' = SUBST END \-> E
+\<<
+ TR "Resolver ecuacion =0" E 2 \->LIST 1 \->LIST + 'TR' STO
+ E \-> EO
+ \<<
+ TR "Restricciones de la ecuacion original" EO DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
+ E DNZC \-> NZ
+ \<<
+  TR NZ 2 GET + 'TR' STO
+  IF NZ 3 GET "OK" == NOT THEN NZ 3 GET DOERR END
+  NZ 1 GET 'E' STO
+ \>>
+ E SIMPLIFY IF DUP TYPE 9 == THEN FXND ELSE 1 END \-> NE DE
+ \<<
+  IF DE 1 SAME NOT THEN
+   TR "Multiplicar por denominador NO nulo" DE 2 \->LIST 1 \->LIST + 'TR' STO
+   NE 'E' STO
+  END
+ \>>
+ DEPTH \-> DD \<< IFERR IF E 'X' DERIV SIMPLIFY 0 SAME THEN 0 ELSE E DEGREE END THEN -1 END \-> DG \<< DEPTH DD - DROPN DG \>> \>>
+ \-> DG
+ \<<
+  IF DG 0 == THEN
+   IF E SIMPLIFY 0 SAME THEN "TODO R" 'VAL' STO "IDENTIDAD" 'AV' STO
+   ELSE { } 'VAL' STO "OK" 'AV' STO END
+  ELSE
+   IF DG 1 == DG 2 == OR THEN
+    E 'X' 0 = SUBST EVAL SIMPLIFY
+    E 'X' DERIV 'X' 0 = SUBST EVAL SIMPLIFY
+    E 'X' DERIV 'X' DERIV 'X' 0 = SUBST EVAL 2 / SIMPLIFY
+    \-> C B A
+    \<<
+     TR "Coeficientes a,b,c" A B C 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+     IF DG 1 == THEN
+      TR "Ecuacion lineal: b*X+c=0; X=-c/b" C NEG B / SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+      C NEG B / SIMPLIFY 1 \->LIST 'VAL' STO
+     ELSE
+      B SQ 4 A * C * - SIMPLIFY \-> DT
+      \<<
+       TR "Discriminante: Delta=b^2-4*a*c" DT 2 \->LIST 1 \->LIST + 'TR' STO
+       IF DT \->NUM TYPE 0 == NOT THEN "DISCRIMINANTE NO REAL" DOERR END
+       IF DT \->NUM 0 < THEN { } 'VAL' STO
+        TR "Delta<0: no hay raices reales" DT 2 \->LIST 1 \->LIST + 'TR' STO
+       ELSE
+        TR "Formula: (-b +/- sqrt(Delta))/(2*a)" A B DT 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+        B NEG DT \v/ - 2 A * / SIMPLIFY
+        B NEG DT \v/ + 2 A * / SIMPLIFY
+        2 \->LIST DORDC 'VAL' STO
+       END
+      \>>
+     END
+     "OK" 'AV' STO
+    \>>
+   ELSE
+    IF DG 2 > THEN
+     E DRUFC \-> RU
+     \<<
+      TR "Ruffini: coeficientes iniciales" RU 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Ruffini: renglones de division sintetica" RU 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Raices racionales encontradas" RU 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Polinomio residual" RU 4 GET 2 \->LIST 1 \->LIST + 'TR' STO
+      IF RU 2 GET SIZE 0 == THEN "GRADO>2 SIN RAICES RACIONALES: REQUIERE OTRO METODO" DOERR END
+      RU 4 GET 'X' DZEROC \-> R
+      \<<
+       TR R 2 GET + 'TR' STO
+       IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+       RU 2 GET R 1 GET + DORDC 'VAL' STO "OK" 'AV' STO
+      \>>
+     \>>
+    ELSE
+     EO 'X' DZINVC \-> IR
+     \<<
+      IF IR 3 GET "OK" == THEN
+       TR IR 2 GET + 'TR' STO IR 1 GET 'VAL' STO "OK" 'AV' STO
+      ELSE
+       E DROOTC \-> R
+       \<<
+        TR "Ecuacion no polinomica: candidatos del CAS" R 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+        IF R 2 GET SIZE THEN R 2 GET DOERR END
+        R 1 GET 'VAL' STO "CANDIDATOS CAS: falta desarrollo de la inversion" 'AV' STO
+       \>>
+      END
+     \>>
+    END
+   END
+  END
+  IF VAL TYPE 5 == THEN
+   { } \-> VALID
+   \<<
+    IF VAL SIZE 0 > THEN
+     1 VAL SIZE FOR I
+      EO 'X' VAL I GET DVALC \-> CK
+      \<<
+       TR "Comprobar candidato en ecuacion original" VAL I GET CK 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+       IF CK TYPE 2 == THEN TR "Descartar candidato: fuera del dominio original" VAL I GET 2 \->LIST 1 \->LIST + 'TR' STO ELSE
+        IF CK SIMPLIFY 0 SAME THEN VALID VAL I GET 1 \->LIST + 'VALID' STO ELSE
+         TR "Descartar: residual original no nulo" CK 2 \->LIST 1 \->LIST + 'TR' STO
+        END
+       END
+      \>>
+     NEXT
+    END
+    VALID 'VAL' STO
+   \>>
+  END
+ \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

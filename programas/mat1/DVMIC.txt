@@ -1,0 +1,54 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 V A B
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF A B < NOT THEN "VALOR MEDIO: a<b" DOERR END
+F0 V A B DINTDEFC \-> IR
+\<<
+ TR IR 5 GET + 'TR' STO
+ IF IR 6 GET "OK" == NOT THEN IR 6 GET DOERR END
+ IR 1 GET B A - / SIMPLIFY F0 DREADC \-> AVG F
+ \<<
+  IF V 'X' SAME NOT THEN F V 'X' = SUBST 'F' STO END
+  TR "Promedio integral: integral/(b-a)" AVG 2 \->LIST 1 \->LIST + 'TR' STO
+  F AVG - 'X' DZEROC \-> Z
+  \<<
+   TR "Buscar c: f(c)=promedio" F AVG = 2 \->LIST 1 \->LIST + Z 2 GET + 'TR' STO
+   { } \-> CS
+   \<<
+    IF Z 3 GET "IDENTIDAD" == THEN A B "TODO INTERIOR" 3 \->LIST 'CS' STO ELSE
+     IF Z 3 GET "OK" == NOT THEN Z 3 GET DOERR END
+     IF Z 1 GET SIZE 0 > THEN
+      1 Z 1 GET SIZE FOR I
+       Z 1 GET I GET \-> P
+       \<<
+        IF P \->NUM A \->NUM > P \->NUM B \->NUM < AND THEN CS P 1 \->LIST + 'CS' STO
+        ELSE TR "Descartar: fuera de (a,b)" P 2 \->LIST 1 \->LIST + 'TR' STO END
+       \>>
+      NEXT
+     END
+    END
+    AVG CS 2 \->LIST 'VAL' STO
+    TR "Promedio y todos los c validos" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+    "OK" 'AV' STO
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

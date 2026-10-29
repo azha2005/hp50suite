@@ -12,7 +12,15 @@ jobs:
         run: ./herramientas/preparar-release.ps1
       - name: Check generated packages match the committed sources
         shell: pwsh
-        run: git diff --exit-code -- programas/LAB.txt programas/MAT1.txt
+        run: git diff --exit-code -- programas/LAB.txt programas/MAT1*.txt
+      - name: Verify harness and topic dependencies
+        shell: pwsh
+        run: |
+          python harness/test_bateria.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python harness/test_paquetes.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python herramientas/empaquetar-mat1.py --base --check
       - uses: actions/upload-artifact@v4
         with:
           name: hp50suite-distribution

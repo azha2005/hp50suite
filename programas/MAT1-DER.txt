@@ -1,0 +1,2711 @@
+%%HP: T(3)A(R)F(.);
+DIR
+DADDPTC
+\<<
+\-> CS PX PY
+\<<
+0 \-> FOUND
+\<<
+IF CS SIZE 0 > THEN
+1 CS SIZE FOR I
+IF CS I GET 1 GET PX - SIMPLIFY 0 SAME CS I GET 2 GET PY - SIMPLIFY 0 SAME AND THEN 1 'FOUND' STO END
+NEXT
+END
+IF FOUND THEN CS ELSE CS PX PY 2 \->LIST 1 \->LIST + END
+\>>
+\>>
+\>>
+DCHK2C
+\<<
+\-> E1 E2 PX PY
+\<<
+E1 PX PY DVAL2C E2 PX PY DVAL2C \-> V1 V2
+\<<
+IF V1 TYPE 2 == V2 TYPE 2 == OR THEN 0 ELSE V1 SIMPLIFY 0 SAME V2 SIMPLIFY 0 SAME AND END
+\>>
+\>>
+\>>
+DCONDC
+\<<
+\-> F0
+\<<
+F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
+\<<
+{ } \-> CL
+\<<
+{ } F
+DO
+IF DUP TYPE 9 ==
+THEN
+OBJ\-> \->STR \-> N FS
+\<<
+CASE
+FS "/" == FS "INV" == OR
+THEN DUP 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+END
+FS 131 CHR ==
+THEN DUP 1 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+END
+FS "LN" == FS "LOG" == OR
+THEN DUP 2 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+END
+FS "ASIN" == FS "ACOS" == OR
+THEN
+DUP 1 SWAP SQ - 1 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+END
+FS "TAN" == FS "SEC" == OR
+THEN
+DUP COS 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+END
+FS "^" ==
+THEN
+DUP \-> E
+\<<
+IF E \->STR "X" POS
+THEN
+OVER 2 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+ELSE
+E \->NUM \-> EN
+\<<
+0 1 12
+FOR Q
+IF DUP NOT
+THEN
+IF EN Q * DUP 0 RND - ABS .000000001 <
+THEN DROP Q END
+END
+NEXT
+\-> Q
+\<<
+IF Q 2 MOD 0 == Q 0 > AND
+THEN
+OVER IF EN 0 < THEN 2 ELSE 1 END
+2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+ELSE
+IF EN 0 <
+THEN OVER 0 2 \->LIST 1 \->LIST CL SWAP + 'CL' STO
+END
+END
+\>>
+\>>
+END
+\>>
+END
+END
+\>>
+ELSE
+DROP
+END
+UNTIL DUP TYPE 5 ==
+END
+DROP CL
+\>>
+\>>
+\>>
+\>>
+DDEF
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Dos definiciones de derivada"
+{ {"f(X):" "Funcion original"} {"a:" "Punto o 'X' simbolico"} }
+{ } { 'X^2' 'X' } { 'X^2' 'X' } INFORM
+IF THEN
+OBJ\-> DROP DDEFSC \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DDEFSC
+\<<
+\-> F0 A0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X H Z } DFREEC THEN "X/H/Z ASIGNADA" DOERR END
+F0 DREADC A0 DREADC \-> F A
+\<<
+TR "Dominio original de f" F 0 DDOMC 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+F 'X' 'X+H' = SUBST F - 'H' / \-> QH
+\<<
+TR "Definicion 1: lim(h->0) [f(X+h)-f(X)]/h" QH 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Expandir el numerador" F 'X' 'X+H' = SUBST EXPAND F - EXPAND 2 \->LIST 1 \->LIST + 'TR' STO
+TR "h<>0 en el cociente; simplificar antes del limite" QH EXPAND TEXPAND SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+QH 'H=0' LIMIT EVAL SIMPLIFY \-> DV
+\<<
+TR "Limite de la primera definicion" DV 2 \->LIST 1 \->LIST + 'TR' STO
+F 'X' A = SUBST EVAL \-> FA
+\<<
+F 'X' 'Z' = SUBST FA - 'Z' A - / \-> QZ
+\<<
+TR "Definicion 2: lim(Z->a) [f(Z)-f(a)]/(Z-a)" QZ 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Expandir y simplificar; Z<>a" QZ EXPAND TEXPAND SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+QZ 'Z' A = LIMIT EVAL SIMPLIFY \-> D2
+\<<
+TR "Limite de la segunda definicion" D2 2 \->LIST 1 \->LIST + 'TR' STO
+IF D2 DV 'X' A = SUBST EVAL - EXPAND SIMPLIFY 0 SAME NOT THEN "DEFINICIONES NO COINCIDEN" DOERR END
+\>>
+IF A 'X' SAME THEN
+F 'X' DDERC \-> DR
+\<<
+TR DR 2 GET + 'TR' STO
+IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END
+TR "Control con reglas: derivada por limite menos derivada por reglas" DV DR 1 GET - EXPAND SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Dominio de la formula de f'; revisar no derivables aparte" DV 0 DDOMC 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+\>>
+ELSE
+F 'X' A DVALC \-> FAP
+\<<
+IF FAP TYPE 2 == THEN "a NO PERTENECE AL DOMINIO" DOERR END
+F F A FAP DDERLATC \-> LR
+\<<
+TR LR 2 GET + 'TR' STO
+IF LR 3 GET "OK" == NOT THEN LR 3 GET DOERR END
+IF LR 1 GET 3 GET "DERIVABLE" == NOT THEN LR 1 GET 3 GET DOERR END
+DV 'X' A = SUBST EVAL SIMPLIFY 'DV' STO
+\>>
+\>>
+END
+QH DV QZ 3 \->LIST 'VAL' STO "OK: comprobar dominios indicados" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DDER
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Derivada: todas las reglas"
+{ {"f:" "Expresion en X,Y"} {"Variable:" "0 X, 1 Y" 0} {"Metodo:" "0 reglas, 1 logaritmica" 0} }
+{ } { 'SIN(X^2)' 0 0 } { 'SIN(X^2)' 0 0 } INFORM
+IF THEN
+OBJ\-> DROP \-> F IDX MET \<< IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END IF IDX 0 == THEN 'X' ELSE 'Y' END \-> V \<< IF MET 0 == THEN F V DDERC ELSE F V DDLOGC END \>> \>> \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DDERC
+\<<
+\-> E0 V
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+E0 DREADC \-> E
+\<<
+TR "Derivar respecto de" V 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Expresion a derivar" E 2 \->LIST 1 \->LIST + 'TR' STO
+IF E TYPE 9 == THEN
+E OBJ\-> \->STR \-> N OP
+\<<
+N \->LIST \-> AA
+\<<
+{ } \-> DD
+\<<
+1 AA SIZE FOR I
+AA I GET V DDERC \-> RR
+\<<
+TR RR 2 GET + 'TR' STO
+IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+DD RR 1 GET 1 \->LIST + 'DD' STO
+\>>
+NEXT
+AA 1 GET DD 1 GET 0 0 \-> A DA B DB
+\<<
+IF N 2 == THEN AA 2 GET 'B' STO DD 2 GET 'DB' STO END
+"" "" \-> RULE FORM
+\<<
+CASE
+OP "+" == THEN "Suma: (a+b)'=a'+b'" 'RULE' STO DA DB + 'FORM' STO END
+OP "-" == THEN "Resta: (a-b)'=a'-b'" 'RULE' STO DA DB - 'FORM' STO END
+OP "*" == THEN "Producto: a'b+ab'" 'RULE' STO DA B * A DB * + 'FORM' STO END
+OP "/" == THEN "Cociente: (a'b-ab')/b^2; b<>0" 'RULE' STO DA B * A DB * - B SQ / 'FORM' STO END
+OP "^" == THEN
+IF DB 0 SAME THEN
+"Potencia y cadena: b*a^(b-1)*a'" 'RULE' STO
+IF B 0 SAME THEN 0 ELSE B A B 1 - ^ * DA * END 'FORM' STO
+ELSE
+"a^b: a>0; a^b*(b'*LN(a)+b*a'/a)" 'RULE' STO
+A B ^ DB A LN * B DA * A / + * 'FORM' STO
+END
+END
+OP "NEG" == THEN "(-a)'=-a'" 'RULE' STO DA NEG 'FORM' STO END
+OP "INV" == THEN "(1/a)'=-a'/a^2; a<>0" 'RULE' STO DA NEG A SQ / 'FORM' STO END
+OP "SQ" == THEN "(a^2)'=2*a*a'" 'RULE' STO 2 A * DA * 'FORM' STO END
+OP "EXP" == THEN "EXP(a)'=EXP(a)*a'" 'RULE' STO A EXP DA * 'FORM' STO END
+OP "LN" == THEN "LN(a)'=a'/a; a>0" 'RULE' STO DA A / 'FORM' STO END
+OP "LOG" == THEN "LOG(a)'=a'/(a*LN(10)); a>0" 'RULE' STO DA A 10 LN * / 'FORM' STO END
+OP "SIN" == THEN "SIN(a)'=COS(a)*a'" 'RULE' STO A COS DA * 'FORM' STO END
+OP "COS" == THEN "COS(a)'=-SIN(a)*a'" 'RULE' STO A SIN NEG DA * 'FORM' STO END
+OP "TAN" == THEN "TAN(a)'=a'/COS(a)^2; COS(a)<>0" 'RULE' STO DA A COS SQ / 'FORM' STO END
+OP "ASIN" == THEN "ASIN(a)'=a'/sqrt(1-a^2); |a|<1" 'RULE' STO DA 1 A SQ - \v/ / 'FORM' STO END
+OP "ACOS" == THEN "ACOS(a)'=-a'/sqrt(1-a^2); |a|<1" 'RULE' STO DA NEG 1 A SQ - \v/ / 'FORM' STO END
+OP "ATAN" == THEN "ATAN(a)'=a'/(1+a^2)" 'RULE' STO DA 1 A SQ + / 'FORM' STO END
+OP "ABS" == THEN "ABS(a)'=a*a'/ABS(a); a<>0; estudiar ceros aparte" 'RULE' STO A DA * A ABS / 'FORM' STO END
+OP 131 CHR == THEN "sqrt(a)'=a'/(2*sqrt(a)); a>0" 'RULE' STO DA 2 A \v/ * / 'FORM' STO END
+OP "XROOT" == THEN
+"Raiz: a es indice constante; (b^(1/a))'" 'RULE' STO
+IF DB 0 SAME NOT THEN "INDICE VARIABLE: USAR POTENCIA" DOERR END
+B INV A B INV 1 - ^ * DA * 'FORM' STO
+END
+"REGLA NO SOPORTADA" DOERR
+END
+TR "Regla aplicada" RULE 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Interior a, derivada a'" A DA 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+IF N 2 == THEN TR "b, derivada b'" B DB 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO END
+TR "Sustituir en la regla" FORM 2 \->LIST 1 \->LIST + 'TR' STO
+FORM EXPAND SIMPLIFY 'VAL' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+ELSE
+IF E V SAME THEN 1 "Variable: dV/dV=1" ELSE 0 "Constante respecto de V: derivada 0" END
+\-> D RULE
+\<< D 'VAL' STO TR "Regla" RULE 2 \->LIST 1 \->LIST + 'TR' STO \>>
+END
+TR "Simplificar derivada" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+"OK" 'AV' STO
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DDERLAT
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Derivadas laterales"
+{ {"Rama izquierda:" "f_izq(X)"} {"Rama derecha:" "f_der(X)"} {"a:" "Punto de corte" 0} {"f(a):" "Valor verdadero en a" 0} }
+{ } { '-X' 'X' 0 0 } { '-X' 'X' 0 0 } INFORM
+IF THEN
+OBJ\-> DROP DDERLATC \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DDERLATC
+\<<
+\-> FI FD A FA
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+TR "Valor VERDADERO f(a)" A FA 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+FI DREADC FD DREADC \-> L R
+\<<
+L FA - 'X' A - / R FA - 'X' A - / \-> QL QR
+\<<
+TR "Cociente izquierdo: (f_izq(X)-f(a))/(X-a)" QL 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Cociente derecho: (f_der(X)-f(a))/(X-a)" QR 2 \->LIST 1 \->LIST + 'TR' STO
+QL A -1 DPOINTC DLIMC QR A 1 DPOINTC DLIMC \-> DL DR
+\<<
+TR DL 2 GET + DR 2 GET + 'TR' STO
+IF DL 3 GET "OK" == NOT DR 3 GET "OK" == NOT OR THEN "LATERALES NO RESUELTOS" DOERR END
+DL 1 GET DR 1 GET \-> VL VR
+\<<
+VL DLKINDC 2 < VR DLKINDC 2 < AND
+IF THEN
+IF VL VR - SIMPLIFY 0 SAME THEN "DERIVABLE" ELSE "NO DERIVABLE: PENDIENTES DIFERENTES" END
+ELSE "NO DERIVABLE: LATERAL NO FINITO" END \-> MSG
+\<<
+VL VR MSG 3 \->LIST 'VAL' STO
+TR "Comparar derivadas laterales finitas" MSG 2 \->LIST 1 \->LIST + 'TR' STO
+"OK" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DDERTAB
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Cadena desde datos"
+{ {"Tabla f:" "Filas {x f f'}; ? como string"} {"Tabla g:" "Filas {x g g'}"} {"a:" "Punto" 0} {"Modo:" "0 f(g),1 g(f),2 inversa f" 0} }
+{ } { {{1 2 3} {4 5 6}} {{1 4 2}} 1 0 } { {{1 2 3} {4 5 6}} {{1 4 2}} 1 0 } INFORM
+IF THEN
+OBJ\-> DROP DDERTABC \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DDERTABC
+\<<
+\-> TF TG A MODE
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF MODE 0 < MODE 2 > OR THEN "MODO: 0 f(g), 1 g(f), 2 inversa f" DOERR END
+IF MODE 1 == THEN TG TF ELSE TF TG END \-> OUT INN
+\<<
+IF MODE 2 == THEN
+TF A DLKTABC \-> R
+\<<
+IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+R 1 GET \-> ROW
+\<<
+IF ROW 3 GET TYPE 2 == THEN "FALTA f'(a)" DOERR END
+IF ROW 3 GET 0 == THEN "DERIVADA CERO: FORMULA INVERSA NO APLICA" DOERR END
+TR "Hipotesis aportada: existe inversa local" "No se deduce de una tabla sola" 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Dato: a,f(a),f'(a)" ROW 2 \->LIST 1 \->LIST + 'TR' STO
+TR "(f^-1)'(f(a))=1/f'(a)" ROW 3 GET INV 2 \->LIST 1 \->LIST + 'TR' STO
+ROW 2 GET ROW 3 GET INV 2 \->LIST 'VAL' STO
+"CONDICIONAL: existencia de inversa local" 'AV' STO
+\>>
+\>>
+ELSE
+INN A DLKTABC \-> RI
+\<<
+IF RI 3 GET "OK" == NOT THEN "FALTA DATO INTERIOR EN a" DOERR END
+RI 1 GET \-> IR
+\<<
+TR "Buscar interior: a, interior(a), interior'(a)" IR 2 \->LIST 1 \->LIST + 'TR' STO
+IF IR 2 GET TYPE 2 == IR 3 GET TYPE 2 == OR THEN "FALTA VALOR O DERIVADA INTERIOR" DOERR END
+OUT IR 2 GET DLKTABC \-> RO
+\<<
+IF RO 3 GET "OK" == NOT THEN "FALTA DATO EXTERIOR EN interior(a)" DOERR END
+RO 1 GET \-> ORW
+\<<
+IF ORW 3 GET TYPE 2 == THEN "FALTA DERIVADA EXTERIOR" DOERR END
+TR "Buscar exterior EN interior(a), no EN a" ORW 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Cadena: exterior'(interior(a))*interior'(a)" ORW 3 GET IR 3 GET 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ORW 3 GET IR 3 GET * SIMPLIFY 'VAL' STO
+TR "Multiplicar pendientes" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+"OK: con los datos suministrados" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+END
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DDIF
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Diferencial y error"
+{ {"f o datos:" "f(X) o {f(a) f'(a)}"} {"a:" "Punto" 0} {"dx:" "Variacion" 0} }
+{ } { 'X^2' 2 .1 } { 'X^2' 2 .1 } INFORM
+IF THEN
+OBJ\-> DROP DDIFC \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DDIFC
+\<<
+\-> F0 A DX
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X } DFREEC THEN "X ASIGNADA" DOERR END
+TR "Punto y variacion: a,dx" A DX 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+"" "" "" "" 0 \-> FA DFA DFUNC DFULL DATA
+\<<
+IF F0 TYPE 5 == THEN
+IF F0 SIZE 2 == NOT THEN "DATOS: {f(a) f'(a)}" DOERR END
+F0 1 GET 'FA' STO F0 2 GET 'DFA' STO 1 'DATA' STO
+TR "Datos dados, sin formula de f" F0 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE
+F0 DREADC 'DFUNC' STO
+DFUNC 'X' DDERC \-> R
+\<<
+IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+TR R 2 GET + 'TR' STO
+DFUNC 'X' A DVALC 'FA' STO R 1 GET 'X' A DVALC 'DFA' STO
+DFUNC 'X' A DX + DVALC 'DFULL' STO
+\>>
+END
+IF FA TYPE 2 == DFA TYPE 2 == OR THEN "F O DERIVADA NO REAL EN a" DOERR END
+TR "Evaluar f(a)" FA 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Evaluar f'(a)" DFA 2 \->LIST 1 \->LIST + 'TR' STO
+DFA DX * SIMPLIFY FA OVER + SIMPLIFY \-> DY AP
+\<<
+TR "Diferencial: dy=f'(a)*dx" DY 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Aproximacion: f(a+dx)~f(a)+dy" AP 2 \->LIST 1 \->LIST + 'TR' STO
+"NO DISPONIBLE" "NO DISPONIBLE" \-> DEL ER
+\<<
+IF DATA NOT DFULL TYPE 2 == NOT AND THEN
+DFULL FA - SIMPLIFY 'DEL' STO
+DFULL AP - SIMPLIFY 'ER' STO
+TR "Valor real f(a+dx)" DFULL 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Incremento real: Delta y=f(a+dx)-f(a)" DEL 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Error firmado: real-aproximado=Delta y-dy" ER 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Error absoluto" ER ABS 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE
+TR "Sin valor real no se puede calcular el error" "No inventar" 2 \->LIST 1 \->LIST + 'TR' STO
+END
+DY AP DEL ER 4 \->LIST 'VAL' STO
+"OK: aproximacion local, no cota de error" 'AV' STO
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DDLOGC
+\<<
+\-> F0 V
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+F0 DREADC \-> F
+\<<
+TR "Hipotesis local: y=f(V)>0; derivable" F 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Tomar logaritmo: LN(y)=LN(f(V))" F LN 2 \->LIST 1 \->LIST + 'TR' STO
+F LN V DDERC \-> R
+\<<
+IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+TR R 2 GET + 'TR' STO
+TR "Derivar: y'/y =" R 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+F R 1 GET * SIMPLIFY 'VAL' STO
+TR "Despejar y'=y*(LN(f))'; sustituir y=f" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+"OK: requiere f>0 en un entorno" 'AV' STO
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DDOMC
+\<<
+\-> F0 RES0
+\<<
+DEPTH \-> D0
+\<<
+F0 IF DUP TYPE 2 == THEN STR\-> END DCONDC \-> CL
+\<<
+{ }
+IF CL SIZE 0 >
+THEN
+1 CL SIZE
+FOR I
+CL I GET OBJ\-> DROP \-> G C
+\<<
+G \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+" " +
+{ 139 138 62 } C 1 + GET CHR + " 0" +
++
+\>>
+NEXT
+END
+\-> CSTR
+\<<
+RES0
+IF DUP TYPE 2 == THEN STR\-> END
+IF DUP TYPE 9 == THEN 1 \->LIST END
+IF DUP TYPE 5 == NOT THEN DROP { } END
+IF DUP SIZE 2 ==
+THEN
+IF DUP 1 GET TYPE 5 == OVER 1 GET DRELC SIZE OR NOT
+THEN 1 \->LIST
+END
+END
+\-> RL
+\<<
+{ } { } "" \-> RC RS RMSG
+\<<
+IF RL SIZE 0 >
+THEN
+1 RL SIZE
+FOR I
+RL I GET \-> E
+\<<
+IF E TYPE 5 ==
+THEN
+IF E SIZE 2 ==
+THEN
+E 1 GET E 2 GET \-> A B
+\<<
+IF A \->STR "INF" POS A \->STR 159 CHR POS + NOT
+THEN
+'X' A - 1 2 \->LIST 1 \->LIST RC SWAP + 'RC' STO
+A \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+"Dado: X " 138 CHR + " " + SWAP +
+RS SWAP + 'RS' STO
+END
+IF B \->STR "INF" POS B \->STR 159 CHR POS + NOT
+THEN
+B 'X' - 1 2 \->LIST 1 \->LIST RC SWAP + 'RC' STO
+B \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+"Dado: X " 137 CHR + " " + SWAP +
+RS SWAP + 'RS' STO
+END
+\>>
+ELSE RMSG "Intervalo mal escrito: { a b }. " + 'RMSG' STO
+END
+ELSE
+E DRELC
+IF DUP SIZE 0 ==
+THEN DROP RMSG "Restriccion no entendida. " + 'RMSG' STO
+ELSE
+OBJ\-> DROP DROP 2 \->LIST 1 \->LIST RC SWAP + 'RC' STO
+E \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+"Dado: " SWAP +
+RS SWAP + 'RS' STO
+END
+END
+\>>
+NEXT
+END
+CL RC + \-> CT
+\<<
+IF CT SIZE 0 ==
+THEN "R" CSTR RS + { } RMSG "" 5 \->LIST
+ELSE
+CT DINTC OBJ\-> DROP \-> TXT PES MSG TXT2
+\<< TXT CSTR RS + PES MSG RMSG + TXT2 5 \->LIST \>>
+END
+\>>
+\>>
+\>>
+\>>
+\>>
+\-> R \<< DEPTH D0 - DROPN R \>>
+\>>
+\>>
+\>>
+DEXSTRC
+\<<
+\-> E
+\<<
+CASE
+E TYPE 0 == THEN E DRATC \->STR END
+E TYPE 9 == THEN
+E OBJ\-> \->STR \-> N OP
+\<< N \->LIST \-> AR
+\<<
+IF {"+" "-" "*" "/" "^"} OP POS THEN
+"(" AR 1 GET DEXSTRC + ")" + OP + "(" + AR 2 GET DEXSTRC + ")" +
+ELSE
+IF OP "NEG" == THEN "-(" AR 1 GET DEXSTRC + ")" + ELSE
+IF OP "XROOT" == THEN "XROOT(" AR 2 GET DEXSTRC + "," + AR 1 GET DEXSTRC + ")" + ELSE
+OP
+"(" + AR 1 GET DEXSTRC + ")" +
+END
+END
+END
+\>>
+\>>
+END
+E \->STR
+END
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+\>>
+\>>
+DFREEC
+\<<
+\-> NAMES
+\<<
+0 \-> BOUND
+\<<
+IF NAMES SIZE 0 >
+THEN
+1 NAMES SIZE FOR NN
+DEPTH \-> DD
+\<<
+IFERR NAMES NN GET RCL DROP 1 THEN 0 END
+\-> VV \<< DEPTH DD - DROPN VV \>>
+\>>
+IF THEN 1 'BOUND' STO END
+NEXT
+END
+BOUND
+\>>
+\>>
+\>>
+DIMPL
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Implicita: reglas por termino"
+{ {"Izquierda:" "Expresion X,Y"} {"Derecha:" "Expresion o constante"} {"x0:" "Abscisa" 0} {"y0 o BUSCAR:" "Punto o string BUSCAR"} }
+{ } { 'X^2+Y^2' 4 0 2 } { 'X^2+Y^2' 4 0 2 } INFORM
+IF THEN
+OBJ\-> DROP \-> L R A B
+\<<
+IF B TYPE 2 == THEN L R A DIMPLYC ELSE
+L R A B DIMPLC \-> IR \<< IR IR 4 GET IR 5 GET 3 \->LIST \>>
+END
+\>> \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DIMPLC
+\<<
+\-> L0 R0 X0 Y0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" "" "" { } "ERROR" \-> DY TG NR TR AV
+\<<
+IFERR
+IF { X Y YP } DFREEC THEN "X/Y/YP ASIGNADA: usar DIR sin valores" DOERR END
+L0 DREADC R0 DREADC
+- \-> F
+\<<
+F 'X' DDERC \-> RR
+\<<
+TR RR 2 GET + 'TR' STO
+IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+RR 1 GET
+\>>
+F 'Y' DDERC \-> RR
+\<<
+TR RR 2 GET + 'TR' STO
+IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+RR 1 GET
+\>> \-> FX FY
+\<<
+TR "F=izquierda-derecha" F 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Fx: Y constante" FX 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Fy: X constante" FY 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Derivar: YP es y'" FX FY 'YP' * + 0 = 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Agrupar y'" FY 'YP' * FX NEG = 2 \->LIST 1 \->LIST + 'TR' STO
+IF FY 0 SAME NOT THEN FX NEG FY / SIMPLIFY 'DY' STO END
+TR "y'=-Fx/Fy si Fy<>0" DY 2 \->LIST 1 \->LIST + 'TR' STO
+F 'X' X0 = SUBST 'Y' Y0 = SUBST EVAL SIMPLIFY \-> CK
+\<<
+TR "Punto: F(x0,y0)" CK 2 \->LIST 1 \->LIST + 'TR' STO
+IF CK 0 SAME NOT THEN "EL PUNTO NO VERIFICA F=0" DOERR END
+\>>
+FX 'X' X0 = SUBST 'Y' Y0 = SUBST EVAL SIMPLIFY
+FY 'X' X0 = SUBST 'Y' Y0 = SUBST EVAL SIMPLIFY \-> VX VY
+\<<
+VX \->NUM TYPE 0 == VY \->NUM TYPE 0 == AND
+IF NOT THEN "PARCIALES NO REALES" DOERR END
+TR "Fx(x0,y0)" VX 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Fy(x0,y0)" VY 2 \->LIST 1 \->LIST + 'TR' STO
+CASE
+VY 0 SAME THEN
+IF VX 0 SAME
+THEN "PUNTO SINGULAR: tangente no determinada" 'AV' STO
+ELSE 'X' X0 = 'TG' STO 'Y' Y0 = 'NR' STO
+"OK: tangente vertical" 'AV' STO END
+END
+VX NEG VY / SIMPLIFY \-> MM
+\<<
+TR "m=-Fx(P)/Fy(P)" MM 2 \->LIST 1 \->LIST + 'TR' STO
+'Y' Y0 - MM 'X' X0 - * = 'TG' STO
+IF MM 0 SAME THEN 'X' X0 = 'NR' STO
+ELSE 'Y' Y0 - -1 MM / 'X' X0 - * = 'NR' STO END
+"OK: punto regular" 'AV' STO
+\>>
+END
+TR "Tangente" TG 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Normal" NR 2 \->LIST 1 \->LIST + 'TR' STO
+\>>
+\>>
+\>>
+THEN
+ERRM 'AV' STO "" 'TG' STO "" 'NR' STO
+TR "No se completo" AV 2 \->LIST 1 \->LIST + 'TR' STO
+END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+DY TG NR TR AV 5 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DIMPLYC
+\<<
+\-> L0 R0 X0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X Y YP } DFREEC THEN "X/Y/YP ASIGNADA" DOERR END
+L0 DREADC R0 DREADC - \-> F
+\<<
+F 'X' X0 = SUBST EVAL SIMPLIFY \-> EQ
+\<<
+TR "F=izq-der; sustituir X=x0 para hallar ramas Y" X0 EQ 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+EQ 'Y' DZEROC \-> R
+\<<
+TR R 2 GET + 'TR' STO
+IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+{ } \-> BRANCH
+\<<
+IF R 1 GET SIZE 0 > THEN
+1 R 1 GET SIZE FOR I
+R 1 GET I GET \-> Y0
+\<<
+L0 R0 X0 Y0 DIMPLC \-> IR
+\<<
+TR "Estudiar cada rama Y0" Y0 2 \->LIST 1 \->LIST + IR 4 GET + 'TR' STO
+BRANCH Y0 IR 2 \->LIST 1 \->LIST + 'BRANCH' STO
+\>>
+\>>
+NEXT
+END
+BRANCH 'VAL' STO "OK: cada rama tiene su estado" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DINTC
+\<<
+\-> CL
+\<<
+RCLF \-> FL
+\<<
+-103 CF
+DEPTH \-> D0
+\<<
+{ } { } "" \-> PE PN MSG
+\<<
+IF CL SIZE 0 >
+THEN
+1 CL SIZE
+FOR I
+CL I GET 1 GET \-> G
+\<<
+IF G TYPE 9 == G TYPE 6 == OR
+THEN
+DEPTH \-> D1
+\<<
+IFERR G 'X' ZEROS THEN "ERR" END
+\-> Z0 \<< DEPTH D1 - DROPN Z0 \>>
+\>>
+\-> Z
+\<<
+IF Z TYPE 2 ==
+THEN MSG "El CAS no resuelve " + G \->STR + "=0. " + 'MSG' STO
+ELSE
+Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END
+\-> ZL
+\<<
+IF ZL SIZE 0 >
+THEN
+1 ZL SIZE
+FOR J
+ZL J GET \-> Z1
+\<<
+DEPTH \-> D1
+\<<
+IFERR Z1 \->NUM THEN "ERR" END
+\-> N0 \<< DEPTH D1 - DROPN N0 \>>
+\>>
+\-> ZN
+\<<
+IF ZN TYPE 0 ==
+THEN
+0 \-> DUPL
+\<<
+IF PN SIZE 0 >
+THEN
+1 PN SIZE
+FOR K
+IF PN K GET ZN - ABS .000000001 <
+THEN 1 'DUPL' STO
+END
+NEXT
+END
+IF DUPL NOT
+THEN PE Z1 + 'PE' STO PN ZN + 'PN' STO
+END
+\>>
+ELSE
+IF Z1 \->STR "n1" POS
+THEN MSG "Periodica: no soportado. " + 'MSG' STO
+END
+END
+\>>
+\>>
+NEXT
+END
+\>>
+END
+\>>
+END
+\>>
+NEXT
+END
+PN SORT \-> PS
+\<<
+{ }
+IF PS SIZE 0 >
+THEN
+1 PS SIZE
+FOR K
+PE PN PS K GET POS GET +
+NEXT
+END
+PS SIZE \-> PES N
+\<<
+{ }
+IF N 0 >
+THEN
+1 N
+FOR K
+PES K GET \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
++
+NEXT
+END
+\-> PSS
+\<<
+{ }
+IF N 0 ==
+THEN CL .3183 DSATC +
+ELSE
+CL PS 1 GET 1 - DSATC +
+1 N
+FOR K
+CL PES K GET DSATC +
+IF K N <
+THEN CL PS K GET PS K 1 + GET + 2 / DSATC +
+ELSE CL PS N GET 1 + DSATC +
+END
+NEXT
+END
+\-> B
+\<<
+"" "" 1 { } \-> TXT TXT2 ALL HS
+\<<
+1 N 1 +
+FOR K
+IF B K 2 * 1 - GET NOT THEN 0 'ALL' STO END
+NEXT
+0 1
+FOR M
+""
+IF B 1 GET
+THEN "(-" 159 CHR + ", " + +
+END
+IF N 0 >
+THEN
+1 N
+FOR K
+B K 2 * 1 - GET B K 2 * GET B K 2 * 1 + GET
+PSS K GET
+\-> L P0 R S
+\<<
+P0
+IF M L R AND AND P0 NOT AND
+THEN DROP 1 HS S + 'HS' STO
+END
+\-> P
+\<<
+IF L
+THEN
+IF P
+THEN
+IF R NOT THEN S + "]" + END
+ELSE
+S + ")" +
+IF R THEN " U (" + S + ", " + END
+END
+ELSE
+IF R
+THEN
+IF DUP SIZE THEN " U " + END
+IF P THEN "[" ELSE "(" END + S + ", " +
+ELSE
+IF P
+THEN
+IF DUP SIZE THEN " U " + END
+"{" + S + "}" +
+END
+END
+END
+\>>
+\>>
+NEXT
+END
+IF B N 2 * 1 + GET
+THEN "+" + 159 CHR + ")" +
+END
+IF DUP SIZE NOT THEN DROP "VACIO" END
+IF DUP "(-" 159 CHR + ", +" + 159 CHR + ")" + ==
+THEN DROP "R"
+END
+NEXT
+\-> T0 T1
+\<<
+IF HS SIZE
+THEN
+HS 1 GET
+IF HS SIZE 1 >
+THEN
+2 HS SIZE
+FOR K ", " + HS K GET + NEXT
+END
+\-> HT
+\<<
+T1 " - {" + HT + "}" +
+IF ALL
+THEN 'TXT' STO T0 'TXT2' STO
+ELSE 'TXT2' STO T0 'TXT' STO
+END
+\>>
+ELSE T0 'TXT' STO
+END
+\>>
+IF N 0 >
+THEN PS 1 GET 3 - PS N GET 3 +
+ELSE -5. 5.
+END
+\-> LO HI
+\<<
+0 \-> MAL
+\<<
+0 30
+FOR K
+HI LO - K * 30 / LO + \-> XK
+\<<
+0 \-> CERCA
+\<<
+IF N 0 >
+THEN
+1 N
+FOR J
+IF PS J GET XK - ABS .000001 <
+THEN 1 'CERCA' STO
+END
+NEXT
+END
+IF CERCA NOT MAL NOT AND
+THEN
+0
+IF N 0 >
+THEN
+1 N
+FOR J
+IF PS J GET XK < THEN 1 + END
+NEXT
+END
+2 * 1 + B SWAP GET
+CL XK DSATC
+IF \=/
+THEN
+1 'MAL' STO
+MSG "Ojo: el sondeo en x=" + XK 4 RND \->STR +
+" no coincide con la tabla. " + 'MSG' STO
+END
+END
+\>>
+\>>
+NEXT
+\>>
+\>>
+IF MSG SIZE
+THEN "NO CONFIABLE: " TXT + 'TXT' STO "" 'TXT2' STO
+END
+TXT PES MSG TXT2 4 \->LIST
+\>>
+\>>
+\>>
+\>>
+\>>
+\>>
+\-> R \<< DEPTH D0 - DROPN R \>>
+\>>
+FL STOF
+\>>
+\>>
+\>>
+DLIMC
+\<<
+\-> F0 PT0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+F0 DREADC PT0 DREADC \-> F PT
+\<<
+TR "Limite: expresion y punto/lado" F PT 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+F PT LIMIT EVAL IF DUP TYPE 12 == THEN DTAG END 'VAL' STO
+IF VAL TYPE 2 == THEN "LIMITE SIN RESOLVER" DOERR END
+IF VAL TYPE 6 == THEN "LIMITE SIMBOLICO SIN RESOLVER" DOERR END
+IF VAL \->STR 159 CHR POS THEN
+DEPTH \-> D1
+\<<
+IFERR F SIGN PT LIMIT EVAL \->NUM THEN "?" END
+\-> SG \<< DEPTH D1 - DROPN SG \>>
+\>> \-> SG
+\<<
+IF SG TYPE 0 == THEN
+IF SG ABS 1 == THEN
+IF SG 0 < THEN "'-" ELSE "'+" END 159 CHR + "'" + STR\-> EVAL 'VAL' STO
+END
+END
+\>>
+ELSE
+IF VAL \->NUM TYPE 0 == NOT THEN "LIMITE NO REAL" DOERR END
+END
+TR "Resultado del limite (CAS)" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+"OK" 'AV' STO
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DLKINDC
+\<<
+IF DUP TYPE 2 == OVER TYPE 6 == OR THEN DROP 3 ELSE
+IF DUP \->STR 159 CHR POS THEN DROP 2 ELSE
+IFERR \->NUM IF DUP TYPE 0 == THEN IF 0 == THEN 0 ELSE 1 END ELSE DROP 3 END
+THEN 3 END
+END
+END
+\>>
+DLKTABC
+\<<
+\-> TAB A
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+"DATO NO DISPONIBLE" 'AV' STO
+IF TAB TYPE 5 == NOT THEN "TABLA DE FILAS {x f f'}" DOERR END
+IF TAB SIZE 0 > THEN
+1 TAB SIZE FOR I
+TAB I GET \-> ROW
+\<<
+IF ROW TYPE 5 == THEN
+IF ROW SIZE 3 == THEN
+IF ROW 1 GET A SAME THEN ROW 'VAL' STO "OK" 'AV' STO END
+END
+END
+\>>
+NEXT
+END
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DMSLOPEC
+\<<
+\-> F0 M MODE G0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+F 'X' DDERC \-> D
+\<<
+TR D 2 GET + 'TR' STO
+IF D 3 GET "OK" == NOT THEN D 3 GET DOERR END
+CASE
+MODE 0 == THEN
+TR "Paralela a pendiente m: resolver f'(a)=m" M 2 \->LIST 1 \->LIST + 'TR' STO D 1 GET M - END
+MODE 1 == THEN
+IF M 0 == THEN "PERPENDICULAR A HORIZONTAL: REQUIERE BUSCAR TANGENTE VERTICAL APARTE" DOERR END
+TR "Perpendicular: m_tg=-1/m_dado" -1 M / 2 \->LIST 1 \->LIST + 'TR' STO D 1 GET -1 M / - END
+MODE 2 == THEN
+G0 DREADC \-> G
+\<<
+G 'X' DDERC \-> DG
+\<<
+TR DG 2 GET + 'TR' STO
+IF DG 3 GET "OK" == NOT THEN DG 3 GET DOERR END
+TR "Tangente comun en MISMA abscisa: exigir pendiente Y ordenada iguales" "No resuelve dos abscisas diferentes" 2 \->LIST 1 \->LIST + 'TR' STO
+D 1 GET DG 1 GET -
+\>>
+\>>
+END
+"MODO INVALIDO" DOERR
+END \-> EQ
+\<<
+EQ 'X' DZEROC \-> Z
+\<<
+TR Z 2 GET + 'TR' STO
+IF Z 3 GET "OK" == NOT THEN Z 3 GET DOERR END
+{ } \-> CS
+\<<
+IF Z 1 GET SIZE 0 > THEN
+1 Z 1 GET SIZE FOR I
+Z 1 GET I GET \-> P
+\<<
+1 \-> OKP
+\<<
+IF MODE 2 == THEN
+F 'X' P DVALC G0 DREADC 'X' P DVALC \-> FP GP
+\<<
+IF FP TYPE 2 == GP TYPE 2 == OR THEN 0 'OKP' STO ELSE
+IF FP GP - SIMPLIFY 0 SAME NOT THEN 0 'OKP' STO END
+END
+\>>
+END
+IF OKP THEN
+F P DRECTAC \-> RR
+\<<
+TR RR 2 GET + 'TR' STO
+IF RR 3 GET "OK" == THEN CS P RR 1 GET 2 \->LIST 1 \->LIST + 'CS' STO END
+\>>
+ELSE TR "Descartar: misma pendiente pero otra ordenada" P 2 \->LIST 1 \->LIST + 'TR' STO END
+\>>
+\>>
+NEXT
+END
+CS 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DMULC
+\<<
+\-> F
+\<<
+IF F TYPE 9 == THEN
+F OBJ\-> \->STR \-> N OP
+\<< N \->LIST \-> AR
+\<< IF OP "*" == THEN AR 1 GET DMULC AR 2 GET DMULC + ELSE F 1 \->LIST END \>>
+\>>
+ELSE F 1 \->LIST END
+\>>
+\>>
+DNZC
+\<<
+\-> E0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+E0 DREADC SIMPLIFY IF DUP TYPE 9 == THEN FXND ELSE 1 END \-> N D
+\<<
+TR "Ecuacion equivalente: numerador=0, denominador<>0" N D 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+IF N TYPE 9 == THEN N FACTOR DMULC ELSE N 1 \->LIST END \-> FS
+\<<
+1 \-> P
+\<<
+1 FS SIZE FOR I
+FS I GET \-> F
+\<<
+0 \-> SKIP
+\<<
+1 8 FOR PWRSTEP
+IF F TYPE 9 == THEN
+F OBJ\-> \->STR \-> NA OP
+\<< NA \->LIST \-> AR
+\<<
+CASE
+OP "EXP" == THEN
+1 'SKIP' STO TR "EXP(h) nunca es cero: quitar factor" F 2 \->LIST 1 \->LIST + 'TR' STO
+END
+OP "^" == THEN
+IF AR 2 GET 'X' DERIV SIMPLIFY 0 SAME AR 2 GET 'Y' DERIV SIMPLIFY 0 SAME AND THEN
+AR 2 GET \->NUM \-> EX
+\<<
+IF EX 0 > THEN
+TR "Potencia positiva =0 exige base=0; conservar dominio ORIGINAL" F 2 \->LIST 1 \->LIST + 'TR' STO
+AR 1 GET 'F' STO
+ELSE 1 'SKIP' STO TR "Potencia no positiva nunca es cero donde esta definida" F 2 \->LIST 1 \->LIST + 'TR' STO END
+\>>
+END
+END
+OP 131 CHR == THEN
+TR "Raiz=0 exige radicando=0; conservar dominio ORIGINAL" F 2 \->LIST 1 \->LIST + 'TR' STO
+AR 1 GET 'F' STO
+END
+OP "XROOT" == THEN
+IF AR 2 GET \->NUM 0 > THEN AR 1 GET 'F' STO ELSE 1 'SKIP' STO END
+END
+END
+\>>
+\>>
+END
+NEXT
+IF F 'X' DERIV SIMPLIFY 0 SAME F 'Y' DERIV SIMPLIFY 0 SAME AND THEN
+F 'X' 0 DVALC \-> FV
+\<< IF FV TYPE 2 == NOT THEN IF FV \->NUM 0 == NOT THEN 1 'SKIP' STO END END \>>
+END
+IF SKIP NOT THEN P F * 'P' STO END
+\>>
+\>>
+NEXT
+P SIMPLIFY 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DORDC
+\<<
+\-> LL
+\<<
+{ } { } \-> PE PN
+\<<
+IF LL SIZE 0 > THEN
+1 LL SIZE FOR I
+LL I GET DUP \->NUM \-> P N
+\<<
+0 \-> REP
+\<<
+IF PN SIZE 0 > THEN
+1 PN SIZE FOR J IF PN J GET N - ABS .000000001 < THEN 1 'REP' STO END NEXT
+END
+IF REP NOT THEN PE P 1 \->LIST + 'PE' STO PN N 1 \->LIST + 'PN' STO END
+\>>
+\>>
+NEXT
+END
+PN SORT \-> PS
+\<<
+{ }
+IF PS SIZE 0 > THEN
+1 PS SIZE FOR I PE PN PS I GET POS GET 1 \->LIST + NEXT
+END
+\>>
+\>>
+\>>
+\>>
+DPAGC
+\<<
+\-> PP
+\<<
+PP 1 GET " : " + PP 2 GET \->STR +
+10 CHR " " SREPL DROP 13 CHR " " SREPL DROP \-> TXT
+\<<
+{ } \-> PG
+\<<
+IF TXT SIZE 0 > THEN
+1 TXT SIZE FOR P
+TXT P P 19 + SUB
+IF P 20 + TXT SIZE > NOT
+THEN 10 CHR + TXT P 20 + P 39 + SUB + END
+1 \->LIST PG SWAP + 'PG' STO
+40 STEP
+END
+PG
+\>>
+\>>
+\>>
+\>>
+DPANTC
+\<<
+\-> TXT K P N
+\<<
+CLLCD
+"Paso " K \->STR + "  " + P \->STR + "/" + N \->STR + 1 DISP
+TXT 3 DISP
+"Tecla: continuar" 7 DISP
+LCD\->
+\>>
+\>>
+DPARAMC
+\<<
+\-> F0 A M
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X Y K } DFREEC THEN "X/Y/K ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+F 'X' DDERC \-> DR
+\<<
+TR "Parametro se escribe K y se mantiene constante al derivar X" F 2 \->LIST 1 \->LIST + DR 2 GET + 'TR' STO
+IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END
+DR 1 GET 'X' A = SUBST EVAL M - SIMPLIFY \-> EQ
+\<<
+TR "Imponer f'(a;K)=pendiente dada" A M EQ 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+EQ 'K' DZEROC \-> Z
+\<<
+TR Z 2 GET + 'TR' STO
+IF Z 3 GET "OK" == NOT THEN Z 3 GET DOERR END
+{} \-> ROWS
+\<<
+IF Z 1 GET SIZE 0 > THEN
+1 Z 1 GET SIZE FOR I
+Z 1 GET I GET \-> KP
+\<<
+F 'K' KP = SUBST A DRECTAC \-> RR
+\<<
+TR RR 2 GET + 'TR' STO
+IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+IF RR 1 GET 1 GET M - \->NUM ABS 1E-10 > THEN "PARAMETRO NO VERIFICA PENDIENTE" DOERR END
+ROWS KP RR 1 GET 3 GET 2 \->LIST 1 \->LIST + 'ROWS' STO
+\>>
+\>>
+NEXT
+END
+ROWS 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DPASOS
+\<<
+\-> TR
+\<<
+IF TR SIZE 0 > THEN
+1 1 \-> SIG ACT
+\<<
+WHILE SIG 1 == REPEAT
+"Paso 1-" TR SIZE \->STR + " / CANCEL" +
+{ { "Paso:" "Numero desde 1" 0 } }
+{ } ACT 1 \->LIST ACT 1 \->LIST INFORM
+IF THEN
+1 GET \-> K
+\<<
+IF K 1 < K TR SIZE > OR K 0 RND K == NOT OR
+THEN "Paso fuera de rango" MSGBOX
+ELSE
+TR K GET DPAGC \-> PG
+\<<
+IF PG SIZE 0 > THEN
+1 PG SIZE FOR P
+PG P GET K P PG SIZE DPANTC DROP 7 FREEZE 0 WAIT DROP
+NEXT
+END
+\>>
+IF K TR SIZE < THEN K 1 + ELSE K END 'ACT' STO
+END
+\>>
+ELSE 0 'SIG' STO END
+END
+\>>
+END
+\>>
+\>>
+DPOINTC
+\<<
+\-> A SD
+\<<
+A \->STR
+IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+"'X=" SWAP +
+IF A \->STR 159 CHR POS SD 0 == OR THEN "'" ELSE IF SD 0 < THEN "-0'" ELSE "+0'" END END + STR\->
+\>>
+\>>
+DPOWC
+\<<
+\-> BA EE
+\<<
+EE \->NUM \-> EN
+\<<
+0 1 12 FOR K
+IF DUP NOT THEN
+IF EN K * DUP 0 RND - ABS .000000001 < THEN DROP K END
+END
+NEXT \-> DEN
+\<<
+IF DEN 1 > DEN 2 MOD 1 == AND BA \->NUM 0 < AND THEN
+BA ABS EE ^
+IF EN DEN * 0 RND 2 MOD ABS THEN NEG END
+ELSE BA EE ^ END
+\>>
+\>>
+\>>
+\>>
+DRAMAC
+\<<
+\-> H E2 O1 O2
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+TR "Despejar en una rama: Y=" H 2 \->LIST 1 \->LIST + 'TR' STO
+E2 'Y' H = SUBST SIMPLIFY \-> EQ
+\<<
+TR "Sustituir en la otra ecuacion" EQ 2 \->LIST 1 \->LIST + 'TR' STO
+EQ 'X' DZEROC \-> Z
+\<<
+TR Z 2 GET + 'TR' STO
+IF Z 3 GET "OK" == NOT THEN "SUSTITUCION NO AISLA RAICES FINITAS: FAMILIA O ECUACION NO RESUELTA" DOERR END
+{ } \-> CS
+\<<
+IF Z 1 GET SIZE 0 > THEN
+1 Z 1 GET SIZE FOR I
+Z 1 GET I GET \-> PX
+\<<
+H 'X' PX DVALC \-> PY
+\<<
+IF PY TYPE 2 == THEN TR "Descartar: formula de rama indefinida" PX 2 \->LIST 1 \->LIST + 'TR' STO ELSE
+O1 O2 PX PY DCHK2C IF THEN
+CS PX PY DADDPTC 'CS' STO TR "Comprobar AMBAS ecuaciones originales" PX PY 0 0 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE TR "Descartar: no verifica ambas ecuaciones originales" PX PY 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO END
+END
+\>>
+\>>
+NEXT
+END
+CS 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DRATC
+\<<
+\-> N
+\<<
+RCLF \-> FLR
+\<<
+-105 CF STD
+N ABS \->STR \-> S
+\<<
+0 \-> EX
+\<<
+S "E" POS \-> EP
+\<<
+IF EP 0 > THEN S EP 1 + S SIZE SUB STR\-> 'EX' STO S 1 EP 1 - SUB 'S' STO END
+\>>
+S "." POS \-> DP
+\<<
+0 \-> DEC
+\<<
+IF DP 0 > THEN S SIZE DP - 'DEC' STO IF DP 1 == THEN "" ELSE S 1 DP 1 - SUB END IF DP S SIZE == THEN "" ELSE S DP 1 + S SIZE SUB END + 'S' STO END
+IF S SIZE 0 == THEN "0" 'S' STO END
+S STR\-> 10 DEC EX - \->Q ^ / SIMPLIFY
+IF N 0 < THEN NEG END
+\>>
+\>>
+\>>
+\>>
+FLR STOF
+\>>
+\>>
+\>>
+DREADC
+\<<
+IF DUP TYPE 2 == THEN
+IF DUP SIZE 0 == THEN "EXPRESION VACIA" DOERR END
+IF DUP 1 1 SUB "'" == NOT THEN "'" SWAP + "'" + END
+STR\->
+END
+IF DUP TYPE 0 == THEN DRATC ELSE
+IF DUP TYPE 9 == THEN
+IF DUP \->STR "." POS THEN
+DEXSTRC "'" SWAP + "'" + STR\->
+END
+END
+END
+\>>
+DREALC
+\<<
+\-> EE VV PP
+\<<
+IF EE TYPE 9 == THEN
+EE OBJ\-> \->STR \-> NN OP
+\<<
+{ } \-> AL
+\<<
+IF NN 0 > THEN
+1 NN FOR I
+VV PP DREALC AL SWAP 1 \->LIST SWAP + 'AL' STO
+NEXT
+END
+AL OBJ\-> DROP
+CASE
+OP "+" == THEN + END
+OP "-" == THEN - END
+OP "*" == THEN * END
+OP "/" == THEN / END
+OP "^" == THEN DPOWC END
+OP "XROOT" == THEN INV DPOWC END
+OP "NEG" == THEN NEG END
+OP "INV" == THEN INV END
+OP "SQ" == THEN SQ END
+OP "ABS" == THEN ABS END
+OP "SIGN" == THEN SIGN END
+OP "EXP" == THEN EXP END
+OP "LN" == THEN LN END
+OP "LOG" == THEN LOG END
+OP "SIN" == THEN SIN END
+OP "COS" == THEN COS END
+OP "TAN" == THEN TAN END
+OP "ASIN" == THEN ASIN END
+OP "ACOS" == THEN ACOS END
+OP "ATAN" == THEN ATAN END
+OP 131 CHR == THEN \v/ END
+NN DROPN "FUNCION NUMERICA NO SOPORTADA" DOERR
+END
+\>>
+\>>
+ELSE
+IF EE VV SAME THEN PP
+ELSE
+IF EE TYPE 6 == THEN "PARAMETRO SIN RESOLVER" DOERR ELSE EE EVAL END
+END
+END
+\>>
+\>>
+DREALNC
+\<<
+\-> EE VV PP
+\<<
+IF EE TYPE 9 == THEN
+EE OBJ\-> \->STR \-> NN OP
+\<<
+{ } \-> AL
+\<<
+IF NN 0 > THEN
+1 NN FOR I
+VV PP DREALNC AL SWAP 1 \->LIST SWAP + 'AL' STO
+NEXT
+END
+AL OBJ\-> DROP
+CASE
+OP "+" == THEN + END
+OP "-" == THEN - END
+OP "*" == THEN * END
+OP "/" == THEN / END
+OP "^" == THEN DPOWC END
+OP "XROOT" == THEN INV DPOWC END
+OP "NEG" == THEN NEG END
+OP "INV" == THEN INV END
+OP "SQ" == THEN SQ END
+OP "ABS" == THEN ABS END
+OP "SIGN" == THEN SIGN END
+OP "EXP" == THEN EXP END
+OP "LN" == THEN LN END
+OP "LOG" == THEN LOG END
+OP "SIN" == THEN SIN END
+OP "COS" == THEN COS END
+OP "TAN" == THEN TAN END
+OP "ASIN" == THEN ASIN END
+OP "ACOS" == THEN ACOS END
+OP "ATAN" == THEN ATAN END
+OP 131 CHR == THEN \v/ END
+NN DROPN "FUNCION NUMERICA NO SOPORTADA" DOERR
+END
+\>>
+\>>
+ELSE
+VV EE POS \-> IX
+\<<
+IF IX 0 > THEN PP IX GET
+ELSE
+IF EE TYPE 6 == THEN "PARAMETRO SIN RESOLVER" DOERR ELSE EE EVAL END
+END
+\>>
+END
+\>>
+\>>
+DRECTAC
+\<<
+\-> F0 A
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+F 'X' A DVALC \-> FA
+\<<
+IF FA TYPE 2 == THEN "PUNTO FUERA DE DOMINIO" DOERR END
+TR "Punto de tangencia: (a,f(a))" A FA 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+F 'X' DDERC \-> DR
+\<<
+TR DR 2 GET + 'TR' STO
+IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END
+F F A FA DDERLATC \-> LR
+\<<
+TR LR 2 GET + 'TR' STO
+IF LR 3 GET "OK" == NOT THEN LR 3 GET DOERR END
+LR 1 GET 1 GET LR 1 GET 2 GET \-> ML MR
+\<<
+"" "" "" \-> M TG NR
+\<<
+IF LR 1 GET 3 GET "DERIVABLE" == THEN
+ML \->NUM 'M' STO
+TR "Pendiente: m=f'(a)" M 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Tangente: Y-f(a)=m*(X-a)" 'Y' FA - M 'X' A - * = 2 \->LIST 1 \->LIST + 'TR' STO
+'Y' FA \->NUM M 'X' A - * + EXPAND = 'TG' STO
+IF M 0 == THEN
+'X' A = 'NR' STO
+TR "m=0: normal vertical X=a" NR 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE
+TR "Normal perpendicular: mn=-1/m" -1 M / 2 \->LIST 1 \->LIST + 'TR' STO
+'Y' FA \->NUM -1 M / 'X' A - * + EXPAND = 'NR' STO
+END
+ELSE
+IF ML DLKINDC 2 == MR DLKINDC 2 == AND THEN
+"PENDIENTE INFINITA" 'M' STO 'X' A = 'TG' STO 'Y' FA = 'NR' STO
+TR "Ambos cocientes infinitos: tangente vertical" TG 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE "NO HAY TANGENTE UNICA" DOERR END
+END
+TR "Tangente final" TG 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Normal final" NR 2 \->LIST 1 \->LIST + 'TR' STO
+M FA \->NUM TG NR 4 \->LIST 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DRELC
+\<<
+\-> Q0
+\<<
+DEPTH \-> D0
+\<<
+Q0 IF DUP TYPE 2 == THEN STR\-> END \-> Q
+\<<
+IF Q TYPE 9 == NOT
+THEN { }
+ELSE
+Q OBJ\-> \->STR NUM \-> N OP
+\<<
+IF N 2 == NOT
+THEN N DROPN { }
+ELSE
+- \-> G
+\<<
+CASE
+OP 62 == THEN G 2 END
+OP 60 == THEN G NEG 2 END
+OP 138 == THEN G 1 END
+OP 137 == THEN G NEG 1 END
+OP 61 == THEN G 3 END
+OP 139 == THEN G 0 END
+-1 -1
+END
+\-> G2 C
+\<<
+IF C 0 <
+THEN { }
+ELSE G2 C G 3 \->LIST
+END
+\>>
+\>>
+END
+\>>
+END
+\>>
+\-> R \<< DEPTH D0 - DROPN R \>>
+\>>
+\>>
+\>>
+DROOTC
+\<<
+\-> E
+\<<
+DEPTH \-> D0
+\<<
+{ } { } "" \-> PE PN AV
+\<<
+IF E TYPE 6 == E TYPE 9 == OR
+THEN
+DEPTH \-> D1
+\<<
+IFERR E 'X' ZEROS THEN "NO RESUELTO" END
+\-> Z \<< DEPTH D1 - DROPN Z \>>
+\>>
+\-> Z
+\<<
+IF Z TYPE 2 ==
+THEN "CEROS NO RESUELTOS" 'AV' STO
+ELSE
+Z IF DUP TYPE 5 == NOT THEN 1 \->LIST END \-> ZL
+\<<
+IF ZL SIZE 0 > THEN
+1 ZL SIZE FOR I
+ZL I GET \-> ZI
+\<<
+ZI 'X' 0 DVALC \-> ZV
+\<<
+IF ZV TYPE 2 ==
+THEN
+IF ZI \->STR "n1" POS THEN "RAICES PERIODICAS: DELIMITAR" 'AV' STO END
+ELSE
+ZV \->NUM \-> ZN
+\<<
+0 \-> REP
+\<<
+IF PN SIZE 0 > THEN
+1 PN SIZE FOR J
+IF PN J GET ZN - ABS .000000001 < THEN 1 'REP' STO END
+NEXT
+END
+IF REP NOT THEN PE ZI 1 \->LIST + 'PE' STO PN ZN 1 \->LIST + 'PN' STO END
+\>>
+\>>
+END
+\>>
+\>>
+NEXT
+END
+\>>
+END
+\>>
+END
+PN SORT \-> PS
+\<<
+{ } \-> RS
+\<<
+IF PS SIZE 0 > THEN
+1 PS SIZE FOR I RS PE PN PS I GET POS GET 1 \->LIST + 'RS' STO NEXT
+END
+RS AV 2 \->LIST
+\>>
+\>>
+\>>
+\-> R \<< DEPTH D0 - DROPN R \>>
+\>>
+\>>
+\>>
+DRUFC
+\<<
+\-> P0
+\<<
+DEPTH \-> D0
+\<<
+P0 IF DUP TYPE 2 == THEN STR\-> END
+\-> P
+\<<
+IFERR P DEGREE THEN -1 END
+\-> NG
+\<<
+IF NG 1 <
+THEN
+{ } { } { } P "NO ES UN POLINOMIO EN X DE GRADO 1 O MAS" 5 \->LIST
+ELSE
+P { } { } { } { } { } { } 0 { } 0 0 0 0 0 0
+\-> Q CA CF C0 RA TB CD B FI C A0 AN K NC PC
+\<<
+0 NG FOR i
+Q 0 HORNER 3 \->LIST
+DUP 3 GET 1 \->LIST CA SWAP + 'CA' STO
+1 GET 'Q' STO
+NEXT
+CA SIZE 1 FOR i
+CF CA i GET 1 \->LIST + 'CF' STO
+-1 STEP
+CF 'C0' STO
+CF 1 GET 'AN' STO
+CF SIZE 'K' STO
+WHILE CF K GET 0 == K 1 > AND
+REPEAT K 1 - 'K' STO
+END
+CF K GET 'A0' STO
+{ 0 } 'CD' STO
+IF A0 0 \=/
+THEN
+A0 ABS DIVIS AN ABS DIVIS
+\-> DP DQ
+\<<
+1 DP SIZE FOR i
+1 DQ SIZE FOR j
+CD DP i GET DQ j GET / DUP NEG 2 \->LIST + 'CD' STO
+NEXT
+NEXT
+\>>
+END
+1 CD SIZE FOR k
+CD k GET 'C' STO
+WHILE
+IF CF SIZE 1 >
+THEN
+CF 1 1 SUB 'FI' STO
+CF 1 GET 'B' STO
+2 CF SIZE FOR i
+CF i GET C B * + 'B' STO
+FI B 1 \->LIST + 'FI' STO
+NEXT
+FI FI SIZE GET 0 ==
+ELSE 0
+END
+REPEAT
+RA C 1 \->LIST + 'RA' STO
+TB C FI 2 \->LIST 1 \->LIST + 'TB' STO
+FI 1 FI SIZE 1 - SUB 'CF' STO
+END
+NEXT
+CF SIZE 'NC' STO
+0 'PC' STO
+1 NC FOR i
+PC CF i GET 'X' NC i - ^ * + 'PC' STO
+NEXT
+PC EXPAND 'PC' STO
+IF RA SIZE 0 ==
+THEN
+"NO TIENE RAICES RACIONALES"
+ELSE
+"" \-> FS
+\<<
+1 RA SIZE FOR i
+RA i GET ABS \->STR
+IF DUP 1 1 SUB "'" ==
+THEN DUP SIZE 1 - 2 SWAP SUB
+END
+\-> VS
+\<<
+CASE RA i GET 0 ==
+THEN "X" END
+RA i GET 0 <
+THEN "(X+" VS + ")" + END
+"(X-" VS + ")" +
+END
+\-> PZ
+\<<
+IF FS SIZE 0 ==
+THEN PZ
+ELSE FS "*" + PZ +
+END
+'FS' STO
+\>>
+\>>
+NEXT
+IF CF SIZE 1 >
+THEN
+PC \->STR
+IF DUP 1 1 SUB "'" ==
+THEN DUP SIZE 1 - 2 SWAP SUB
+END
+\-> QS \<< FS "*(" + QS + ")" + \>>
+ELSE
+IF CF 1 GET 1 == NOT
+THEN CF 1 GET \->STR "*" + FS +
+ELSE FS
+END
+END
+\>>
+END
+\-> FACT
+\<<
+C0 RA TB PC FACT 5 \->LIST
+\>>
+\>>
+END
+\-> R \<< DEPTH D0 - DROPN R \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DSATC
+\<<
+\-> CL X0
+\<<
+1 \-> OK
+\<<
+IF CL SIZE 0 >
+THEN
+1 CL SIZE
+FOR I
+CL I GET OBJ\-> DROP \-> G C
+\<<
+DEPTH \-> D1
+\<<
+IFERR
+G IF DUP TYPE 9 == OVER TYPE 6 == OR
+THEN 'X' X0 = SUBST EVAL
+END
+\->NUM
+THEN "ERR"
+END
+\-> V0 \<< DEPTH D1 - DROPN V0 \>>
+\>>
+\-> V
+\<<
+IF V TYPE 0 ==
+THEN
+IF V ABS 1.E400 >
+THEN 0 'OK' STO
+ELSE
+V ABS .000000001 < \-> Z
+\<<
+CASE
+C 0 == THEN Z NOT END
+C 1 == THEN V 0 > Z OR END
+C 2 == THEN V 0 > Z NOT AND END
+Z
+END
+IF NOT THEN 0 'OK' STO END
+\>>
+END
+ELSE 0 'OK' STO
+END
+\>>
+\>>
+NEXT
+END
+OK
+\>>
+\>>
+\>>
+DSING2C
+\<<
+\-> E1 E2 COEF O1 O2
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+COEF 'X' DZEROC \-> ZC
+\<<
+TR "NO perder la rama donde el coeficiente divisor se anula" COEF 2 \->LIST 1 \->LIST + ZC 2 GET + 'TR' STO
+IF ZC 3 GET "OK" == NOT THEN "CEROS DEL COEFICIENTE NO RESUELTOS" DOERR END
+{ } \-> CS
+\<<
+IF ZC 1 GET SIZE 0 > THEN
+1 ZC 1 GET SIZE FOR I
+ZC 1 GET I GET \-> PX
+\<<
+E1 'X' PX = SUBST EVAL SIMPLIFY E2 'X' PX = SUBST EVAL SIMPLIFY \-> U V
+\<<
+U 'Y' DZEROC \-> ZY
+\<<
+TR "Evaluar sistema en coeficiente=0" PX U V 3 \->LIST 2 \->LIST 1 \->LIST + ZY 2 GET + 'TR' STO
+IF ZY 3 GET "IDENTIDAD" == THEN
+V 'Y' DZEROC 'ZY' STO TR ZY 2 GET + 'TR' STO
+END
+IF ZY 3 GET "OK" == NOT THEN "RAMA SINGULAR NO AISLADA O SIN RESOLVER" DOERR END
+IF ZY 1 GET SIZE 0 > THEN
+1 ZY 1 GET SIZE FOR J
+ZY 1 GET J GET \-> PY
+\<< IF O1 O2 PX PY DCHK2C THEN CS PX PY DADDPTC 'CS' STO END \>>
+NEXT
+END
+\>>
+\>>
+\>>
+NEXT
+END
+CS 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DSIS2C
+\<< 0 DSIS2RC \>>
+DSIS2RC
+\<<
+\-> E10 E20 LEV
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF LEV 6 > THEN "ELIMINACION EXCESIVA" DOERR END
+E10 DREADC E20 DREADC \-> O1 O2
+\<<
+TR "Sistema original: ambas expresiones igualadas a cero" O1 O2 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+O1 DNZC O2 DNZC \-> N1 N2
+\<<
+TR N1 2 GET + N2 2 GET + 'TR' STO
+IF N1 3 GET "OK" == NOT N2 3 GET "OK" == NOT OR THEN "NO SE REDUJO EL SISTEMA" DOERR END
+N1 1 GET N2 1 GET \-> E1 E2
+\<<
+CASE
+E1 'Y' DERIV SIMPLIFY 0 SAME THEN
+E1 'X' DZEROC \-> ZX
+\<<
+TR "Una ecuacion solo contiene X" E1 2 \->LIST 1 \->LIST + ZX 2 GET + 'TR' STO
+IF ZX 3 GET "OK" == NOT THEN "FAMILIA NO AISLADA O PRIMERA ECUACION NO RESUELTA" DOERR END
+{ } \-> CS
+\<<
+IF ZX 1 GET SIZE 0 > THEN
+1 ZX 1 GET SIZE FOR I
+ZX 1 GET I GET \-> PX
+\<<
+E2 'X' PX = SUBST EVAL SIMPLIFY \-> EQY
+\<<
+TR "Sustituir X en segunda ecuacion" PX EQY 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+EQY 'Y' DZEROC \-> ZY
+\<<
+TR ZY 2 GET + 'TR' STO
+IF ZY 3 GET "OK" == NOT THEN "FAMILIA NO AISLADA O SEGUNDA ECUACION NO RESUELTA" DOERR END
+IF ZY 1 GET SIZE 0 > THEN
+1 ZY 1 GET SIZE FOR J
+ZY 1 GET J GET \-> PY
+\<< IF O1 O2 PX PY DCHK2C THEN CS PX PY DADDPTC 'CS' STO END \>>
+NEXT
+END
+\>>
+\>>
+\>>
+NEXT
+END
+CS 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+END
+E2 'Y' DERIV SIMPLIFY 0 SAME THEN
+E2 E1 LEV 1 + DSIS2RC \-> SW
+\<< TR "Intercambiar ecuaciones para despejar" 1 2 \->LIST 1 \->LIST + SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+END
+E1 'Y' DERIV 'Y' DERIV 'Y' DERIV SIMPLIFY 0 SAME NOT THEN
+IF E2 'Y' DERIV 'Y' DERIV 'Y' DERIV SIMPLIFY 0 SAME THEN
+E2 E1 LEV 1 + DSIS2RC \-> SW \<< TR SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+ELSE "SE REQUIERE ELIMINACION DE GRADO MAYOR QUE DOS EN Y" DOERR END
+END
+E1 'Y' DERIV 'Y' DERIV 2 / SIMPLIFY
+E1 'Y' DERIV 'Y' 0 = SUBST EVAL SIMPLIFY
+E1 'Y' 0 = SUBST EVAL SIMPLIFY
+E2 'Y' DERIV 'Y' DERIV 2 / SIMPLIFY
+\-> A B C A2
+\<<
+CASE
+A 0 SAME THEN
+TR "Primera ecuacion: B(X)*Y+C(X)=0" B C 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+C NEG B / SIMPLIFY E2 O1 O2 DRAMAC \-> GR
+\<<
+TR GR 2 GET + 'TR' STO
+IF GR 3 GET "OK" == NOT THEN GR 3 GET DOERR END
+E1 E2 B O1 O2 DSING2C \-> SR
+\<<
+TR SR 2 GET + 'TR' STO
+IF SR 3 GET "OK" == NOT THEN SR 3 GET DOERR END
+GR 1 GET SR 1 GET + 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+END
+A2 0 SAME THEN
+E2 E1 LEV 1 + DSIS2RC \-> SW \<< TR SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+END
+A 'X' DERIV SIMPLIFY 0 SAME THEN
+A E2 * A2 E1 * - EXPAND SIMPLIFY \-> NEW
+\<<
+TR "Eliminar Y^2: A1*E2-A2*E1=0; A1 constante no nula" A A2 NEW 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+IF NEW 0 SAME THEN "SISTEMA DEPENDIENTE: FAMILIA DE PUNTOS" DOERR END
+NEW E1 LEV 1 + DSIS2RC \-> SW
+\<< TR SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+\>>
+END
+"DOS CUADRATICAS CON COEFICIENTES VARIABLES: REQUIERE ELIMINACION ADICIONAL" DOERR
+END
+\>>
+END
+IF AV "OK" == NOT THEN AV DOERR END
+{ } \-> UNIQUE
+\<<
+IF VAL SIZE 0 > THEN
+1 VAL SIZE FOR I
+VAL I GET 1 GET VAL I GET 2 GET \-> PX PY
+\<<
+IF O1 O2 PX PY DCHK2C THEN
+UNIQUE PX PY DADDPTC 'UNIQUE' STO
+TR "Control final: ambas ecuaciones originales son cero" PX PY 0 0 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+END
+\>>
+NEXT
+END
+UNIQUE 'VAL' STO
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DTANOR
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Tangente y normal con pasos"
+{ {"f(X):" "Funcion original"} {"a:" "Abscisa del punto" 0} }
+{ } { 'X^2' 1 } { 'X^2' 1 } INFORM
+IF THEN
+OBJ\-> DROP DRECTAC \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DTANP
+\<<
+RCLF \-> FLUI
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+IFERR
+"Buscar tangentes o parametro"
+{ {"f(X,K):" "Funcion, K si hay parametro"} {"m:" "Pendiente dada" 0} {"Modo:" "0 paralela,1 perpendicular,2 misma abscisa,3 comun general,4 parametro" 0} {"g(X) o a:" "Curva en modos2/3; punto a en modo4"} }
+{ } { 'X^2' 2 0 0 } { 'X^2' 2 0 0 } INFORM
+IF THEN
+OBJ\-> DROP \-> F M MD G
+\<<
+CASE MD 3 == THEN F G DTCOMC END MD 4 == THEN F G M DPARAMC END F M MD G DMSLOPEC END
+\>> \-> RES
+\<< RES DUP 2 GET DVER \>>
+END
+THEN FLUI STOF ERRM DOERR END
+FLUI STOF
+\>>
+\>>
+DTCOMC
+\<<
+\-> F0 G0
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END
+F0 DREADC G0 DREADC \-> F G
+\<<
+F 'X' DDERC G 'X' DDERC \-> DF DG
+\<<
+TR DF 2 GET + DG 2 GET + 'TR' STO
+IF DF 3 GET "OK" == NOT DG 3 GET "OK" == NOT OR THEN "DERIVADAS NO COMPLETADAS" DOERR END
+G 'X' 'Y' = SUBST DG 1 GET 'X' 'Y' = SUBST \-> GY DGY
+\<<
+DF 1 GET DGY - SIMPLIFY
+F 'X' DF 1 GET * - GY 'Y' DGY * - - EXPAND SIMPLIFY
+\-> EQ1 EQ2
+\<<
+TR "Buscar dos abscisas a,b: X representa a; Y representa b" "No confundir b con la ordenada del grafico" 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Igualar pendientes: f'(a)-g'(b)=0" EQ1 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Igualar ordenadas al origen: f(a)-a*f'(a)-g(b)+b*g'(b)=0" EQ2 2 \->LIST 1 \->LIST + 'TR' STO
+EQ1 EQ2 DSIS2C \-> SS
+\<<
+TR SS 2 GET + 'TR' STO
+IF SS 3 GET "OK" == NOT THEN SS 3 GET DOERR END
+{} \-> ROWS
+\<<
+IF SS 1 GET SIZE 0 > THEN
+1 SS 1 GET SIZE FOR I
+SS 1 GET I GET OBJ\-> DROP \-> A B
+\<<
+F A DRECTAC G B DRECTAC \-> RA RB
+\<<
+TR RA 2 GET + RB 2 GET + 'TR' STO
+IF RA 3 GET "OK" == NOT RB 3 GET "OK" == NOT OR THEN "CANDIDATO SIN TANGENTE REGULAR" DOERR END
+RA 1 GET 1 GET RB 1 GET 1 GET - \->NUM ABS 1E-10 <
+RA 1 GET 2 GET A RA 1 GET 1 GET * - RB 1 GET 2 GET B RB 1 GET 1 GET * - - \->NUM ABS 1E-10 < AND
+IF NOT THEN "TANGENTES NO COINCIDEN" DOERR END
+ROWS A B RA 1 GET 3 GET 3 \->LIST 1 \->LIST + 'ROWS' STO
+TR "Comprobar misma pendiente y misma ordenada; tangente comun" A B RA 1 GET 3 GET 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+\>>
+\>>
+NEXT
+END
+ROWS 'VAL' STO "OK: bajo alcance del eliminador del sistema" 'AV' STO
+\>>
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DVAL2C
+\<<
+\-> E PX PY
+\<< E {X Y} PX PY 2 \->LIST DVALNC 1 GET \>>
+\>>
+DVALC
+\<<
+\-> E V P
+\<<
+RCLF \-> FLV
+\<<
+-105 CF -103 CF -3 CF RAD -120 SF -123 CF -119 CF -100 CF -99 CF
+DEPTH \-> D0
+\<<
+IFERR
+E V P DREALC
+DUP \->NUM
+IF DUP TYPE 0 ==
+THEN
+IF ABS 1.E400 > THEN DROP "NO REAL" END
+ELSE DROP DROP "NO REAL" END
+THEN "NO REAL" END
+\-> R \<< DEPTH D0 - DROPN FLV STOF R \>>
+\>>
+\>>
+\>>
+\>>
+DVALNC
+\<<
+\-> E VS PS
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF VS SIZE PS SIZE == NOT THEN "VARIABLES Y VALORES DE DISTINTO TAMANO" DOERR END
+E DREADC VS PS DREALNC \-> R
+\<<
+R \->NUM \-> NR
+\<<
+IF NR TYPE 0 == NOT THEN "NO REAL" DOERR END
+IF NR ABS 1E400 > THEN "NO FINITO" DOERR END
+R SIMPLIFY 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DVER
+\<<
+\-> TRACE
+\<<
+IF TRACE SIZE 0 > THEN
+"Leer desarrollo"
+{{"Modo:" "0 TODOS los pasos,1 resumen final" 0}}
+{} {0} {0} INFORM
+IF THEN 1 GET
+IF 0 == THEN TRACE DPASOS ELSE
+{} \-> SHORT
+\<<
+TRACE SIZE 3 - 1 MAX TRACE SIZE FOR I SHORT TRACE I GET 1 \->LIST + 'SHORT' STO NEXT
+SHORT DPASOS
+\>>
+END
+END
+END
+\>>
+\>>
+DZEROC
+\<<
+\-> E0 V
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+E0 DREADC IF V 'X' SAME NOT THEN V 'X' = SUBST END \-> E
+\<<
+TR "Resolver ecuacion =0" E 2 \->LIST 1 \->LIST + 'TR' STO
+E \-> EO
+\<<
+TR "Restricciones de la ecuacion original" EO DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
+E DNZC \-> NZ
+\<<
+TR NZ 2 GET + 'TR' STO
+IF NZ 3 GET "OK" == NOT THEN NZ 3 GET DOERR END
+NZ 1 GET 'E' STO
+\>>
+E SIMPLIFY IF DUP TYPE 9 == THEN FXND ELSE 1 END \-> NE DE
+\<<
+IF DE 1 SAME NOT THEN
+TR "Multiplicar por denominador NO nulo" DE 2 \->LIST 1 \->LIST + 'TR' STO
+NE 'E' STO
+END
+\>>
+DEPTH \-> DD \<< IFERR IF E 'X' DERIV SIMPLIFY 0 SAME THEN 0 ELSE E DEGREE END THEN -1 END \-> DG \<< DEPTH DD - DROPN DG \>> \>>
+\-> DG
+\<<
+IF DG 0 == THEN
+IF E SIMPLIFY 0 SAME THEN "TODO R" 'VAL' STO "IDENTIDAD" 'AV' STO
+ELSE { } 'VAL' STO "OK" 'AV' STO END
+ELSE
+IF DG 1 == DG 2 == OR THEN
+E 'X' 0 = SUBST EVAL SIMPLIFY
+E 'X' DERIV 'X' 0 = SUBST EVAL SIMPLIFY
+E 'X' DERIV 'X' DERIV 'X' 0 = SUBST EVAL 2 / SIMPLIFY
+\-> C B A
+\<<
+TR "Coeficientes a,b,c" A B C 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+IF DG 1 == THEN
+TR "Ecuacion lineal: b*X+c=0; X=-c/b" C NEG B / SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+C NEG B / SIMPLIFY 1 \->LIST 'VAL' STO
+ELSE
+B SQ 4 A * C * - SIMPLIFY \-> DT
+\<<
+TR "Discriminante: Delta=b^2-4*a*c" DT 2 \->LIST 1 \->LIST + 'TR' STO
+IF DT \->NUM TYPE 0 == NOT THEN "DISCRIMINANTE NO REAL" DOERR END
+IF DT \->NUM 0 < THEN { } 'VAL' STO
+TR "Delta<0: no hay raices reales" DT 2 \->LIST 1 \->LIST + 'TR' STO
+ELSE
+TR "Formula: (-b +/- sqrt(Delta))/(2*a)" A B DT 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+B NEG DT \v/ - 2 A * / SIMPLIFY
+B NEG DT \v/ + 2 A * / SIMPLIFY
+2 \->LIST DORDC 'VAL' STO
+END
+\>>
+END
+"OK" 'AV' STO
+\>>
+ELSE
+IF DG 2 > THEN
+E DRUFC \-> RU
+\<<
+TR "Ruffini: coeficientes iniciales" RU 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Ruffini: renglones de division sintetica" RU 3 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Raices racionales encontradas" RU 2 GET 2 \->LIST 1 \->LIST + 'TR' STO
+TR "Polinomio residual" RU 4 GET 2 \->LIST 1 \->LIST + 'TR' STO
+IF RU 2 GET SIZE 0 == THEN "GRADO>2 SIN RAICES RACIONALES: REQUIERE OTRO METODO" DOERR END
+RU 4 GET 'X' DZEROC \-> R
+\<<
+TR R 2 GET + 'TR' STO
+IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+RU 2 GET R 1 GET + DORDC 'VAL' STO "OK" 'AV' STO
+\>>
+\>>
+ELSE
+EO 'X' DZINVC \-> IR
+\<<
+IF IR 3 GET "OK" == THEN
+TR IR 2 GET + 'TR' STO IR 1 GET 'VAL' STO "OK" 'AV' STO
+ELSE
+E DROOTC \-> R
+\<<
+TR "Ecuacion no polinomica: candidatos del CAS" R 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+IF R 2 GET SIZE THEN R 2 GET DOERR END
+R 1 GET 'VAL' STO "CANDIDATOS CAS: falta desarrollo de la inversion" 'AV' STO
+\>>
+END
+\>>
+END
+END
+END
+IF VAL TYPE 5 == THEN
+{ } \-> VALID
+\<<
+IF VAL SIZE 0 > THEN
+1 VAL SIZE FOR I
+EO 'X' VAL I GET DVALC \-> CK
+\<<
+TR "Comprobar candidato en ecuacion original" VAL I GET CK 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+IF CK TYPE 2 == THEN TR "Descartar candidato: fuera del dominio original" VAL I GET 2 \->LIST 1 \->LIST + 'TR' STO ELSE
+IF CK SIMPLIFY 0 SAME THEN VALID VAL I GET 1 \->LIST + 'VALID' STO ELSE
+TR "Descartar: residual original no nulo" CK 2 \->LIST 1 \->LIST + 'TR' STO
+END
+END
+\>>
+NEXT
+END
+VALID 'VAL' STO
+\>>
+END
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+DZINVC
+\<<
+\-> E V
+\<<
+RCLF \-> FL
+\<<
+-105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+DEPTH \-> D0
+\<<
+"" { } "ERROR" \-> VAL TR AV
+\<<
+IFERR
+IF E TYPE 9 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+E OBJ\-> \->STR \-> N OP
+\<<
+N \->LIST \-> AR
+\<<
+IF N 2 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+AR 1 GET AR 2 GET \-> F T
+\<<
+IF OP "+" == THEN T NEG 'T' STO ELSE IF OP "-" == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END END
+IF T V DERIV SIMPLIFY 0 SAME NOT THEN "DOS MIEMBROS VARIABLES" DOERR END
+IF F TYPE 9 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+F OBJ\-> \->STR \-> NF OF
+\<<
+NF \->LIST \-> AF
+\<<
+IF NF 1 == NOT THEN "SIN INVERSION ELEMENTAL" DOERR END
+CASE
+OF "EXP" == THEN
+IF T \->NUM 0 > NOT THEN { } 'VAL' STO "OK" 'AV' STO ELSE
+TR "EXP(h)=k, k>0; aplicar LN a ambos miembros" T 2 \->LIST 1 \->LIST + 'TR' STO
+AF 1 GET T LN - V DZEROC \-> R
+\<< TR R 2 GET + 'TR' STO R 1 GET 'VAL' STO R 3 GET 'AV' STO \>>
+END
+END
+OF "LN" == THEN
+TR "LN(h)=k; h=EXP(k)>0" T 2 \->LIST 1 \->LIST + 'TR' STO
+AF 1 GET T EXP - V DZEROC \-> R
+\<< TR R 2 GET + 'TR' STO R 1 GET 'VAL' STO R 3 GET 'AV' STO \>>
+END
+"SIN INVERSION ELEMENTAL" DOERR
+END
+\>>
+\>>
+\>>
+\>>
+\>>
+THEN "" 'VAL' STO ERRM 'AV' STO END
+TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+VAL TR AV 3 \->LIST
+\-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+\>>
+\>>
+\>>
+\>>
+\>>
+TEFUN
+{
+{ '(X^2-1)/(X-1)' "evitable en X=1, limite 2" }
+{ '1/X' "asintota vertical en 0, horizontal y=0" }
+{ '(X^2+1)/X' "oblicua y=X" }
+{ 'X^3-3*X' "criticos en X=-1 y X=1" }
+{ 'XROOT(3,X^2)' "HOSTIL: raiz cubica, sin derivada en 0" }
+{ 'LN(X)/X' "horizontal y=0, pide LHopital en +oo" }
+{ 'EXP(-X^2)' "horizontal y=0 a los dos lados" }
+{ 'EXP(X)/X^2' "HOSTIL: oo/oo en +oo, dos pasos de LHopital" }
+}
+TF
+\<<
+\-> N
+\<<
+TEFUN N GET OBJ\-> DROP
+\>>
+\>>
+END

@@ -1,0 +1,74 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> ROWS POINTS
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF ROWS SIZE 0 == THEN "TABLA VACIA" DOERR END
+{ } { } { } \-> INTER EX IP
+\<<
+ 1 ROWS SIZE FOR I
+  ROWS I GET \-> RW
+  \<<
+   IF RW SIZE 4 == NOT THEN "FILA: {izq der signo_f' signo_f''}; 2=desconocido" DOERR END
+   RW 1 GET DBOUNDC RW 2 GET DBOUNDC \-> RL RU
+   \<<
+    IF RL 3 GET "OK" == NOT RU 3 GET "OK" == NOT OR THEN "EXTREMO INVALIDO" DOERR END
+    IF RL 1 GET 2 GET RU 1 GET 2 GET < NOT THEN "INTERVALO VACIO O INVERTIDO" DOERR END
+   \>>
+   RW 3 GET RW 4 GET \-> S1 S2
+   \<<
+    CASE S1 1 == THEN "CRECE" END S1 -1 == THEN "DECRECE" END S1 0 == THEN "CONSTANTE" END "SIN DATO f'" END
+    CASE S2 1 == THEN "CONVEXA" END S2 -1 == THEN "CONCAVA" END S2 0 == THEN "AFIN" END "SIN DATO f''" END
+    \-> MON CON
+    \<<
+     INTER RW 1 GET RW 2 GET MON CON 4 \->LIST 1 \->LIST + 'INTER' STO
+     TR "Regla: signo f' -> monotonia; signo f'' -> concavidad" INTER I GET 2 \->LIST 1 \->LIST + 'TR' STO
+    \>>
+    IF I 1 > THEN
+     ROWS I 1 - GET \-> PRE
+     \<<
+      IF PRE 2 GET RW 1 GET SAME NOT THEN "TRAMOS DESORDENADOS O NO ADYACENTES" DOERR END
+      RW 1 GET \-> P
+      \<<
+       { } \-> DAT
+       \<<
+        IF POINTS SIZE 0 > THEN
+         1 POINTS SIZE FOR J
+          POINTS J GET \-> PR \<< IF PR SIZE 3 == THEN IF PR 1 GET P SAME THEN PR 'DAT' STO END END \>>
+         NEXT
+        END
+        IF DAT SIZE 3 == THEN
+         IF DAT 3 GET 1 == THEN
+          IF PRE 3 GET 1 == S1 -1 == AND THEN EX P DAT 2 GET "MAX" 3 \->LIST 1 \->LIST + 'EX' STO END
+          IF PRE 3 GET -1 == S1 1 == AND THEN EX P DAT 2 GET "MIN" 3 \->LIST 1 \->LIST + 'EX' STO END
+          IF PRE 4 GET S2 * -1 == THEN IP P DAT 2 GET 2 \->LIST 1 \->LIST + 'IP' STO END
+         ELSE TR "Sin continuidad dada no concluir extremo/inflexion" P 2 \->LIST 1 \->LIST + 'TR' STO END
+        ELSE TR "Falta valor/continuidad en corte: solo candidato" P 2 \->LIST 1 \->LIST + 'TR' STO END
+       \>>
+      \>>
+     \>>
+    END
+   \>>
+  \>>
+ NEXT
+ TR "Extremos con coordenadas DADAS y continuidad DADA" EX 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Cambios de concavidad continuos" IP 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "El bosquejo es cualitativo; no determina una funcion unica" "No inventar coordenadas" 2 \->LIST 1 \->LIST + 'TR' STO
+ INTER EX IP 3 \->LIST 'VAL' STO "OK: conclusiones condicionadas a los datos" 'AV' STO
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

@@ -26,16 +26,21 @@ Conn4x. Nothing to compile and nothing to install on the PC.
 | Descriptive statistics | 12 | mean/variance/CV, mode, percentiles (three methods), frequency table, histogram, boxplot, z-scores, Chebyshev, weighted mean |
 | Two variables | 3 | covariance and Pearson's r with scatter plot, OLS regression, deviation table with column sums |
 | Economics | 6 | market equilibrium, taxes and subsidies (incidence, deadweight loss, price controls), the competitive firm, PPP GDP, CAGR, real variation |
-| Calculus I | 30 | domain, inequalities, inverse functions, parity, continuity, asymptotes, derivative by definition, tangent and normal lines, implicit derivatives, Ruffini, Bolzano (bisection), Weierstrass, l'Hôpital, integrals, definite integrals, area between curves, separable ODEs, Lagrange multipliers |
+| Calculus I | 30+ | domain, inequalities, inverse functions, parity, continuity, asymptotes, derivative by definition, tangent and normal lines, implicit derivatives, Ruffini, Bolzano (bisection), Weierstrass, l'Hôpital, integrals, definite integrals, area between curves, separable ODEs, Lagrange multipliers |
 | Other | 2 | step through a `while` loop (exam question), plot a piecewise function |
 
 Each program asks for its inputs with an `INFORM` form and answers in
-`MSGBOX` boxes. You can type data as a list `{ 2 4 6 }` or a vector `[ 2 4 6 ]`,
+`MSGBOX` boxes or a paged step viewer. You can type data as a list `{ 2 4 6 }` or a vector `[ 2 4 6 ]`,
 or give the name of a stored variable.
 
 Full reference, with a worked example for each program (in Spanish):
 [`DICCIONARIO-LAB.md`](DICCIONARIO-LAB.md) (statistics and economics) and
 [`DICCIONARIO-MAT1.md`](DICCIONARIO-MAT1.md) (calculus).
+
+Guided calculus modules cover derivatives, theorem hypotheses, integration
+methods, ODEs and multivariable exercises with paged traces. See
+[`programas/P2.md`](programas/P2.md) for topic packages and tested limits;
+physical calculator acceptance remains pending.
 
 ## Install
 

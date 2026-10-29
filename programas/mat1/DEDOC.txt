@@ -1,0 +1,101 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> RHS0 PVI
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y U C } DFREEC THEN "X/Y/U/C ASIGNADA" DOERR END
+RHS0 DREADC \-> RHS
+\<<
+ RHS 0 DSEPFC \-> SEP
+ \<<
+  TR SEP 2 GET + 'TR' STO
+  IF SEP 3 GET "OK" == NOT THEN SEP 3 GET DOERR END
+  SEP 1 GET OBJ\-> DROP \-> NX QY
+  \<<
+   QY 'Y' DZEROC \-> EQC
+   \<<
+    TR "Antes de dividir: buscar soluciones constantes Q(Y)=0" QY 2 \->LIST 1 \->LIST + EQC 2 GET + 'TR' STO
+    IF EQC 3 GET "OK" == NOT QY 0 SAME NOT AND THEN EQC 3 GET DOERR END
+    EQC 1 GET \-> CONST
+    \<<
+     IF RHS 0 SAME QY 0 SAME OR THEN
+      IF PVI SIZE 0 > THEN
+       IF PVI SIZE 2 == NOT THEN "PVI={x0 y0} O {}" DOERR END
+       RHS PVI 1 GET PVI 2 GET DVAL2C TYPE 2 == IF THEN "PVI FUERA DEL DOMINIO DE LA EDO" DOERR END
+       'Y' PVI 2 GET =
+      ELSE 'Y=C' END \-> SOL0
+      \<<
+       TR "y'=0: integrar, todas las soluciones son constantes" SOL0 2 \->LIST 1 \->LIST + 'TR' STO
+       'Y' 0 SOL0 "TODO R" 4 \->LIST 'VAL' STO "OK: RHS IDENTICAMENTE CERO" 'AV' STO
+      \>> ELSE
+      TR "Para soluciones no constantes: Q(Y)<>0" QY 2 \->LIST 1 \->LIST + 'TR' STO
+      TR "Separar: (1/Q(Y))*dY=N(X)*dX" QY INV NX 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+      QY INV 'Y' DAUTINTC NX 'X' DAUTINTC \-> IY IX
+      \<<
+       TR IY 2 GET + IX 2 GET + 'TR' STO
+       IF IY 3 GET "OK" == NOT IX 3 GET "OK" == NOT OR THEN "INTEGRACION DE LA EDO NO COMPLETADA" DOERR END
+       IY 1 GET IX 1 GET \-> FY GX
+       \<<
+        FY GX 'C' + = \-> SOL
+        \<<
+         TR "Integrar ambos lados; una sola constante arbitraria" SOL 2 \->LIST 1 \->LIST + 'TR' STO
+         FY 'Y' DERIV RHS * GX 'X' DERIV - EXPAND SIMPLIFY \-> CK
+         \<<
+          TR "Verificar derivando la relacion: FY'(Y)*RHS-GX'(X)" CK 2 \->LIST 1 \->LIST + 'TR' STO
+          IF CK 0 SAME NOT THEN "VERIFICACION SIMBOLICA INCONCLUSA" DOERR END
+         \>>
+         IF PVI SIZE 0 > THEN
+          IF PVI SIZE 2 == NOT THEN "PVI={x0 y0} O {}" DOERR END
+          PVI 1 GET PVI 2 GET \-> XP YP
+          \<<
+           RHS XP YP DVAL2C TYPE 2 == IF THEN "PVI FUERA DEL DOMINIO DE LA EDO" DOERR END
+           QY 'Y' YP DVALC \-> Q0
+           \<<
+            IF Q0 TYPE 2 == THEN "Q(y0) NO REAL" DOERR END
+            IF Q0 \->NUM 0 == THEN
+             'Y' YP = 'SOL' STO
+             TR "y0 es equilibrio: elegir solucion constante perdida al dividir" SOL 2 \->LIST 1 \->LIST + 'TR' STO
+            ELSE
+             FY 'Y' YP DVALC GX 'X' XP DVALC \-> FY0 GX0
+             \<<
+              IF FY0 TYPE 2 == GX0 TYPE 2 == OR THEN "PRIMITIVAS NO REALES EN PVI" DOERR END
+              TR "Evaluar FY(y0), GX(x0)" FY0 GX0 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+              FY0 GX0 - SIMPLIFY \-> K
+              \<<
+               TR "Despejar C=FY(y0)-GX(x0)" K 2 \->LIST 1 \->LIST + 'TR' STO
+               FY GX K + = 'SOL' STO
+               TR "Sustituir PVI en solucion: residuo" FY0 GX0 - K - SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+              \>>
+             \>>
+            END
+           \>>
+          \>>
+         END
+         TR "Solucion implicita final (no dividir mas sin revisar dominio)" SOL 2 \->LIST 1 \->LIST + 'TR' STO
+         TR "Agregar las soluciones constantes verificadas" CONST 2 \->LIST 1 \->LIST + 'TR' STO
+         FY GX SOL CONST 4 \->LIST 'VAL' STO "OK EN COMPONENTES REALES DEL DOMINIO" 'AV' STO
+        \>>
+       \>>
+      \>>
+     END
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

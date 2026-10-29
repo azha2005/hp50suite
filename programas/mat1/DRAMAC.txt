@@ -1,0 +1,50 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> H E2 O1 O2
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+TR "Despejar en una rama: Y=" H 2 \->LIST 1 \->LIST + 'TR' STO
+E2 'Y' H = SUBST SIMPLIFY \-> EQ
+\<<
+ TR "Sustituir en la otra ecuacion" EQ 2 \->LIST 1 \->LIST + 'TR' STO
+ EQ 'X' DZEROC \-> Z
+ \<<
+  TR Z 2 GET + 'TR' STO
+  IF Z 3 GET "OK" == NOT THEN "SUSTITUCION NO AISLA RAICES FINITAS: FAMILIA O ECUACION NO RESUELTA" DOERR END
+  { } \-> CS
+  \<<
+   IF Z 1 GET SIZE 0 > THEN
+    1 Z 1 GET SIZE FOR I
+     Z 1 GET I GET \-> PX
+     \<<
+      H 'X' PX DVALC \-> PY
+      \<<
+       IF PY TYPE 2 == THEN TR "Descartar: formula de rama indefinida" PX 2 \->LIST 1 \->LIST + 'TR' STO ELSE
+        O1 O2 PX PY DCHK2C IF THEN
+         CS PX PY DADDPTC 'CS' STO TR "Comprobar AMBAS ecuaciones originales" PX PY 0 0 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+        ELSE TR "Descartar: no verifica ambas ecuaciones originales" PX PY 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO END
+       END
+      \>>
+     \>>
+    NEXT
+   END
+   CS 'VAL' STO "OK" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

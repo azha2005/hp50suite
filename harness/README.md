@@ -1,6 +1,6 @@
 # Harness: probar la suite contra la ROM de 50g
 
-## Lotes compactos y recepción segura (23/10/2026)
+## Lotes compactos y recepción segura (29/10/2026)
 
 El generador carga fuentes actuales una sola vez y permite unir tablas,
 seleccionar casos y reducir dependencias. No usa una caché residente.
@@ -47,12 +47,23 @@ falta confirmar reposo y usar `-SoloRecibir`, que verifica la marca final antes
 de comparar. Un archivo sin marca no autoriza recargar otra tanda. No ejecutar
 lotes en paralelo; se rechazan varios procesos EMU48 ambiguos.
 
-El runner de Windows conserva su envío de teclas por ventana; el controlador
-de escritorio usado durante esta sesión necesita foco y puede interferir con
-el teclado humano. Ninguno equivale a un motor headless. El Emu48 instalado
-sólo ofrece archivos de estado en su CLI y CONNECT/POKE/REQUEST por DDE. La
-[adaptación WebAssembly de Emu48](https://github.com/Claudio-ymt/emu48android-web-version/tree/master/web)
-es una candidata para un adaptador aislado; aún no está integrado ni validado.
+El banco vuelve a usar el canal original: `PostMessage` dirige las teclas a
+la ventana de Emu48 y `PrintWindow` captura su LCD. No usa el teclado global,
+no activa la ventana ni necesita computer use. `emu-ventana.ps1` busca la
+ventana cargada por PID, también cuando `MainWindowHandle` devuelve cero.
+Usar **Windows PowerShell 5.1** (`powershell.exe`) para estos scripts nativos.
+
+```powershell
+powershell.exe -NoProfile -File harness/banco-teclas.ps1 -Foto harness/pantallas/reposo.png
+# Inspeccionar la captura: sin reloj de cálculo ni diálogo pendiente.
+powershell.exe -NoProfile -File harness/correr-emu.ps1 -Fuente harness/BMOD.txt -SoloRecibir -Bin harness/BMOD.bin
+```
+
+La captura de una ventana oculta puede ser negra; no demuestra reposo.
+`EmuBanco.ShowWithoutFocus` permite mostrar una copia de pruebas sin activarla.
+No se deben cerrar, reiniciar ni sobrescribir estados del usuario para recuperar
+un lote. En esta sesión el reinicio se hizo sobre una copia local de pruebas.
+Esto sigue siendo Emu48 de Windows: **no hay un motor headless integrado**.
 
 ### Visor y banderas
 
@@ -67,8 +78,12 @@ python harness/armar-visor.py harness/BVISORUI.txt --interactivo
 ```
 
 Se revisó una LCD nativa de 131×80 con dos líneas de 20 caracteres completas.
-La captura de ventana de Windows falla y la navegación completa del visor
-sigue pendiente. Renderizar una página no prueba todos los formularios.
+Se revisaron las capturas de selección, primer paso, propuesta del siguiente,
+segundo paso y salida por CANCEL (`visor-selector`, `visor-paso1`,
+`visor-siguiente`, `visor-paso2`, `visor-fin`). La primitiva larga mostró sus dos
+páginas completas (`visor-largo1/2`) y volvió a la pila (`visor-largo-fin`).
+DDER y el selector DVER también se revisan con un ejemplo nativo. Esto no prueba
+todos los formularios, entradas ni el teclado físico.
 
 En esta ROM `-100 CF` permite que RISCH termine sin pedir una tecla por paso;
 `-100 SF` abrió los pasos nativos. La tabla de banderas del apéndice del
@@ -76,19 +91,53 @@ En esta ROM `-100 CF` permite que RISCH termine sin pedir una tecla por paso;
 contradice las entradas de comandos que describen esa bandera. Se usó el
 comportamiento medido; los núcleos nuevos conservan y restauran RCLF/STOF.
 
-### Evidencia actual
+### Evidencia actual: ROM de 50g, 29/10/2026
 
-- Cinco pruebas del comparador/generador en PC: aprobadas.
-- Tanda histórica final: 83/84. Se corrigió después la representación del
-  infinito positivo en DLATC; repetición de ambos laterales: 2/2 aprobados.
-  Falta repetir los 84 juntos sobre esa revisión.
-- Tanda previa de 101 casos del módulo: 100/101. El control de fracciones
-  racionales se corrigió para verificar cada componente real: 5/5 en su sonda.
-  La tanda ampliada de 116 aún no tiene marca final válida; está pendiente,
-  no aprobada. No atribuir los resultados anteriores a los últimos fuentes.
-- La cúspide compuesta X^(2/3)+X devuelve CEROS NO RESUELTOS y no afirma
-  extremos. Ese límite del CAS queda explícito en los casos de borde.
-- Conn4x y hardware físico siguen sin validar esta ampliación.
+La regresión se ejecuta **por lotes**, con fuentes actuales, marca final y
+comparación de valores. Son comprobaciones de casos y controles; no 355
+modelos distintos de examen. Los 84 controles históricos se cubren con
+33+22+28 y el caso de Lagrange incluido en extras.
+
+| Lote final | Cobertura | Controles |
+|---|---|---|
+| BFINAL-REGLAS | derivadas, primitivas, raíces, tabla, diferencial, Gauss | 28 |
+| BFINAL-FRAC | fracciones y los 30 controles de DINTEG | 41 |
+| BFINAL-ESTUDIO | estudio, dominio, cúspides, signos y extremos | 26 |
+| BFINAL-HESS | sistemas, parciales, hessiano | 11 |
+| BFINAL-LAGR | multiplicadores y comprobaciones | 6 |
+| BFINAL-EDO2 | separación, PVI, equilibrios, verificación y elasticidad | 20 |
+| BFINAL-LHOP | iteraciones, transformaciones e impropias | 18 |
+| BFINAL-APL1 | Rolle, TVM, laterales, elasticidad, signos y TFC | 21 |
+| BFINAL-APL2 | dos definiciones, rectas y valor medio integral | 9 |
+| BFINAL-HISTA | regresión histórica principal | 33 |
+| BFINAL-HISTB | regresión histórica, sin el caso de Lagrange | 22 |
+| BFINAL-INTERVALOS | definida, área, gráficos y visor, incluidas intersecciones | 42 |
+| BFINAL-WEI | extremos, Bolzano y sustitución trigonométrica | 28 |
+| BFINAL-IMPL | implícita (13) y sondeos del CAS (12) | 25 |
+| BFINAL-EXTRAS | teoría, orden/grado, rectas, visor vacío y Lagrange histórico | 15 |
+| BFINAL-DECIMALES | decimales exactos y conservación del dominio | 10 |
+| **Total aceptado** | **con marca final y hashes vigentes** | **355/355** |
+
+Los lotes conjuntos grandes no se cuentan como aprobados: una tanda de varias
+variables tuvo tres fallos que no reaparecieron en las repeticiones por familia.
+La presión de memoria del texto más los objetos es una causa posible, no una
+medición establecida. El informe final usa únicamente los lotes de la tabla.
+El harness rechaza varios procesos Emu48 y no consulta DDE durante el cálculo.
+
+Siete pruebas de generador/comparador y paquetes en PC, autotest del lector,
+compilación Python y verificación de distribución: aprobadas. El nuevo auditor
+comprueba además que ningún objeto, caso ni resultado aceptado haya quedado
+viejo; no interactúa con el emulador:
+
+```powershell
+python harness/verificar-lotes.py harness/BFINAL-REGLAS.json harness/BFINAL-FRAC.json
+```
+
+Los archivos generados, bins, manifiestos y capturas siguen ignorados por Git.
+Los nombres de esta tabla sirven para reproducir la selección; `--solo` separa
+familias sin perder su cierre de dependencias. La cúspide compuesta X^(2/3)+X
+sigue sin resolución completa y no recibe una certificación de extremos.
+**Conn4x, RAM de recepción y HP física siguen pendientes.**
 
 Para comparar un resultado nuevo, siempre pasar el manifiesto de su corrida:
 

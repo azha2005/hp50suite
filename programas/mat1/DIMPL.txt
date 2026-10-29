@@ -1,27 +1,22 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  RCLF \-> FLUI
-  \<<
-    -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
-    IFERR
-      @ Implicit derivative with explicit partials and tangent/normal at given point.
-      "Derivacion implicita"
-      {
-        { "Miembro izquierdo:" "Expresion en X,Y" }
-        { "Miembro derecho:" "Constante o expresion" }
-        { "x0:" "Punto de la curva" 0 }
-        { "y0:" "Elegir rama del punto" 0 }
-      }
-      { } { 'X^2+Y^2' 4 0 2 } { 'X^2+Y^2' 4 0 2 } INFORM
-      IF THEN
-        OBJ\-> DROP DIMPLC \-> RES
-        \<<
-          RES
-          "Estado y desarrollo" 10 CHR + "en la traza / pila" + MSGBOX
-          DUP 4 GET DPASOS
-        \>>
-      END
-    THEN FLUI STOF ERRM DOERR END
-    FLUI STOF
-  \>>
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Implicita: reglas por termino"
+ { {"Izquierda:" "Expresion X,Y"} {"Derecha:" "Expresion o constante"} {"x0:" "Abscisa" 0} {"y0 o BUSCAR:" "Punto o string BUSCAR"} }
+ { } { 'X^2+Y^2' 4 0 2 } { 'X^2+Y^2' 4 0 2 } INFORM
+ IF THEN
+  OBJ\-> DROP \-> L R A B
+ \<<
+  IF B TYPE 2 == THEN L R A DIMPLYC ELSE
+   L R A B DIMPLC \-> IR \<< IR IR 4 GET IR 5 GET 3 \->LIST \>>
+  END
+ \>> \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

@@ -1,0 +1,23 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Elasticidad y estacionariedad"
+ { {"f(X):" "Funcion"} {"a:" "Punto para modo 0" 0} {"Modo:" "0 valor,1 E=k,2 E'=0,3 f'=0" 0} {"Convencion:" "1 matematica, -1 demanda" 0} }
+ { } { '100-2*X' 10 0 -1 } { '100-2*X' 10 0 -1 } INFORM
+ IF THEN
+  OBJ\-> DROP \-> F A M CV
+ \<<
+  IF M 1 == THEN
+   "Valor objetivo de E" {{"k:" "Elasticidad con signo segun convencion" 0}} {} {1} {1} INFORM
+   IF THEN 1 GET \-> K \<< F A M K CV DELASTC \>> ELSE "" {} "CANCELADO" 3 \->LIST END
+  ELSE F A M 0 CV DELASTC END
+ \>> \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

@@ -1,32 +1,17 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ LHOP - un paso de L'Hopital, con el paso a la vista.
-  @ Interfaz: el calculo esta en LHOPC, que toma 'f' 'g' 'X=a' de la pila
-  @ y devuelve { L0 Q L1 }.
-  @ Para el punto en el infinito se escribe 'X=INF' (correr DINF antes).
-  @ El cociente de derivadas queda tambien en la pila: casi nunca entra
-  @ en una caja de 2 lineas y es lo que hay que copiar a la hoja.
-  "Un paso de L'Hopital"
-  {
-    { "f(X) (numerador):" "'SIN(X)'" }
-    { "g(X) (denominador):" "'X'" }
-    { "Punto, ej 'X=0' o 'X=INF':" "'X=0'" }
-  }
-  { } { } { }
-  INFORM
-  IF THEN
-    OBJ\-> DROP LHOPC OBJ\-> DROP \-> L0 Q L1
-    \<<
-      "Limite original:" 10 CHR +
-      L0 \->STR +
-      MSGBOX
-      "f'/g' =" 10 CHR +
-      Q \->STR +
-      MSGBOX
-      "Limite de f'/g':" 10 CHR +
-      L1 \->STR +
-      MSGBOX
-      L0 Q L1
-    \>>
-  END
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "L Hopital: pasos y formas"
+ { {"F:" "Numerador/factor/base"} {"G:" "Denominador/factor/exponente"} {"Punto:" "X=a, X=a+0 o X=a-0"} {"Modo:" "0 cociente,1 producto,2 resta,3 potencia" 0} }
+ { } { 'SIN(X)' 'X' 'X=0' 0 } { 'SIN(X)' 'X' 'X=0' 0 } INFORM
+ IF THEN
+  OBJ\-> DROP DLHOPC \-> RES
+  \<< RES DUP 2 GET DPASOS \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

@@ -1,0 +1,31 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> N
+ \<<
+  RCLF \-> FLR
+  \<<
+   -105 CF STD
+   N ABS \->STR \-> S
+   \<<
+    0 \-> EX
+    \<<
+     S "E" POS \-> EP
+     \<<
+      IF EP 0 > THEN S EP 1 + S SIZE SUB STR\-> 'EX' STO S 1 EP 1 - SUB 'S' STO END
+     \>>
+     S "." POS \-> DP
+     \<<
+      0 \-> DEC
+      \<<
+       IF DP 0 > THEN S SIZE DP - 'DEC' STO IF DP 1 == THEN "" ELSE S 1 DP 1 - SUB END IF DP S SIZE == THEN "" ELSE S DP 1 + S SIZE SUB END + 'S' STO END
+       IF S SIZE 0 == THEN "0" 'S' STO END
+       S STR\-> 10 DEC EX - \->Q ^ / SIMPLIFY
+       IF N 0 < THEN NEG END
+      \>>
+     \>>
+    \>>
+   \>>
+   FLR STOF
+  \>>
+ \>>
+\>>

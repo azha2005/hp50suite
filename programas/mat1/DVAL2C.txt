@@ -1,0 +1,5 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> E PX PY
+ \<< E {X Y} PX PY 2 \->LIST DVALNC 1 GET \>>
+\>>

@@ -1,0 +1,38 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> R0 S0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF {X Y} DFREEC THEN "X/Y ASIGNADA" DOERR END
+R0 DREADC S0 DREADC \-> R S
+\<<
+ S 'X' DDERC \-> D
+ \<<
+  TR "Solucion propuesta y ecuacion y'=R(X,Y)" S R 2 \->LIST 2 \->LIST 1 \->LIST + D 2 GET + 'TR' STO
+  IF D 3 GET "OK" == NOT THEN D 3 GET DOERR END
+  R 'Y' S = SUBST SIMPLIFY \-> RS
+  \<<
+   TR "Sustituir Y=S(X) en el segundo miembro" RS 2 \->LIST 1 \->LIST + 'TR' STO
+   D 1 GET RS - EXPAND SIMPLIFY 'VAL' STO
+   TR "Residual S'(X)-R(X,S(X))" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+   TR "Dominios: solucion propuesta y segundo miembro sustituido" S DCONDC RS DCONDC 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+   IF VAL 0 SAME THEN "VERIFICA EN LA INTERSECCION DE DOMINIOS" ELSE "NO VERIFICA O CONTROL INCONCLUSO" END 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

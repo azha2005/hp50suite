@@ -1,0 +1,55 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E0 PVI
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+E0 DREADC \-> E
+\<<
+ TR "Elasticidad matematica E=X*y'/y; requiere X<>0 e y<>0" E 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Despejar y'/y=E(X)/X" E 'X' / 2 \->LIST 1 \->LIST + 'TR' STO
+ E 'X' / 'X' DAUTINTC \-> IR
+ \<<
+  TR IR 2 GET + 'TR' STO
+  IF IR 3 GET "OK" == NOT THEN IR 3 GET DOERR END
+  TR "Integrar: LN(ABS(y))=integral(E/X)+C" IR 1 GET 'C' + 2 \->LIST 1 \->LIST + 'TR' STO
+  'C' IR 1 GET EXP * \-> S
+  \<<
+   IF PVI SIZE 0 > THEN
+    IF PVI SIZE 2 == NOT THEN "PVI={x0 y0} O {}" DOERR END
+    IF PVI 1 GET 0 == PVI 2 GET 0 == OR THEN "ELASTICIDAD NO DEFINE ESTE PVI" DOERR END
+    IR 1 GET 'X' PVI 1 GET DVALC \-> J0
+    \<<
+     IF J0 TYPE 2 == THEN "INTEGRAL NO REAL EN x0" DOERR END
+     PVI 2 GET J0 EXP / SIMPLIFY \-> C0
+     \<<
+      TR "Constante multiplicativa = y0/EXP(J(x0))" C0 2 \->LIST 1 \->LIST + 'TR' STO
+      C0 IR 1 GET EXP * SIMPLIFY 'S' STO
+     \>>
+    \>>
+   END
+   TR "Solucion, constante no nula; signo fijo por componente" S 2 \->LIST 1 \->LIST + 'TR' STO
+   'X' S 'X' DERIV * S / E - EXPAND SIMPLIFY \-> CK
+   \<<
+    TR "Control: X*S'/S-E" CK 2 \->LIST 1 \->LIST + 'TR' STO
+    IF CK 0 SAME NOT THEN "CONTROL DE ELASTICIDAD INCONCLUSO" DOERR END
+   \>>
+   S 'VAL' STO "OK: X Y S NO NULOS; revisar dominio original" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

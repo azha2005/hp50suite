@@ -1,0 +1,233 @@
+%%HP: T(3)A(R)F(.);
+DIR
+DPAGC
+\<<
+\-> PP
+\<<
+PP 1 GET " : " + PP 2 GET \->STR +
+10 CHR " " SREPL DROP 13 CHR " " SREPL DROP \-> TXT
+\<<
+{ } \-> PG
+\<<
+IF TXT SIZE 0 > THEN
+1 TXT SIZE FOR P
+TXT P P 19 + SUB
+IF P 20 + TXT SIZE > NOT
+THEN 10 CHR + TXT P 20 + P 39 + SUB + END
+1 \->LIST PG SWAP + 'PG' STO
+40 STEP
+END
+PG
+\>>
+\>>
+\>>
+\>>
+DPANTC
+\<<
+\-> TXT K P N
+\<<
+CLLCD
+"Paso " K \->STR + "  " + P \->STR + "/" + N \->STR + 1 DISP
+TXT 3 DISP
+"Tecla: continuar" 7 DISP
+LCD\->
+\>>
+\>>
+DPASOS
+\<<
+\-> TR
+\<<
+IF TR SIZE 0 > THEN
+1 1 \-> SIG ACT
+\<<
+WHILE SIG 1 == REPEAT
+"Paso 1-" TR SIZE \->STR + " / CANCEL" +
+{ { "Paso:" "Numero desde 1" 0 } }
+{ } ACT 1 \->LIST ACT 1 \->LIST INFORM
+IF THEN
+1 GET \-> K
+\<<
+IF K 1 < K TR SIZE > OR K 0 RND K == NOT OR
+THEN "Paso fuera de rango" MSGBOX
+ELSE
+TR K GET DPAGC \-> PG
+\<<
+IF PG SIZE 0 > THEN
+1 PG SIZE FOR P
+PG P GET K P PG SIZE DPANTC DROP 7 FREEZE 0 WAIT DROP
+NEXT
+END
+\>>
+IF K TR SIZE < THEN K 1 + ELSE K END 'ACT' STO
+END
+\>>
+ELSE 0 'SIG' STO END
+END
+\>>
+END
+\>>
+\>>
+DTEORC
+\<<
+\-> TOP
+\<<
+CASE
+TOP 1 == THEN
+{
+{"Tema" "Primitivas y unicidad"}
+{"Hipotesis" "F y G derivables en un INTERVALO I y F'=G'=f."}
+{"Tesis" "F-G es constante EN CADA intervalo conexo de su dominio."}
+{"Demostracion 1" "Sea H=F-G. Entonces H'=F'-G'=0."}
+{"Demostracion 2" "Para a<b en I, Lagrange da H(b)-H(a)=H'(c)*(b-a)=0."}
+{"Conclusion" "H(a)=H(b) para todos a,b de I. Luego F=G+C."}
+{"Cuidado" "En R-{0} las constantes pueden diferir a cada lado. No hay una unica C global."}
+}
+END
+TOP 2 == THEN
+{
+{"Tema" "Sustitucion y partes"}
+{"Sustitucion: hipotesis" "u=g(X) derivable y una primitiva H de h en la imagen del intervalo."}
+{"Regla de cadena" "d[H(g(X))]/dX=H'(g(X))*g'(X)=h(g(X))*g'(X)."}
+{"Formula" "Integral h(g(X))*g'(X)dX=H(g(X))+C. Mostrar el factor du/dX."}
+{"Condicion" "Para transformar extremos y volver por una inversa, elegir una rama valida del cambio."}
+{"Partes: punto de partida" "(u*v)'=u'*v+u*v'. Integrar la identidad en un intervalo valido."}
+{"Despeje" "Integral u*v' =u*v-Integral u'*v. Registrar u,dv,du,v en cada repeticion."}
+{"Ciclo" "Si reaparece k*I: I=A+k*I; (1-k)*I=A; dividir solo si 1-k<>0."}
+}
+END
+TOP 3 == THEN
+{
+{"Tema" "Rolle"}
+{"Hipotesis" "f continua en [a,b], derivable en (a,b), a<b, y f(a)=f(b)."}
+{"Tesis" "Existe c en (a,b) tal que f'(c)=0."}
+{"Prueba 1" "Weierstrass asegura maximo y minimo en [a,b]."}
+{"Prueba 2" "Si ambos valores son iguales, f es constante; cualquier c interior sirve."}
+{"Prueba 3" "Si f no es constante y los extremos valen lo mismo, al menos un extremo de f se alcanza en el interior."}
+{"Prueba 4" "En ese extremo interior derivable, Fermat da f'(c)=0."}
+{"Contraejemplo de hipotesis" "f=ABS(X) en [-1,1] es continua y extremos iguales pero no derivable en 0; no hay f'=0."}
+}
+END
+TOP 4 == THEN
+{
+{"Tema" "Lagrange: valor medio"}
+{"Hipotesis" "f continua en [a,b], derivable en (a,b), a<b."}
+{"Tesis" "Existe c interior con f'(c)=(f(b)-f(a))/(b-a)."}
+{"Construccion" "m=(f(b)-f(a))/(b-a). Definir h(X)=f(X)-f(a)-m*(X-a)."}
+{"Extremos" "h(a)=0 y h(b)=f(b)-f(a)-m*(b-a)=0."}
+{"Aplicar Rolle" "h continua y derivable; existe c interior con h'(c)=0."}
+{"Despejar" "0=h'(c)=f'(c)-m; por tanto f'(c)=m."}
+{"Geometria" "La tangente en c es paralela a la secante por los extremos."}
+}
+END
+TOP 5 == THEN
+{
+{"Tema" "Monotonia y extremos"}
+{"Hipotesis monotonia" "f continua en [u,v] y derivable en (u,v), dentro del intervalo estudiado."}
+{"Prueba" "Lagrange: f(v)-f(u)=f'(c)*(v-u). Como v-u>0, el signo de f' determina el cambio."}
+{"Signos" "f'>0 implica creciente; f'<0 decreciente; f'=0 en todo intervalo implica constante."}
+{"Fermat" "En extremo local interior derivable, los cocientes por derecha e izquierda tienen signos opuestos o cero."}
+{"Limite" "Si ambos tienden al mismo f'(a), necesariamente f'(a)=0."}
+{"Necesaria, no suficiente" "f(X)=X^3 tiene f'(0)=0 y no tiene extremo. ABS(X) tiene minimo sin derivada."}
+{"Inflexion" "f''(c)=0 solo es candidato. Verificar cambio de concavidad y continuidad de f en c."}
+}
+END
+TOP 6 == THEN
+{
+{"Tema" "TFC y Barrow"}
+{"TFC: hipotesis" "f continua en un intervalo I. A(X)=integral desde a hasta X de f(T)dT."}
+{"Cociente" "[A(X+h)-A(X)]/h=(1/h)*integral desde X hasta X+h de f(T)dT."}
+{"Cota por continuidad" "Dado epsilon, cerca de X se tiene ABS(f(T)-f(X))<epsilon. El promedio de la diferencia queda entre -epsilon y epsilon."}
+{"Limite" "El cociente tiende a f(X); por tanto A'=f."}
+{"Barrow" "Si F'=f, (F-A)'=0; por Lagrange F-A=C. Evaluar en b y a: integral[a,b] f=F(b)-F(a)."}
+{"Extremos variables" "H'=f(U(X))*U'(X)-f(L(X))*L'(X), bajo continuidad y derivabilidad de extremos."}
+{"No aplicar sin hipotesis" "Un polo interior requiere limites independientes. Una cancelacion o valor principal no prueba convergencia."}
+}
+END
+TOP 7 == THEN
+{
+{"Tema" "Promedio integral"}
+{"Hipotesis" "f continua en [a,b], a<b."}
+{"Weierstrass" "Existen m y M: m<=f(X)<=M en todo el cerrado."}
+{"Integrar cotas" "m*(b-a)<=Integral f<=M*(b-a). Dividir por b-a>0."}
+{"Promedio" "m<=promedio<=M, con promedio=Integral f/(b-a)."}
+{"Valor intermedio" "Por continuidad, f alcanza cada valor entre m y M: existe c con f(c)=promedio."}
+{"Interior" "Si f es constante, todo c interior sirve. Si no, promedio esta estrictamente entre m y M y se alcanza en el interior."}
+}
+END
+TOP 8 == THEN
+{
+{"Tema" "Diferencial y elasticidad"}
+{"Diferenciabilidad" "f(a+h)=f(a)+f'(a)*h+r(h), con r(h)/h->0."}
+{"Diferencial" "dx=h; dy=f'(a)*dx. Incremento real Delta y=f(a+h)-f(a). Error firmado=r(h)=Delta y-dy."}
+{"Elasticidad" "Para X<>0 y f(X)<>0: E=X*f'/f. Es el cociente de cambios relativos infinitesimales."}
+{"Demanda" "Si se adopta elasticidad positiva de demanda, E_d=-X*f'/f; declarar la convencion."}
+{"Distinguir" "f'=0, E=0, E'=0 y ABS(E)=1 son condiciones distintas. X=0 puede anular E aunque f' no sea 0."}
+{"Recuperar funcion" "y'/y=E(X)/X; LN(ABS(y))=Integral E(X)/X dX+C. Requiere X,y no nulos."}
+}
+END
+TOP 9 == THEN
+{
+{"Tema" "L Hopital: alcance"}
+{"Hipotesis" "En un entorno perforado del lado pedido: F,G derivables, G'<>0, y existe limite F'/G' (finito o infinito)."}
+{"Forma necesaria" "Comprobar limites de F y G por separado: ambos 0 o ambos infinitos. No basta mirar limite F/G."}
+{"Tesis" "Bajo esas hipotesis, limite F/G=limite F'/G'."}
+{"Esquema de prueba 0/0" "Prolongar F(a)=G(a)=0 si es posible. Aplicar el teorema de Cauchy en [a,X]: F(X)/G(X)=F'(cX)/G'(cX)."}
+{"Paso al limite" "cX esta entre a y X, asi que cX->a por el mismo lado. La hipotesis sobre el cociente derivado da el limite."}
+{"Otras formas" "Producto y resta requieren reescritura; potencias positivas requieren LN y regreso con EXP."}
+{"Caso infinito/infinito 1" "Si L=lim F'/G' es finito, fijar epsilon>0 y elegir un entorno donde L-eps<F'/G'<L+eps; G'<>0 asegura monotonia de G en ese lado."}
+{"Caso infinito/infinito 2" "Fijar t dentro de ese entorno. Cauchy entre t y x da (F(x)-F(t))/(G(x)-G(t))=F'(c)/G'(c), dentro de las mismas cotas."}
+{"Caso infinito/infinito 3" "Como ABS(G(x))->infinito, F(t)/G(x)->0 y G(t)/G(x)->0. Las cotas del cociente de incrementos dan liminf F/G>=L-eps y limsup F/G<=L+eps. Dejar eps->0."}
+{"Limite derivado infinito" "Reemplazar L+/-eps por una cota arbitraria de un solo lado; el mismo argumento fuerza F/G a +infinito o -infinito."}
+}
+END
+TOP 10 == THEN
+{
+{"Tema" "EDO: orden, grado y separacion"}
+{"Orden" "La derivada de mayor orden presente en la ecuacion ORIGINAL."}
+{"Grado" "Solo definido si la ecuacion es polinomica en las derivadas despues de despejar denominadores/radicales sin perder restricciones."}
+{"No inventar grado" "SIN(y'), EXP(y') y LN(y') no son polinomios en derivadas; no asignar grado por apariencia."}
+{"Separacion" "En y'=N(X)*Q(Y), buscar primero Q(c)=0: y=c puede ser solucion constante."}
+{"No constantes" "Donde Q(Y)<>0: dY/Q(Y)=N(X)dX. Integrar ambos lados, incluir una constante."}
+{"PVI" "Sustituir x0,y0; comprobar dominio y ecuacion original. Una solucion implicita no determina automaticamente una unica rama."}
+{"Verificacion" "Para Y=S(X), calcular S', sustituir en RHS y restar; el residual debe ser cero en un intervalo valido."}
+}
+END
+TOP 11 == THEN
+{
+{"Tema" "Hessiano y Lagrange"}
+{"Fermat en varias variables" "Si f diferenciable tiene extremo local interior, grad f=0. Resolver ambas parciales y comprobar candidatos."}
+{"Hipotesis Hessiano" "f es C2 en entorno del punto estacionario. D=fXX*fYY-fXY^2."}
+{"Clasificacion" "D>0 y fXX>0: minimo estricto. D>0 y fXX<0: maximo estricto. D<0: silla. D=0: inconcluso."}
+{"Justificacion" "Taylor: f(P+h)=f(P)+(1/2)*h^T Hess(f)(P) h+o(norm(h)^2); el signo de la forma cuadratica determina la variacion local."}
+{"Restriccion regular" "H=0 con grad H<>0: extremo restringido implica grad f=LM*grad H."}
+{"No dividir sin revisar" "Eliminar LM por FX*HY-FY*HX=0; comprobar H=0 y reconstruir LM con una componente no nula."}
+{"Clasificar" "Sobre direccion tangente v=(HY,-HX), evaluar v^T Hess(L)v. Positivo minimo, negativo maximo local restringido; cero inconcluso."}
+{"Puntos singulares" "grad H=0 exige estudio aparte. Ser candidato de Lagrange no prueba extremo ni maximo absoluto."}
+}
+END
+TOP 12 == THEN
+{
+{"Tema" "Weierstrass y extremos absolutos"}
+{"Hipotesis" "f continua en [a,b], con a,b finitos y a<=b."}
+{"Tesis" "f alcanza un maximo y un minimo ABSOLUTOS en el cerrado."}
+{"Guia de uso" "Evaluar extremos del intervalo, ceros de f' y puntos interiores donde f existe pero no es derivable."}
+{"No confundir" "Un sondeo finito no demuestra continuidad. Revisar restricciones del integrando original antes de cancelar factores."}
+{"Comparar" "Comparar valores de TODOS los candidatos y conservar todos los empates. Una constante alcanza ambos extremos en todo el intervalo."}
+{"Contraejemplo" "En (0,1), f(X)=X no alcanza ni minimo ni maximo. En [0,1], 1/X no es continua ni definida en 0."}
+{"Prueba: acotacion" "Si f no fuera acotada, elegir xn con ABS(f(xn))>n. Por compacidad una subsucesion converge a c en [a,b]. Por continuidad f(xnk)->f(c) finito, contradiccion."}
+{"Prueba: maximo" "Existe M=sup f([a,b]). Elegir xn con M-1/n<f(xn)<=M. Una subsucesion converge a c por compacidad y f(xnk)->f(c)=M por continuidad. El supremo se alcanza."}
+{"Prueba: minimo" "Aplicar el argumento anterior a -f: alcanza su maximo, por lo tanto f alcanza su minimo."}
+}
+END
+"TEMA 1 A 12" DOERR
+END
+\>>
+\>>
+DTEORIA
+\<<
+"Teoria: elegir 1 a 12"
+{{"Tema:" "1 primitivas,2 metodos,3 Rolle,4 TVM,5 extremos,6 TFC,7 promedio,8 elast,9 LH,10 EDO,11 Hess,12 Weier" 0}}
+{} {3} {3} INFORM
+IF THEN 1 GET DTEORC DUP DPASOS END
+\>>
+END

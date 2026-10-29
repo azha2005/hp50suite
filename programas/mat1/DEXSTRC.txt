@@ -1,0 +1,28 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> E
+ \<<
+  CASE
+   E TYPE 0 == THEN E DRATC \->STR END
+   E TYPE 9 == THEN
+    E OBJ\-> \->STR \-> N OP
+    \<< N \->LIST \-> AR
+     \<<
+      IF {"+" "-" "*" "/" "^"} OP POS THEN
+       "(" AR 1 GET DEXSTRC + ")" + OP + "(" + AR 2 GET DEXSTRC + ")" +
+      ELSE
+       IF OP "NEG" == THEN "-(" AR 1 GET DEXSTRC + ")" + ELSE
+        IF OP "XROOT" == THEN "XROOT(" AR 2 GET DEXSTRC + "," + AR 1 GET DEXSTRC + ")" + ELSE
+         OP
+         "(" + AR 1 GET DEXSTRC + ")" +
+        END
+       END
+      END
+     \>>
+    \>>
+   END
+   E \->STR
+  END
+  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+ \>>
+\>>

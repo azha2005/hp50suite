@@ -1,0 +1,52 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> FS A
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF FS TYPE 5 == NOT THEN FS DREADC 'X' A DVALC 'VAL' STO "OK" 'AV' STO ELSE
+ 0 \-> FOUND
+ \<<
+  IF FS SIZE 0 == THEN "FUNCION POR TRAMOS VACIA" DOERR END
+  1 FS SIZE FOR I
+   FS I GET \-> RW
+   \<<
+    IF RW SIZE 2 == THEN IF RW 1 GET A == THEN RW 2 GET 'VAL' STO 1 'FOUND' STO END END
+   \>>
+  NEXT
+  IF FOUND NOT THEN
+   1 FS SIZE FOR I
+    FS I GET \-> RW
+    \<<
+     IF RW SIZE 3 == THEN
+      IF A RW 2 GET < NOT A RW 3 GET > NOT AND THEN
+       RW 1 GET DREADC 'X' A DVALC \-> FV
+       \<<
+        IF FV TYPE 2 == THEN "VALOR NO REAL EN TRAMO" DOERR END
+        IF FOUND THEN IF VAL FV - SIMPLIFY 0 SAME NOT THEN "VALOR AMBIGUO EN CORTE: AGREGAR {a f(a)}" DOERR END END
+        FV 'VAL' STO 1 'FOUND' STO
+       \>>
+      END
+     END
+    \>>
+   NEXT
+  END
+  IF FOUND NOT THEN "PUNTO FUERA DE TRAMOS" DOERR END
+  "OK" 'AV' STO
+ \>>
+END
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

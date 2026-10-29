@@ -1,29 +1,17 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DDEF - derivada por definicion. Punto 4 de la guia.
-  @ Este objeto es SOLO la interfaz: el calculo esta en DDEFC, que toma
-  @ 'f(X)' X0 de la pila y devuelve { Q DV }.
-  @ En x0 se puede poner 'X' para obtener f'(X) simbolica.
-  @ Deja en la pila el cociente incremental SIN simplificar (n2) y la
-  @ derivada (n1): el cociente es lo que hay que copiar a la hoja para
-  @ mostrar el procedimiento, y casi nunca entra en una caja.
-  "Derivada por definicion"
-  {
-    { "f(X), ej 'X^2':" "'X^2'" }
-    { "Punto x0 ('X' = simbolico):" "'X'" }
-  }
-  { } { } { }
-  INFORM
-  IF THEN
-    OBJ\-> DROP DDEFC OBJ\-> DROP \-> Q DV
-    \<<
-      "Cociente increm.:" 10 CHR +
-      Q \->STR +
-      MSGBOX
-      "Derivada:" 10 CHR +
-      DV \->STR +
-      MSGBOX
-      Q DV
-    \>>
-  END
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Dos definiciones de derivada"
+ { {"f(X):" "Funcion original"} {"a:" "Punto o 'X' simbolico"} }
+ { } { 'X^2' 'X' } { 'X^2' 'X' } INFORM
+ IF THEN
+  OBJ\-> DROP DDEFSC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

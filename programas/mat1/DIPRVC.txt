@@ -1,0 +1,60 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> P0 F0 V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+P0 F0 \-> P F
+\<<
+ IF V 'X' SAME NOT THEN P V 'X' = SUBST 'P' STO F V 'X' = SUBST 'F' STO END
+ P 'X' DERIV F - DABSSQC EXPAND SIMPLIFY \-> CK
+ \<<
+  TR "Normalizar TAN=SIN/COS y ABS(g)^2=g^2 en dominio real; derivar primitiva y restar integrando" CK 2 \->LIST 1 \->LIST + 'TR' STO
+  IF CK 0 SAME THEN 0 'VAL' STO "OK" 'AV' STO
+  ELSE
+   P DINFOC F DINFOC \-> PI FI
+   \<<
+    IF PI 3 GET SIZE FI 3 GET SIZE OR THEN "CONTROL SIMBOLICO INCONCLUSO" DOERR END
+    PI 2 GET FI 2 GET + DCUTSC \-> RR
+    \<<
+     IF RR 2 GET SIZE THEN "NO SE RESOLVIERON CORTES DEL CONTROL" DOERR END
+     RR 1 GET \-> PT
+     \<<
+      0 PT SIZE FOR I
+       IF PT SIZE 0 == THEN 1 ELSE
+        IF I 0 == THEN PT 1 GET 1 - ELSE
+         IF I PT SIZE == THEN PT I GET 1 + ELSE PT I GET PT I 1 + GET + 2 / END
+        END
+       END \-> M
+       \<<
+        F 'X' M DVALC TYPE 2 == NOT IF THEN
+         P M DABRC 'X' DERIV F M DABRC - EXPAND SIMPLIFY \-> C
+         \<<
+          TR "Control por componente real: prueba,residuo" M C 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+          IF C 0 SAME NOT THEN "CONTROL NO NULO EN UNA COMPONENTE" DOERR END
+         \>>
+        END
+       \>>
+      NEXT
+      0 'VAL' STO "OK" 'AV' STO
+     \>>
+    \>>
+   \>>
+  END
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

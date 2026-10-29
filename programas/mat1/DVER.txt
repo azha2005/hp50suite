@@ -1,0 +1,20 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> TRACE
+ \<<
+  IF TRACE SIZE 0 > THEN
+  "Leer desarrollo"
+  {{"Modo:" "0 TODOS los pasos,1 resumen final" 0}}
+  {} {0} {0} INFORM
+  IF THEN 1 GET
+   IF 0 == THEN TRACE DPASOS ELSE
+    {} \-> SHORT
+    \<<
+     TRACE SIZE 3 - 1 MAX TRACE SIZE FOR I SHORT TRACE I GET 1 \->LIST + 'SHORT' STO NEXT
+     SHORT DPASOS
+    \>>
+   END
+  END
+  END
+ \>>
+\>>

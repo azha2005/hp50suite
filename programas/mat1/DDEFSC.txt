@@ -1,0 +1,71 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 A0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X H Z } DFREEC THEN "X/H/Z ASIGNADA" DOERR END
+F0 DREADC A0 DREADC \-> F A
+\<<
+ TR "Dominio original de f" F 0 DDOMC 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+ F 'X' 'X+H' = SUBST F - 'H' / \-> QH
+ \<<
+  TR "Definicion 1: lim(h->0) [f(X+h)-f(X)]/h" QH 2 \->LIST 1 \->LIST + 'TR' STO
+  TR "Expandir el numerador" F 'X' 'X+H' = SUBST EXPAND F - EXPAND 2 \->LIST 1 \->LIST + 'TR' STO
+  TR "h<>0 en el cociente; simplificar antes del limite" QH EXPAND TEXPAND SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+  QH 'H=0' LIMIT EVAL SIMPLIFY \-> DV
+  \<<
+   TR "Limite de la primera definicion" DV 2 \->LIST 1 \->LIST + 'TR' STO
+   F 'X' A = SUBST EVAL \-> FA
+   \<<
+    F 'X' 'Z' = SUBST FA - 'Z' A - / \-> QZ
+    \<<
+     TR "Definicion 2: lim(Z->a) [f(Z)-f(a)]/(Z-a)" QZ 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "Expandir y simplificar; Z<>a" QZ EXPAND TEXPAND SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+     QZ 'Z' A = LIMIT EVAL SIMPLIFY \-> D2
+     \<<
+      TR "Limite de la segunda definicion" D2 2 \->LIST 1 \->LIST + 'TR' STO
+      IF D2 DV 'X' A = SUBST EVAL - EXPAND SIMPLIFY 0 SAME NOT THEN "DEFINICIONES NO COINCIDEN" DOERR END
+     \>>
+     IF A 'X' SAME THEN
+      F 'X' DDERC \-> DR
+      \<<
+       TR DR 2 GET + 'TR' STO
+       IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END
+       TR "Control con reglas: derivada por limite menos derivada por reglas" DV DR 1 GET - EXPAND SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+       TR "Dominio de la formula de f'; revisar no derivables aparte" DV 0 DDOMC 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+      \>>
+     ELSE
+      F 'X' A DVALC \-> FAP
+      \<<
+       IF FAP TYPE 2 == THEN "a NO PERTENECE AL DOMINIO" DOERR END
+       F F A FAP DDERLATC \-> LR
+       \<<
+        TR LR 2 GET + 'TR' STO
+        IF LR 3 GET "OK" == NOT THEN LR 3 GET DOERR END
+        IF LR 1 GET 3 GET "DERIVABLE" == NOT THEN LR 1 GET 3 GET DOERR END
+        DV 'X' A = SUBST EVAL SIMPLIFY 'DV' STO
+       \>>
+      \>>
+     END
+     QH DV QZ 3 \->LIST 'VAL' STO "OK: comprobar dominios indicados" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

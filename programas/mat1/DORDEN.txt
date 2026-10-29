@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "EDO: orden y grado"
+ { {"E=0:" "Usar YP,YPP,YPPP para derivadas"} }
+ { } { 'YPP^2+YP+Y' } { 'YPP^2+YP+Y' } INFORM
+ IF THEN
+  OBJ\-> DROP DORDENC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

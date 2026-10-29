@@ -61,6 +61,8 @@ if (-not $proc) { throw "No hay ningun EMU48 abierto. Abrirlo con el estado 'Def
 if (@($proc).Count -ne 1) { throw "Hay varios EMU48: no se puede elegir un servidor DDE de forma segura." }
 if (-not (Test-Path -LiteralPath $Dde48)) { throw "No encontre DDE48.exe en: $Dde48" }
 if ($SoloPreparar -and $SoloRecibir) { throw 'Elegir SoloPreparar o SoloRecibir' }
+. (Join-Path $aqui 'emu-ventana.ps1')
+$ventanaBanco = [EmuBanco]::Window($proc.Id)
 $meta = [IO.Path]::ChangeExtension($Fuente, '.json')
 if (Test-Path -LiteralPath $meta) {
     $manifest = Get-Content -LiteralPath $meta -Raw | ConvertFrom-Json
@@ -81,8 +83,8 @@ $r | ForEach-Object { Write-Host "   $_" -ForegroundColor DarkGray }
 if ($r -join ' ' -notmatch 'OK') { throw "El POKE fallo. Emulador ocupado o sin responder." }
 if ($SoloPreparar) { Write-Host 'Listo para EVAL; luego usar -SoloRecibir.'; exit 0 }
 
-Write-Host "3. tecla EVAL (vk $Vk) a la ventana $($proc.MainWindowHandle)..." -ForegroundColor Cyan
-[EmuTecla]::Enviar($proc.MainWindowHandle, $Vk)
+Write-Host "3. tecla EVAL (vk $Vk) a la ventana $($ventanaBanco)..." -ForegroundColor Cyan
+[EmuTecla]::Enviar($ventanaBanco, $Vk)
 }
 
 if ($SoloRecibir) {
@@ -112,7 +114,7 @@ while ($transcurrido -lt $EsperaMs) {
     $pausa = if ($EnterCadaMs -gt 0) { [Math]::Min($EnterCadaMs, $EsperaMs - $transcurrido) } else { $EsperaMs - $transcurrido }
     Start-Sleep -Milliseconds $pausa
     $transcurrido += $pausa
-    if ($EnterCadaMs -gt 0) { [EmuTecla]::Enviar($proc.MainWindowHandle, 13) }
+    if ($EnterCadaMs -gt 0) { [EmuTecla]::Enviar($ventanaBanco, 13) }
 }
 
 # Fixed time is not proof of completion. ON can be caught by IFERR, so it

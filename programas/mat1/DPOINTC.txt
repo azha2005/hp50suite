@@ -1,0 +1,10 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> A SD
+ \<<
+  A \->STR
+  IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+  "'X=" SWAP +
+  IF A \->STR 159 CHR POS SD 0 == OR THEN "'" ELSE IF SD 0 < THEN "-0'" ELSE "+0'" END END + STR\->
+ \>>
+\>>

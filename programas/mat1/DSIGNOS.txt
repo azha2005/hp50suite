@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Interpretar tabla de signos"
+ { {"Filas:" "{izq der signo_f' signo_f''};2 sin dato"} {"Puntos:" "{x y continuidad_1_si}; sin datos {}"} }
+ { } { {{-1 0 1 -1} {0 1 -1 1}} {{0 2 1}} } { {{-1 0 1 -1} {0 1 -1 1}} {{0 2 1}} } INFORM
+ IF THEN
+  OBJ\-> DROP DSIGNOSC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

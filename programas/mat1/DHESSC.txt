@@ -1,0 +1,69 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 MODE GIVEN
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+F0 DREADC \-> F
+\<<
+ F DPARSC \-> DP
+ \<<
+  TR DP 2 GET + 'TR' STO
+  IF DP 3 GET "OK:" POS 1 == NOT THEN DP 3 GET DOERR END
+  DP 1 GET OBJ\-> DROP \-> FX FY FXX FXY FYX FYY
+  \<<
+   IF MODE 0 == THEN FX FY DSIS2C ELSE GIVEN {} "OK" 3 \->LIST END \-> SS
+   \<<
+    TR "Estacionariedad: fX=0 y fY=0" FX FY 2 \->LIST 2 \->LIST 1 \->LIST + SS 2 GET + 'TR' STO
+    IF SS 3 GET "OK" == NOT THEN SS 3 GET DOERR END
+    { } \-> CL
+    \<<
+     IF SS 1 GET SIZE 0 > THEN
+      1 SS 1 GET SIZE FOR I
+       SS 1 GET I GET OBJ\-> DROP \-> PX PY
+       \<<
+        IF FX FY PX PY DCHK2C NOT THEN "PUNTO DADO NO ES ESTACIONARIO" DOERR END
+        F PX PY DVAL2C FXX PX PY DVAL2C FXY PX PY DVAL2C FYY PX PY DVAL2C \-> Z A B C
+        \<<
+         IF Z TYPE 2 == A TYPE 2 == OR B TYPE 2 == OR C TYPE 2 == OR THEN "PUNTO FUERA DEL DOMINIO C2 DE LA FORMULA" DOERR END
+         A C * B SQ - SIMPLIFY \-> DET
+         \<<
+          TR "Hessiano evaluado: [[fXX fXY][fXY fYY]]" A B 2 \->LIST B C 2 \->LIST 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+          TR "Determinante D=fXX*fYY-fXY^2" DET 2 \->LIST 1 \->LIST + 'TR' STO
+          CASE
+           DET \->NUM 0 < THEN "SILLA" END
+           DET \->NUM 0 > A \->NUM 0 > AND THEN "MIN LOCAL" END
+           DET \->NUM 0 > A \->NUM 0 < AND THEN "MAX LOCAL" END
+           "INCONCLUSO: D=0; NO CLASIFICAR CON HESSIANO"
+          END \-> KIND
+          \<<
+           TR "Criterio y conclusion (requiere C2 en entorno)" KIND 2 \->LIST 1 \->LIST + 'TR' STO
+           CL PX PY Z DET A KIND 6 \->LIST 1 \->LIST + 'CL' STO
+          \>>
+         \>>
+        \>>
+       \>>
+      NEXT
+     END
+     TR "Alcance: puntos estacionarios diferenciables; revisar fronteras y no derivables aparte" "No afirmar extremos absolutos" 2 \->LIST 1 \->LIST + 'TR' STO
+     DP 1 GET CL 2 \->LIST 'VAL' STO "OK: clasificacion local bajo hipotesis C2" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

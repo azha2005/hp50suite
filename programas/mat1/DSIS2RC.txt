@@ -1,0 +1,130 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E10 E20 LEV
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF LEV 6 > THEN "ELIMINACION EXCESIVA" DOERR END
+E10 DREADC E20 DREADC \-> O1 O2
+\<<
+ TR "Sistema original: ambas expresiones igualadas a cero" O1 O2 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ O1 DNZC O2 DNZC \-> N1 N2
+ \<<
+  TR N1 2 GET + N2 2 GET + 'TR' STO
+  IF N1 3 GET "OK" == NOT N2 3 GET "OK" == NOT OR THEN "NO SE REDUJO EL SISTEMA" DOERR END
+  N1 1 GET N2 1 GET \-> E1 E2
+  \<<
+   CASE
+    E1 'Y' DERIV SIMPLIFY 0 SAME THEN
+     E1 'X' DZEROC \-> ZX
+     \<<
+      TR "Una ecuacion solo contiene X" E1 2 \->LIST 1 \->LIST + ZX 2 GET + 'TR' STO
+      IF ZX 3 GET "OK" == NOT THEN "FAMILIA NO AISLADA O PRIMERA ECUACION NO RESUELTA" DOERR END
+      { } \-> CS
+      \<<
+       IF ZX 1 GET SIZE 0 > THEN
+        1 ZX 1 GET SIZE FOR I
+         ZX 1 GET I GET \-> PX
+         \<<
+          E2 'X' PX = SUBST EVAL SIMPLIFY \-> EQY
+          \<<
+           TR "Sustituir X en segunda ecuacion" PX EQY 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+           EQY 'Y' DZEROC \-> ZY
+           \<<
+            TR ZY 2 GET + 'TR' STO
+            IF ZY 3 GET "OK" == NOT THEN "FAMILIA NO AISLADA O SEGUNDA ECUACION NO RESUELTA" DOERR END
+            IF ZY 1 GET SIZE 0 > THEN
+             1 ZY 1 GET SIZE FOR J
+              ZY 1 GET J GET \-> PY
+              \<< IF O1 O2 PX PY DCHK2C THEN CS PX PY DADDPTC 'CS' STO END \>>
+             NEXT
+            END
+           \>>
+          \>>
+         \>>
+        NEXT
+       END
+       CS 'VAL' STO "OK" 'AV' STO
+      \>>
+     \>>
+    END
+    E2 'Y' DERIV SIMPLIFY 0 SAME THEN
+     E2 E1 LEV 1 + DSIS2RC \-> SW
+     \<< TR "Intercambiar ecuaciones para despejar" 1 2 \->LIST 1 \->LIST + SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+    END
+    E1 'Y' DERIV 'Y' DERIV 'Y' DERIV SIMPLIFY 0 SAME NOT THEN
+     IF E2 'Y' DERIV 'Y' DERIV 'Y' DERIV SIMPLIFY 0 SAME THEN
+      E2 E1 LEV 1 + DSIS2RC \-> SW \<< TR SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+     ELSE "SE REQUIERE ELIMINACION DE GRADO MAYOR QUE DOS EN Y" DOERR END
+    END
+    E1 'Y' DERIV 'Y' DERIV 2 / SIMPLIFY
+    E1 'Y' DERIV 'Y' 0 = SUBST EVAL SIMPLIFY
+    E1 'Y' 0 = SUBST EVAL SIMPLIFY
+    E2 'Y' DERIV 'Y' DERIV 2 / SIMPLIFY
+    \-> A B C A2
+    \<<
+     CASE
+      A 0 SAME THEN
+       TR "Primera ecuacion: B(X)*Y+C(X)=0" B C 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+       C NEG B / SIMPLIFY E2 O1 O2 DRAMAC \-> GR
+       \<<
+        TR GR 2 GET + 'TR' STO
+        IF GR 3 GET "OK" == NOT THEN GR 3 GET DOERR END
+        E1 E2 B O1 O2 DSING2C \-> SR
+        \<<
+         TR SR 2 GET + 'TR' STO
+         IF SR 3 GET "OK" == NOT THEN SR 3 GET DOERR END
+         GR 1 GET SR 1 GET + 'VAL' STO "OK" 'AV' STO
+        \>>
+       \>>
+      END
+      A2 0 SAME THEN
+       E2 E1 LEV 1 + DSIS2RC \-> SW \<< TR SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+      END
+      A 'X' DERIV SIMPLIFY 0 SAME THEN
+       A E2 * A2 E1 * - EXPAND SIMPLIFY \-> NEW
+       \<<
+        TR "Eliminar Y^2: A1*E2-A2*E1=0; A1 constante no nula" A A2 NEW 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+        IF NEW 0 SAME THEN "SISTEMA DEPENDIENTE: FAMILIA DE PUNTOS" DOERR END
+        NEW E1 LEV 1 + DSIS2RC \-> SW
+        \<< TR SW 2 GET + 'TR' STO SW 1 GET 'VAL' STO SW 3 GET 'AV' STO \>>
+       \>>
+      END
+      "DOS CUADRATICAS CON COEFICIENTES VARIABLES: REQUIERE ELIMINACION ADICIONAL" DOERR
+     END
+    \>>
+   END
+   IF AV "OK" == NOT THEN AV DOERR END
+   { } \-> UNIQUE
+   \<<
+    IF VAL SIZE 0 > THEN
+     1 VAL SIZE FOR I
+      VAL I GET 1 GET VAL I GET 2 GET \-> PX PY
+      \<<
+       IF O1 O2 PX PY DCHK2C THEN
+        UNIQUE PX PY DADDPTC 'UNIQUE' STO
+        TR "Control final: ambas ecuaciones originales son cero" PX PY 0 0 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+       END
+      \>>
+     NEXT
+    END
+    UNIQUE 'VAL' STO
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

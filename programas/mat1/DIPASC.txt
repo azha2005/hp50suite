@@ -1,0 +1,146 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 V
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+F0 DREADC \-> F
+\<<
+ TR "Integrar respecto de" V 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Integrando" F 2 \->LIST 1 \->LIST + 'TR' STO
+ F V DERIV SIMPLIFY \-> DF
+ \<<
+ IF DF 0 SAME THEN
+   TR "Constante: integral k dV=k*V" F 2 \->LIST 1 \->LIST + 'TR' STO
+   F V * 'VAL' STO
+ ELSE
+   F TYPE 9 == NOT IF THEN
+     TR "Potencia: integral V dV=V^2/2" V 2 \->LIST 1 \->LIST + 'TR' STO
+     V SQ 2 / 'VAL' STO
+   ELSE
+     F OBJ\-> \->STR \-> N OP
+     \<<
+       N \->LIST \-> AA
+       \<<
+         AA 1 GET 0 \-> A B
+         \<<
+           IF N 2 == THEN AA 2 GET 'B' STO END
+           CASE
+             OP "+" == OP "-" == OR THEN
+               A V DIPASC B V DIPASC \-> P Q
+               \<<
+                 IF P 3 GET "OK" == NOT THEN P 3 GET DOERR END
+                 IF Q 3 GET "OK" == NOT THEN Q 3 GET DOERR END
+                 TR "Linealidad: integrar termino a termino" OP 2 \->LIST 1 \->LIST + P 2 GET + Q 2 GET + 'TR' STO
+                 IF OP "+" == THEN P 1 GET Q 1 GET + ELSE P 1 GET Q 1 GET - END 'VAL' STO
+               \>>
+             END
+             OP "NEG" == THEN
+               A V DIPASC \-> P \<<
+                 IF P 3 GET "OK" == NOT THEN P 3 GET DOERR END
+                 TR "Sacar factor constante -1" -1 2 \->LIST 1 \->LIST + P 2 GET + 'TR' STO
+                 P 1 GET NEG 'VAL' STO
+               \>>
+             END
+             OP "*" == THEN
+               A V DERIV SIMPLIFY B V DERIV SIMPLIFY \-> DA DB
+               \<<
+                 IF DA 0 SAME DB 0 SAME OR THEN
+                   IF DA 0 SAME THEN A B ELSE B A END \-> K G
+                   \<<
+                     G V DIPASC \-> P
+                     \<<
+                       IF P 3 GET "OK" == NOT THEN P 3 GET DOERR END
+                       TR "Factor constante fuera de la integral" K 2 \->LIST 1 \->LIST + P 2 GET + 'TR' STO
+                       K P 1 GET * 'VAL' STO
+                     \>>
+                   \>>
+                 ELSE
+                   A B V DSUB1C \-> S1
+                   \<<
+                     IF S1 3 GET "OK" == THEN TR S1 2 GET + 'TR' STO S1 1 GET 'VAL' STO ELSE
+                       B A V DSUB1C \-> S2
+                       \<<
+                         IF S2 3 GET "OK" == NOT THEN "ELEGIR PARTES O REESCRIBIR" DOERR END
+                         TR S2 2 GET + 'TR' STO S2 1 GET 'VAL' STO
+                       \>>
+                     END
+                   \>>
+                 END
+               \>>
+             END
+             OP "/" == THEN
+               A B V DIDIVC \-> R
+               \<<
+                 TR R 2 GET + 'TR' STO
+                 IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+                 R 1 GET 'VAL' STO
+               \>>
+             END
+             OP "^" == OP "INV" == OR OP "SQ" == OR OP 131 CHR == OR
+             OP "SIN" == OR OP "COS" == OR OP "TAN" == OR OP "EXP" == OR OP "LN" == OR THEN
+               IF OP "INV" == THEN -1 'B' STO END
+               IF OP "SQ" == THEN 2 'B' STO END
+               IF OP 131 CHR == THEN 1 2 / 'B' STO END
+               A V DERIV SIMPLIFY \-> DA
+               \<<
+                 IF OP "^" == DA 0 SAME AND THEN
+                  B V DERIV SIMPLIFY \-> DB
+                  \<<
+                   IF A \->NUM 0 > NOT DB 0 SAME OR DB V DERIV SIMPLIFY 0 SAME NOT OR THEN "EXPONENCIAL: BASE POSITIVA E INTERIOR LINEAL" DOERR END
+                   TR "Exponencial a^u: integral=a^u/(u'*LN(a))" A B DB 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+                   A B ^ DB A LN * / 'VAL' STO
+                  \>>
+                 ELSE
+                 IF DA 0 SAME DA V DERIV SIMPLIFY 0 SAME NOT OR THEN "INTERIOR NO LINEAL: SUSTITUCION" DOERR END
+                 TR "u=interior" A 2 \->LIST 1 \->LIST + 'TR' STO
+                 TR "du/dV=a constante; dV=du/a" DA 2 \->LIST 1 \->LIST + 'TR' STO
+                 CASE
+                   OP "SIN" == THEN "Integral SIN(u)=-COS(u)" A COS NEG DA / END
+                   OP "COS" == THEN "Integral COS(u)=SIN(u)" A SIN DA / END
+                   OP "TAN" == THEN "Integral TAN(u)=-LN(ABS(COS(u)))" A COS ABS LN NEG DA / END
+                   OP "EXP" == THEN "Integral EXP(u)=EXP(u)" A EXP DA / END
+                   OP "LN" == THEN "Partes: u=LN(z), dv=dz; integral=z*LN(z)-z" A A LN * A - DA / END
+                   IF B V DERIV SIMPLIFY 0 SAME NOT THEN "EXPONENTE VARIABLE: ELEGIR METODO" DOERR END
+                   IF B -1 SAME THEN "Integral du/u=LN(ABS(u)); u<>0" A ABS LN DA /
+                   ELSE "Potencia: integral u^n=u^(n+1)/(n+1); n<>-1" A B 1 + ^ DA B 1 + * / END
+                 END \-> RULE P
+                 \<<
+                   TR "Formula" RULE 2 \->LIST 1 \->LIST + 'TR' STO
+                   P 'VAL' STO
+                 \>>
+                 END
+               \>>
+             END
+             "FORMULA NO INMEDIATA: ELEGIR METODO" DOERR
+           END
+         \>>
+       \>>
+     \>>
+   END
+ END
+ VAL SIMPLIFY 'VAL' STO
+ TR "Primitiva sin C" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+ VAL F V DIPRVC \-> VC
+ \<<
+  TR VC 2 GET + 'TR' STO
+  IF VC 3 GET "OK" == NOT THEN VC 3 GET DOERR END
+ \>>
+ "OK" 'AV' STO
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

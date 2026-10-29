@@ -1,0 +1,88 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { YP YPP YPPP } DFREEC THEN "YP/YPP/YPPP ASIGNADA" DOERR END
+E0 DREADC \-> E
+\<<
+ 0 "NO DEFINIDO O SIN DERIVADAS" \-> ORD DG
+ \<<
+  { YP YPP YPPP } \-> VS
+  \<<
+   1 3 FOR I
+    IF E VS I GET DERIV SIMPLIFY 0 SAME NOT THEN I 'ORD' STO END
+   NEXT
+   TR "Convencion: YP=y',YPP=y'',YPPP=tercera derivada" VS 2 \->LIST 1 \->LIST + 'TR' STO
+   TR "Orden: mayor derivada presente en la ecuacion ORIGINAL" ORD 2 \->LIST 1 \->LIST + 'TR' STO
+   IF ORD 0 > THEN
+    1 \-> POL
+    \<<
+     { } E \-> TODO CUR
+     \<<
+      { } E
+      DO
+       IF DUP TYPE 9 == THEN
+        DUP \-> ND
+        \<<
+         OBJ\-> \->STR \-> NA OP
+         \<<
+          IF {"+" "-" "*" "NEG" "SQ" "^"} OP POS NOT THEN
+           1 3 FOR I IF ND VS I GET DERIV SIMPLIFY 0 SAME NOT THEN 0 'POL' STO END NEXT
+          END
+          IF OP "^" == THEN
+           NA \->LIST \-> AR
+           \<<
+            1 3 FOR I
+             IF AR 1 GET VS I GET DERIV SIMPLIFY 0 SAME NOT THEN
+              AR 2 GET \->NUM \-> P
+              \<< IF P TYPE 0 == THEN IF P 0 < P DUP 0 RND == NOT OR THEN 0 'POL' STO END ELSE 0 'POL' STO END \>>
+             END
+            NEXT
+            AR OBJ\-> DROP
+           \>>
+          END
+         \>>
+        \>>
+       ELSE DROP END
+      UNTIL DUP TYPE 5 == END
+      DROP
+     \>>
+     IF POL THEN
+      E VS ORD GET \-> VEX VHIGH
+      \<<
+       0 \-> DEG
+       \<<
+        WHILE VEX VHIGH DERIV SIMPLIFY 0 SAME NOT REPEAT
+         VEX VHIGH DERIV SIMPLIFY 'VEX' STO DEG 1 + 'DEG' STO
+         IF DEG 12 > THEN "GRADO MAYOR QUE LIMITE DE 12" DOERR END
+         TR "Derivar respecto de simbolo de mayor orden; cuenta" DEG VEX 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+        END
+        DEG 'DG' STO
+       \>>
+      \>>
+     ELSE
+      TR "Grado no definido: ecuacion no polinomica en derivadas en su forma dada" "No elevar/eliminar radicales sin revisar equivalencia" 2 \->LIST 1 \->LIST + 'TR' STO
+     END
+    \>>
+   END
+   ORD DG 2 \->LIST 'VAL' STO "OK EN LA NOTACION INDICADA" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

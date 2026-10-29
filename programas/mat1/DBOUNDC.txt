@@ -1,0 +1,35 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> A
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF A TYPE 2 == THEN
+ IF A "INF" == A "+INF" == OR A "+oo" == OR THEN "'+" 159 CHR + "'" + STR\-> EVAL 1E499 2 \->LIST 'VAL' STO ELSE
+  IF A "-INF" == A "-oo" == OR THEN "'-" 159 CHR + "'" + STR\-> EVAL -1E499 2 \->LIST 'VAL' STO
+  ELSE "LIMITE: REAL, INF O -INF COMO STRING" DOERR END
+ END
+ELSE
+ IF A TYPE 9 == A \->STR 159 CHR POS 0 > AND THEN
+  A IF A \->STR "-" POS THEN -1E499 ELSE 1E499 END 2 \->LIST 'VAL' STO
+ ELSE
+  A 'X' 0 DVALC \-> R
+  \<< IF R TYPE 2 == THEN "EXTREMO NO REAL" DOERR END R R \->NUM 2 \->LIST 'VAL' STO \>>
+ END
+END
+"OK" 'AV' STO
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

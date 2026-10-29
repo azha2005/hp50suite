@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Rolle y Lagrange"
+ { {"f o tramos:" "f(X) o {{f L U}... {a f(a)}}"} {"a:" "Extremo izquierdo" 0} {"b:" "Extremo derecho" 0} {"Teorema:" "0 Rolle,1 Lagrange" 0} }
+ { } { 'X^2' 0 2 1 } { 'X^2' 0 2 1 } INFORM
+ IF THEN
+  OBJ\-> DROP DTVMC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

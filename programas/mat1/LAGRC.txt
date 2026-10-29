@@ -1,43 +1,8 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ LAGRC - nucleo de LAGR. Multiplicadores de Lagrange.
-  @ Uso:  'f(X,Y)' 'g(X,Y)' c LAGRC
-  @ Deja: n1 = { LG SOL }
-  @         LG  = el lagrangiano L = f - LM*(g - c),
-  @         SOL = solucion del sistema, o un aviso si el CAS no pudo.
-  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en LAGR.
-  @
-  @ Los examenes modelo nunca piden clasificar los puntos, asi que no
-  @ arma el hessiano orlado.
-  @ Usa LM como multiplicador y DERIV para las parciales (el escape de
-  @ derivada parcial no esta confirmado en esta suite).
-  @ Purgar X, Y y LM antes de correrlo si tenian valor.
-  \-> F0 G0 C
-  \<<
-    DEPTH \-> D0
-    \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
-      \<<
-        G0 IF DUP TYPE 2 == THEN STR\-> END \-> G
-        \<<
-          F G C - 'LM' * - \-> LG
-          \<<
-            IFERR
-              LG 'X' DERIV 0 =
-              LG 'Y' DERIV 0 =
-              LG 'LM' DERIV 0 =
-              3 \->LIST { X Y LM } SOLVE
-            THEN
-              "EL CAS NO RESOLVIO EL SISTEMA: pasarlo a mano"
-            END
-            \-> SOL
-            \<<
-              LG SOL 2 \->LIST
-              \-> R \<< DEPTH D0 - DROPN R \>>
-            \>>
-          \>>
-        \>>
-      \>>
-    \>>
-  \>>
+ DLAGC \-> R
+ \<<
+  IF R 1 GET TYPE 5 == THEN R 1 GET 1 GET R 1 GET 2 GET R 2 GET R 3 GET 4 \->LIST
+  ELSE "" "" R 2 GET R 3 GET 4 \->LIST END
+ \>>
 \>>

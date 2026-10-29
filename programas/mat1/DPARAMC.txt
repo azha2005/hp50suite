@@ -1,0 +1,57 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 A M
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y K } DFREEC THEN "X/Y/K ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+ F 'X' DDERC \-> DR
+ \<<
+  TR "Parametro se escribe K y se mantiene constante al derivar X" F 2 \->LIST 1 \->LIST + DR 2 GET + 'TR' STO
+  IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END
+  DR 1 GET 'X' A = SUBST EVAL M - SIMPLIFY \-> EQ
+  \<<
+   TR "Imponer f'(a;K)=pendiente dada" A M EQ 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+   EQ 'K' DZEROC \-> Z
+   \<<
+    TR Z 2 GET + 'TR' STO
+    IF Z 3 GET "OK" == NOT THEN Z 3 GET DOERR END
+    {} \-> ROWS
+    \<<
+     IF Z 1 GET SIZE 0 > THEN
+      1 Z 1 GET SIZE FOR I
+       Z 1 GET I GET \-> KP
+       \<<
+        F 'K' KP = SUBST A DRECTAC \-> RR
+        \<<
+         TR RR 2 GET + 'TR' STO
+         IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+         IF RR 1 GET 1 GET M - \->NUM ABS 1E-10 > THEN "PARAMETRO NO VERIFICA PENDIENTE" DOERR END
+         ROWS KP RR 1 GET 3 GET 2 \->LIST 1 \->LIST + 'ROWS' STO
+        \>>
+       \>>
+      NEXT
+     END
+     ROWS 'VAL' STO "OK" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

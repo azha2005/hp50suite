@@ -1,0 +1,15 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> CS PX PY
+ \<<
+  0 \-> FOUND
+  \<<
+   IF CS SIZE 0 > THEN
+    1 CS SIZE FOR I
+     IF CS I GET 1 GET PX - SIMPLIFY 0 SAME CS I GET 2 GET PY - SIMPLIFY 0 SAME AND THEN 1 'FOUND' STO END
+    NEXT
+   END
+   IF FOUND THEN CS ELSE CS PX PY 2 \->LIST 1 \->LIST + END
+  \>>
+ \>>
+\>>

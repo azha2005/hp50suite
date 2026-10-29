@@ -1,0 +1,23 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Integral impropia por limites"
+ { {"f(X):" "Funcion ORIGINAL"} {"Variable:" "0 X,1 Y" 0} {"a:" "Real o string -INF"} {"b:" "Real o string INF"} }
+ { } { '1/X^2' 0 1 "INF" } { '1/X^2' 0 1 "INF" } INFORM
+ IF THEN
+  OBJ\-> DROP \-> F IDX A B
+ \<<
+  "Metodo de la primitiva" {{"Metodo:" "0 inmediata,1 sustitucion,2 partes,3 fracciones" 0} {"Auxiliar:" "u para partes; {u H(U)} para sustitucion"}} {} {0 0} {0 0} INFORM
+  IF THEN OBJ\-> DROP \-> M AUX
+   \<< F IF IDX 0 == THEN 'X' ELSE 'Y' END A B M AUX DIMPRGC \>>
+  ELSE "" {} "CANCELADO" 3 \->LIST END
+ \>> \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

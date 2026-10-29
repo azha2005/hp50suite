@@ -1,0 +1,40 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X Y } DFREEC THEN "X/Y ASIGNADA" DOERR END
+F0 DREADC \-> F
+\<<
+ F 'X' DDERC F 'Y' DDERC \-> RX RY
+ \<<
+  TR "Parciales primeras: otra variable CONSTANTE" F 2 \->LIST 1 \->LIST + RX 2 GET + RY 2 GET + 'TR' STO
+  IF RX 3 GET "OK" == NOT RY 3 GET "OK" == NOT OR THEN "PARCIAL NO COMPLETADA" DOERR END
+  RX 1 GET RY 1 GET \-> FX FY
+  \<<
+   FX 'X' DDERC FX 'Y' DDERC FY 'X' DDERC FY 'Y' DDERC \-> XX XY YX YY
+   \<<
+    TR "Volver a derivar cada parcial: XX,XY,YX,YY" 0 2 \->LIST 1 \->LIST + XX 2 GET + XY 2 GET + YX 2 GET + YY 2 GET + 'TR' STO
+    IF XX 3 GET "OK" == NOT XY 3 GET "OK" == NOT OR YX 3 GET "OK" == NOT OR YY 3 GET "OK" == NOT OR THEN "SEGUNDA PARCIAL NO COMPLETADA" DOERR END
+    TR "Comparar mixtas: fXY-fYX; igualdad requiere regularidad" XY 1 GET YX 1 GET - SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+    FX FY XX 1 GET XY 1 GET YX 1 GET YY 1 GET 6 \->LIST 'VAL' STO "OK: formulas en sus dominios" 'AV' STO
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

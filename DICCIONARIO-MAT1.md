@@ -1,15 +1,16 @@
 # Diccionario de programas — Matemática I
 
-**Módulo nuevo en desarrollo:** integración guiada `DINTEG`, implícita `DIMPL`
-y visor `DPASOS`, en un paquete separado. Alcance, ejemplos y limitaciones en
-[programas/P2.md](programas/P2.md). No reemplaza todavía la distribución estable.
+**Módulos guiados por tema:** derivadas, integración, teoremas, EDO y varias
+variables. Entradas, pasos y límites en [programas/P2.md](programas/P2.md).
+La ampliación está probada en ROM de 50g; Conn4x y hardware real pendientes.
 
 [Primera prueba e instalación](INICIO-RAPIDO.md) ·
 [Descargas](https://github.com/azha2005/hp50suite/releases) ·
 [Reportar una prueba](https://github.com/azha2005/hp50suite/issues/new?template=prueba.yml)
 
 Referencia rápida para usar la suite en la HP 50g. Todos se corren desde la
-carpeta donde se cargó `MAT1.txt` (queda todo en un mismo `DIR`). Piden los
+carpeta donde se cargó `MAT1.txt` o el paquete temático correspondiente
+(cada paquete es un `DIR` autocontenido). Piden los
 datos con un formulario (`INFORM`) y muestran el resultado en cajas
 (`MSGBOX`): apretar **OK** para pasar a la caja siguiente.
 
@@ -252,10 +253,35 @@ programa que se vaya a usar.
 - **Pide:** f(X,Y), g(X,Y), c (la restricción es g = c).
 - **Da:** el lagrangiano y los puntos críticos.
 - **Ejemplo:** `'X*Y'`, `'X+Y'`, 10 → punto crítico X = 5, Y = 5 (λ = 5)
-- Es el más frágil: depende de que el CAS resuelva un sistema no lineal. Si
-  avisa que no resolvió, es el límite del CAS, no un error del armado.
+- Desarrolla las tres ecuaciones, elimina el multiplicador, resuelve por
+  sustitución y verifica cada candidato. Clasifica localmente bajo regularidad
+  C2; los puntos no regulares y los sistemas fuera de alcance se avisan.
+  No afirma máximos absolutos sólo por ser candidatos.
 
 ---
+
+## Módulos guiados por tema (29/10/2026)
+
+La guía completa, formularios, ejemplos, contratos y límites están en
+[programas/P2.md](programas/P2.md). Los paquetes por tema incluyen sus propias
+dependencias; transferirlos como carpetas completas y trabajar dentro de ellas.
+
+| Paquete | Programas y desarrollo |
+|---|---|
+| MAT1-P2 | DINTEG: reglas, sustitución, partes repetidas/cíclicas y sistema de fracciones; DINTDEF: Barrow/promedio integral; DAREA: tramos y gráfico; DIMPR: límites independientes; DTFC: cadena en ambos extremos |
+| MAT1-DER | DDER: reglas por subexpresión/logarítmica; DDEF: ambas definiciones; DTANOR/DTANP: rectas y búsqueda por pendiente/parámetro; DIMPL: parciales por término y ramas; DDERLAT: verdadero f(a); DDERTAB: datos e inversa; DDIF: aproximación y error |
+| MAT1-EST | DESTFUN: signos y coordenadas; DWEIER: candidatos y empates; DTVM: Rolle/Lagrange, también a trozos; DELAST: valor, condición y convención; DSIGNOS: conclusiones desde datos sin inventar coordenadas |
+| MAT1-EDO | DEDO: separar desde y'=R y conservar equilibrios; DSEP/DSEPI: integración ya separada; DEDOVER: verificar solución; DORDEN: orden/grado; DRECEL: recuperar desde elasticidad |
+| MAT1-MULTI | DPARCIAL: primeras/segundas/mixtas; DHESS: estacionarios y clasificación; LAGR: restricción, sistema, comprobación y segunda variación local |
+| MAT1-TEORIA | DTEORIA: doce guías de hipótesis, tesis, prueba y contraejemplos |
+
+El visor conserva la traza completa en la pila y pagina las expresiones largas.
+DVER ofrece desarrollo completo por defecto y resumen opcional; DPASOS permite
+elegir y repetir pasos. Un estado condicional o no resuelto debe revisarse.
+
+Los algoritmos tienen un alcance explícito: el CAS aún propone factores,
+intersecciones y algunos límites. Una tabla de raíces incompleta no certifica
+extremos. La aceptación de Conn4x/memoria/teclado en la HP física está pendiente.
 
 ## Utilidad
 

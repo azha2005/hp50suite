@@ -1,0 +1,59 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 L0 U0 A
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X T } DFREEC THEN "X/T ASIGNADA" DOERR END
+F0 DREADC L0 DREADC U0 DREADC \-> F L U
+\<<
+ IF F 'X' DERIV SIMPLIFY 0 SAME NOT THEN "INTEGRANDO DEPENDE DE X: REQUIERE LEIBNIZ" DOERR END
+ TR "H(X)=integral desde L(X) hasta U(X) de f(T)dT" F L U 3 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Hipotesis TFC: f continua entre los extremos, L y U derivables" F 'T' 'X' = SUBST DCONDC 2 \->LIST 1 \->LIST + 'TR' STO
+ L 'X' DDERC U 'X' DDERC \-> DL DU
+ \<<
+  TR DL 2 GET + DU 2 GET + 'TR' STO
+  IF DL 3 GET "OK" == NOT DU 3 GET "OK" == NOT OR THEN "EXTREMO NO DERIVABLE" DOERR END
+  F 'T' U = SUBST F 'T' L = SUBST \-> FU FLW
+  \<<
+   TR "Regla: H'=f(U)*U'-f(L)*L'" "Cadena en AMBOS extremos" 2 \->LIST 1 \->LIST + 'TR' STO
+   TR "Termino superior: f(U), U'" FU DU 1 GET 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+   TR "Termino inferior: f(L), L'" FLW DL 1 GET 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+   FU DU 1 GET * FLW DL 1 GET * - SIMPLIFY \-> DH
+   \<<
+    TR "Restar y simplificar" DH 2 \->LIST 1 \->LIST + 'TR' STO
+    "NO EVALUADO" \-> AT
+    \<<
+     IF A TYPE 2 == THEN "CONDICIONAL: verificar continuidad en el intervalo" 'AV' STO ELSE
+      L 'X' A DVALC U 'X' A DVALC \-> LA UA
+      \<<
+       IF LA TYPE 2 == UA TYPE 2 == OR THEN "EXTREMO NO REAL EN a" DOERR END
+       F 'T' 'X' = SUBST LA UA MIN LA UA MAX DCLOSEC \-> HC
+       \<<
+        TR "Continuidad comprobada para los extremos evaluados" HC 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+        IF HC 1 GET "OK" == NOT THEN HC 1 GET DOERR END
+        DH 'X' A DVALC 'AT' STO "OK EN EL PUNTO; requiere entorno valido" 'AV' STO
+       \>>
+      \>>
+     END
+     DH AT 2 \->LIST 'VAL' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

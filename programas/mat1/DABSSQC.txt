@@ -1,0 +1,55 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> EX
+ \<<
+  {} \-> NODES
+  \<<
+   {} EX
+   DO
+    IF DUP TYPE 9 == THEN
+     DUP \-> ND
+     \<<
+      OBJ\-> \->STR \-> N OP
+      \<<
+       N \->LIST \-> AR
+       \<<
+        IF OP "SQ" == OP "^" == OR THEN
+         IF OP "SQ" == THEN 1 ELSE AR 2 GET 2 SAME END
+         IF THEN
+          AR 1 GET \-> BASE
+          \<<
+           IF BASE TYPE 9 == THEN
+            BASE OBJ\-> \->STR \-> NB OB
+            \<<
+             NB \->LIST \-> BA
+             \<< IF OB "ABS" == THEN NODES ND BA 1 GET SQ 2 \->LIST 1 \->LIST + 'NODES' STO END \>>
+            \>>
+           END
+          \>>
+         END
+        END
+        IF OP "TAN" == THEN
+         NODES ND AR 1 GET SIN AR 1 GET COS / 2 \->LIST 1 \->LIST + 'NODES' STO
+        END
+        AR OBJ\-> DROP
+       \>>
+      \>>
+     \>>
+    ELSE DROP END
+   UNTIL DUP TYPE 5 == END
+   DROP
+   IF NODES SIZE 0 > THEN
+    1 NODES SIZE FOR I
+     NODES I GET \-> ND
+     \<<
+      EX \->STR ND 1 GET \->STR DUP SIZE 1 - 2 SWAP SUB
+      ND 2 GET \->STR
+      IF DUP 1 1 SUB "'" == THEN DUP SIZE 1 - 2 SWAP SUB END
+      "(" SWAP + ")" + SREPL DROP STR\-> 'EX' STO
+     \>>
+    NEXT
+   END
+   EX
+  \>>
+ \>>
+\>>

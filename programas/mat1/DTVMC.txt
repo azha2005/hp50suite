@@ -1,0 +1,125 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> FS0 A B MODE
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X } DFREEC THEN "X ASIGNADA" DOERR END
+IF A B < NOT THEN "SE REQUIERE a<b FINITOS" DOERR END
+IF MODE 0 == MODE 1 == OR NOT THEN "0 ROLLE,1 LAGRANGE" DOERR END
+FS0 IF DUP TYPE 5 == NOT THEN DREADC A B 3 \->LIST 1 \->LIST END \-> FS
+\<<
+ FS A DPCVALC FS B DPCVALC \-> RA RB
+ \<<
+  IF RA 3 GET "OK" == NOT RB 3 GET "OK" == NOT OR THEN "EXTREMOS NO DEFINIDOS" DOERR END
+  RA 1 GET RB 1 GET \-> FA FB
+  \<<
+   IF FA TYPE 2 == FB TYPE 2 == OR THEN "EXTREMOS NO REALES" DOERR END
+   FB FA - B A - / SIMPLIFY \-> S
+   \<<
+    TR "Hipotesis: cerrado [a,b] y f(a),f(b)" A B FA FB 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+    IF MODE 0 == THEN
+     TR "Rolle exige f(a)=f(b)" FB FA - SIMPLIFY 2 \->LIST 1 \->LIST + 'TR' STO
+     IF FB FA - SIMPLIFY 0 SAME NOT THEN "ROLLE NO APLICA: EXTREMOS DISTINTOS" DOERR END
+    END
+    TR "Pendiente secante: (f(b)-f(a))/(b-a)" S 2 \->LIST 1 \->LIST + 'TR' STO
+    A "" { } { } \-> CUR PREV CS FAMS
+    \<<
+     1 FS SIZE FOR I
+      FS I GET \-> RW
+      \<<
+       IF RW SIZE 3 == THEN
+        RW 1 GET DREADC RW 2 GET A MAX RW 3 GET B MIN \-> F L U
+        \<<
+         IF L U < THEN
+          IF L CUR == NOT THEN "TRAMOS CON HUECO, SOLAPADOS O DESORDENADOS" DOERR END
+          F L U DCLOSEC \-> HC
+          \<<
+           TR "Continuidad de cada rama en el cerrado" F L U HC 1 GET 4 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+           IF HC 1 GET "OK" == NOT THEN HC 1 GET DOERR END
+          \>>
+          FS L DPCVALC 1 GET F 'X' L DVALC - SIMPLIFY 0 SAME
+          FS U DPCVALC 1 GET F 'X' U DVALC - SIMPLIFY 0 SAME AND
+          IF NOT THEN "NO CONTINUA: VALOR EN CORTE DIFIERE DE LA RAMA" DOERR END
+          IF L A > THEN
+           PREV F L FS L DPCVALC 1 GET DDERLATC \-> DL
+           \<<
+            TR DL 2 GET + 'TR' STO
+            IF DL 3 GET "OK" == NOT THEN DL 3 GET DOERR END
+            IF DL 1 GET 3 GET "DERIVABLE" == NOT THEN "NO DERIVABLE EN CORTE INTERIOR" DOERR END
+            IF DL 1 GET 1 GET S - SIMPLIFY 0 SAME THEN CS L 1 \->LIST + 'CS' STO END
+           \>>
+          END
+          F 'X' DDERC \-> DR
+          \<<
+           TR DR 2 GET + 'TR' STO
+           IF DR 3 GET "OK" == NOT THEN DR 3 GET DOERR END
+           F 1 DBRKC \-> DC
+           \<<
+            IF DC 5 GET SIZE THEN DC 5 GET DOERR END
+            IF DC 4 GET SIZE 0 > THEN
+             1 DC 4 GET SIZE FOR NDJ
+              DC 4 GET NDJ GET \-> NDPT
+              \<<
+               IF NDPT \->NUM L \->NUM > NDPT \->NUM U \->NUM < AND THEN
+                F F NDPT F 'X' NDPT DVALC DDERLATC \-> DLR
+                \<<
+                 TR DLR 2 GET + 'TR' STO
+                 IF DLR 3 GET "OK" == NOT THEN DLR 3 GET DOERR END
+                 IF DLR 1 GET 3 GET "DERIVABLE" == NOT THEN "NO DERIVABLE DENTRO DE UNA RAMA" DOERR END
+                \>>
+               END
+              \>>
+             NEXT
+            END
+           \>>
+           DR 1 GET S - 'X' DZEROC \-> Z
+           \<<
+            TR "Ecuacion f'(c)=pendiente secante" DR 1 GET S = 2 \->LIST 1 \->LIST + Z 2 GET + 'TR' STO
+            IF Z 3 GET "IDENTIDAD" == THEN
+             FAMS L U "TODO INTERIOR" 3 \->LIST 1 \->LIST + 'FAMS' STO
+            ELSE
+             IF Z 3 GET "OK" == NOT THEN Z 3 GET DOERR END
+             IF Z 1 GET SIZE 0 > THEN
+              1 Z 1 GET SIZE FOR J
+               Z 1 GET J GET \-> P
+               \<<
+                IF P \->NUM L \->NUM > P \->NUM U \->NUM < AND THEN CS P 1 \->LIST + 'CS' STO
+                ELSE TR "Descartar c fuera del abierto de la rama" P 2 \->LIST 1 \->LIST + 'TR' STO END
+               \>>
+              NEXT
+             END
+            END
+           \>>
+          \>>
+          F 'PREV' STO U 'CUR' STO
+         END
+        \>>
+       ELSE IF RW SIZE 2 == NOT THEN "FILA: {f L U} O {a f(a)}" DOERR END END
+      \>>
+     NEXT
+     IF CUR B == NOT THEN "NO SE CUBRIO TODO [a,b]" DOERR END
+     CS DORDC FAMS S 3 \->LIST 'VAL' STO
+     TR "c interiores y familias de soluciones" VAL 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "Interpretacion: tangente paralela a la secante" S 2 \->LIST 1 \->LIST + 'TR' STO
+     "OK: hipotesis verificadas en ramas soportadas" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

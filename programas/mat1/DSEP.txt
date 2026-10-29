@@ -1,31 +1,17 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DSEP - ecuacion diferencial separable, solucion general.
-  @ Interfaz: el calculo esta en DSEPC, que toma 'M(Y)' 'N(X)' de la pila
-  @ y devuelve { FY GX SOL }.
-  @ Entras con la ecuacion YA separada: M(Y) dy = N(X) dx. La separacion
-  @ algebraica es justo lo que el profesor quiere ver escrito a mano.
-  @ La solucion queda tambien en la pila.
-  "EDO separable: M(Y)dy = N(X)dx"
-  {
-    { "M(Y), ej 'Y':" "'Y'" }
-    { "N(X), ej 'X':" "'X'" }
-  }
-  { } { } { }
-  INFORM
-  IF THEN
-    OBJ\-> DROP DSEPC OBJ\-> DROP \-> FY GX SOL
-    \<<
-      "Integral de M(Y):" 10 CHR +
-      FY \->STR +
-      MSGBOX
-      "Integral de N(X):" 10 CHR +
-      GX \->STR +
-      MSGBOX
-      "Solucion general:" 10 CHR +
-      SOL \->STR +
-      MSGBOX
-      SOL
-    \>>
-  END
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "EDO ya separada con pasos"
+ { {"M(Y):" "M(Y)*dY=N(X)*dX"} {"N(X):" "Rama en X"} }
+ { } { 'Y' 'X' } { 'Y' 'X' } INFORM
+ IF THEN
+  OBJ\-> DROP {} DSEPGC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

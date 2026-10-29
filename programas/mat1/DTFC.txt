@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "TFC y extremos variables"
+ { {"f(T):" "Integrando, usar T"} {"L(X):" "Extremo inferior"} {"U(X):" "Extremo superior"} {"a o NO:" "Numero para evaluar, o string NO"} }
+ { } { 'T^2' 0 'X^2' 1 } { 'T^2' 0 'X^2' 1 } INFORM
+ IF THEN
+  OBJ\-> DROP DTFCC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

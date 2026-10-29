@@ -1,0 +1,31 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E VS PS
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF VS SIZE PS SIZE == NOT THEN "VARIABLES Y VALORES DE DISTINTO TAMANO" DOERR END
+E DREADC VS PS DREALNC \-> R
+\<<
+ R \->NUM \-> NR
+ \<<
+  IF NR TYPE 0 == NOT THEN "NO REAL" DOERR END
+  IF NR ABS 1E400 > THEN "NO FINITO" DOERR END
+  R SIMPLIFY 'VAL' STO "OK" 'AV' STO
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

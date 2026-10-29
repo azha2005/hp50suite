@@ -1,0 +1,54 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E1 E2 COEF O1 O2
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+COEF 'X' DZEROC \-> ZC
+\<<
+ TR "NO perder la rama donde el coeficiente divisor se anula" COEF 2 \->LIST 1 \->LIST + ZC 2 GET + 'TR' STO
+ IF ZC 3 GET "OK" == NOT THEN "CEROS DEL COEFICIENTE NO RESUELTOS" DOERR END
+ { } \-> CS
+ \<<
+  IF ZC 1 GET SIZE 0 > THEN
+   1 ZC 1 GET SIZE FOR I
+    ZC 1 GET I GET \-> PX
+    \<<
+     E1 'X' PX = SUBST EVAL SIMPLIFY E2 'X' PX = SUBST EVAL SIMPLIFY \-> U V
+     \<<
+      U 'Y' DZEROC \-> ZY
+      \<<
+       TR "Evaluar sistema en coeficiente=0" PX U V 3 \->LIST 2 \->LIST 1 \->LIST + ZY 2 GET + 'TR' STO
+       IF ZY 3 GET "IDENTIDAD" == THEN
+        V 'Y' DZEROC 'ZY' STO TR ZY 2 GET + 'TR' STO
+       END
+       IF ZY 3 GET "OK" == NOT THEN "RAMA SINGULAR NO AISLADA O SIN RESOLVER" DOERR END
+       IF ZY 1 GET SIZE 0 > THEN
+        1 ZY 1 GET SIZE FOR J
+         ZY 1 GET J GET \-> PY
+         \<< IF O1 O2 PX PY DCHK2C THEN CS PX PY DADDPTC 'CS' STO END \>>
+        NEXT
+       END
+      \>>
+     \>>
+    \>>
+   NEXT
+  END
+  CS 'VAL' STO "OK" 'AV' STO
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

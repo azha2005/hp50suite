@@ -1,0 +1,35 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> TAB A
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+"DATO NO DISPONIBLE" 'AV' STO
+IF TAB TYPE 5 == NOT THEN "TABLA DE FILAS {x f f'}" DOERR END
+IF TAB SIZE 0 > THEN
+ 1 TAB SIZE FOR I
+  TAB I GET \-> ROW
+  \<<
+   IF ROW TYPE 5 == THEN
+    IF ROW SIZE 3 == THEN
+     IF ROW 1 GET A SAME THEN ROW 'VAL' STO "OK" 'AV' STO END
+    END
+   END
+  \>>
+ NEXT
+END
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

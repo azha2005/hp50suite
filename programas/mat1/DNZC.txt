@@ -1,0 +1,77 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> E0
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+E0 DREADC SIMPLIFY IF DUP TYPE 9 == THEN FXND ELSE 1 END \-> N D
+\<<
+ TR "Ecuacion equivalente: numerador=0, denominador<>0" N D 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ IF N TYPE 9 == THEN N FACTOR DMULC ELSE N 1 \->LIST END \-> FS
+ \<<
+  1 \-> P
+  \<<
+   1 FS SIZE FOR I
+    FS I GET \-> F
+    \<<
+     0 \-> SKIP
+     \<<
+      1 8 FOR PWRSTEP
+      IF F TYPE 9 == THEN
+       F OBJ\-> \->STR \-> NA OP
+       \<< NA \->LIST \-> AR
+        \<<
+         CASE
+          OP "EXP" == THEN
+           1 'SKIP' STO TR "EXP(h) nunca es cero: quitar factor" F 2 \->LIST 1 \->LIST + 'TR' STO
+          END
+          OP "^" == THEN
+           IF AR 2 GET 'X' DERIV SIMPLIFY 0 SAME AR 2 GET 'Y' DERIV SIMPLIFY 0 SAME AND THEN
+            AR 2 GET \->NUM \-> EX
+            \<<
+             IF EX 0 > THEN
+              TR "Potencia positiva =0 exige base=0; conservar dominio ORIGINAL" F 2 \->LIST 1 \->LIST + 'TR' STO
+              AR 1 GET 'F' STO
+             ELSE 1 'SKIP' STO TR "Potencia no positiva nunca es cero donde esta definida" F 2 \->LIST 1 \->LIST + 'TR' STO END
+            \>>
+           END
+          END
+          OP 131 CHR == THEN
+           TR "Raiz=0 exige radicando=0; conservar dominio ORIGINAL" F 2 \->LIST 1 \->LIST + 'TR' STO
+           AR 1 GET 'F' STO
+          END
+          OP "XROOT" == THEN
+           IF AR 2 GET \->NUM 0 > THEN AR 1 GET 'F' STO ELSE 1 'SKIP' STO END
+          END
+         END
+        \>>
+       \>>
+      END
+      NEXT
+      IF F 'X' DERIV SIMPLIFY 0 SAME F 'Y' DERIV SIMPLIFY 0 SAME AND THEN
+       F 'X' 0 DVALC \-> FV
+       \<< IF FV TYPE 2 == NOT THEN IF FV \->NUM 0 == NOT THEN 1 'SKIP' STO END END \>>
+      END
+      IF SKIP NOT THEN P F * 'P' STO END
+     \>>
+    \>>
+   NEXT
+   P SIMPLIFY 'VAL' STO "OK" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

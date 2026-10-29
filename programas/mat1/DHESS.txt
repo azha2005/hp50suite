@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Puntos criticos y hessiano"
+ { {"f(X,Y):" "Funcion original"} {"Modo:" "0 buscar,1 comprobar candidatos dados" 0} {"Candidatos:" "{{x y}...}; se usa en modo1"} }
+ { } { 'X^3-3*X*Y+Y^3' 0 {} } { 'X^3-3*X*Y+Y^3' 0 {} } INFORM
+ IF THEN
+  OBJ\-> DROP DHESSC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
+\>>

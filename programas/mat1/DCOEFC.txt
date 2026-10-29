@@ -1,0 +1,17 @@
+%%HP: T(3)A(R)F(.);
+\<<
+ \-> P
+ \<<
+  P DEGREE \-> DG
+  \<<
+   { } P \-> CS Q
+   \<<
+    0 DG FOR I
+     Q 0 HORNER \-> QU RT CO
+     \<< CS CO 1 \->LIST + 'CS' STO QU 'Q' STO \>>
+    NEXT
+    CS
+   \>>
+  \>>
+ \>>
+\>>

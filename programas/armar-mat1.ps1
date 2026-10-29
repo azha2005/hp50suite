@@ -35,42 +35,6 @@ $orden = @('TDSEP','TEFUN','TCHK','TD','TF',
            'DFREEC','DREADC','DPOWC','DREALC','DVALC','DROOTC','DCUTSC','DORDC','DINFOC','DCLOSEC','DABRC',
            'DINSUMC','DINPRC','DINTEGC','DINPVIC','DPAGC','DPANTC','DPASOS','DBRKC','DANAC','DANAG')
 
-$lineas = New-Object System.Collections.Generic.List[string]
-$lineas.Add('%%HP: T(3)A(R)F(.);')
-$lineas.Add('DIR')
-
-foreach ($nombre in $orden) {
-    $ruta = Join-Path $origen "$nombre.txt"
-    if (-not (Test-Path $ruta)) {
-        Write-Host "FALTA: $nombre.txt" -ForegroundColor Red
-        exit 1
-    }
-    # Se descarta la primera linea (el header %%HP de cada archivo suelto).
-    $cuerpo = [System.IO.File]::ReadAllText($ruta) -split "`r?`n" | Select-Object -Skip 1
-    $lineas.Add("  $nombre")
-    foreach ($l in $cuerpo) {
-        # Sin comentarios ni sangria: el compilador los tira igual, y la 50g
-        # tiene que tener en RAM el texto entero MAS el objeto compilado.
-        # Con comentarios MAT1.txt pesaba 171 KB y la 50g respondio Syntax
-        # Error + Insufficient Memory (02/10/2026); sin ellos, 52 KB.
-        # Seguro porque ningun string ocupa dos lineas y ningun @ va
-        # adentro de un string (chequeado al armar este cambio).
-        $t = $l.Trim()
-        if ($t.Length -gt 0 -and -not $t.StartsWith("@")) { $lineas.Add($t) }
-    }
-}
-$lineas.Add('END')
-
-# CRLF explicito, ASCII puro, sin BOM.
-$texto = ($lineas -join "`r`n") + "`r`n"
-[System.IO.File]::WriteAllText($salida, $texto, (New-Object System.Text.ASCIIEncoding))
-
-$bytes   = [System.IO.File]::ReadAllBytes($salida)
-$noAscii = ($bytes | Where-Object { $_ -gt 127 }).Count
-$ab = ([regex]::Matches($texto, [regex]::Escape('\<<'))).Count
-$ce = ([regex]::Matches($texto, [regex]::Escape('\>>'))).Count
-
-Write-Host "MAT1.txt: $($orden.Count) objetos, $ab/$ce bloques, $noAscii bytes no-ASCII" -ForegroundColor Green
-if ($ab -ne $ce -or $noAscii -gt 0) { Write-Host "  REVISAR" -ForegroundColor Red; exit 1 }
-Write-Host "Verificar los archivos sueltos de mat1\, que son la fuente:" -ForegroundColor DarkGray
-Write-Host "  ..\verificar.ps1 .\mat1\*.txt" -ForegroundColor DarkGray
+# Resolve every current transitive dependency, including the guided kernels.
+& python (Join-Path (Split-Path $PSScriptRoot -Parent) 'herramientas/empaquetar-mat1.py') --base
+if ($LASTEXITCODE -ne 0) { throw 'MAT1 packaging failed' }

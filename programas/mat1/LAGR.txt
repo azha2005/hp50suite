@@ -1,31 +1,17 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ LAGR - multiplicadores de Lagrange, puntos criticos restringidos.
-  @ Interfaz: el calculo esta en LAGRC, que toma 'f(X,Y)' 'g(X,Y)' c de
-  @ la pila y devuelve { LG SOL }.
-  @ Restriccion de la forma g(X,Y) = c.
-  @ NO clasifica los puntos (no arma el hessiano orlado): los examenes
-  @ modelo no lo piden.
-  @ Purgar X, Y y LM antes de correrlo si tenian valor.
-  @ El lagrangiano y la solucion quedan tambien en la pila.
-  "Lagrange: max/min de f con g=c"
-  {
-    { "f(X,Y), ej 'X*Y':" "'X*Y'" }
-    { "g(X,Y), ej 'X+Y':" "'X+Y'" }
-    { "c (valor de la restriccion):" "10" 0 }
-  }
-  { } { } { }
-  INFORM
-  IF THEN
-    OBJ\-> DROP LAGRC OBJ\-> DROP \-> LG SOL
-    \<<
-      "Lagrangiano:" 10 CHR +
-      LG \->STR +
-      MSGBOX
-      "Puntos criticos:" 10 CHR +
-      SOL \->STR +
-      MSGBOX
-      LG SOL
-    \>>
-  END
+ RCLF \-> FLUI
+ \<<
+ -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+ IFERR
+ "Multiplicadores con desarrollo"
+ { {"f(X,Y):" "Funcion objetivo"} {"g(X,Y):" "Restriccion g=k"} {"k:" "Valor de la restriccion" 0} }
+ { } { 'X*Y' 'X+Y' 6 } { 'X*Y' 'X+Y' 6 } INFORM
+ IF THEN
+  OBJ\-> DROP DLAGC \-> RES
+  \<< RES DUP 2 GET DVER \>>
+ END
+ THEN FLUI STOF ERRM DOERR END
+ FLUI STOF
+ \>>
 \>>

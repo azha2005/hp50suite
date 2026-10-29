@@ -1,0 +1,57 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> M0 N0 PVI
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF {X Y U C} DFREEC THEN "X/Y/U/C ASIGNADA" DOERR END
+M0 DREADC N0 DREADC \-> M N
+\<<
+ TR "Ecuacion YA separada: M(Y)dY=N(X)dX" M N 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ IF M 'X' DERIV SIMPLIFY 0 SAME NOT N 'Y' DERIV SIMPLIFY 0 SAME NOT OR THEN "M SOLO Y; N SOLO X" DOERR END
+ M 'Y' DAUTINTC N 'X' DAUTINTC \-> IR JR
+ \<<
+  TR IR 2 GET + JR 2 GET + 'TR' STO
+  IF IR 3 GET "OK" == NOT JR 3 GET "OK" == NOT OR THEN "NO PRIMITIVA ELEMENTAL DESARROLLADA" DOERR END
+  IR 1 GET JR 1 GET \-> FY GX
+  \<<
+   'C' \-> K
+   \<<
+    IF PVI SIZE 0 > THEN
+     IF PVI SIZE 2 == NOT THEN "PVI={x0 y0}" DOERR END
+     M 'Y' PVI 2 GET DVALC \-> MP
+     \<< IF MP TYPE 2 == THEN "M NO REAL EN PVI" DOERR END IF MP \->NUM 0 == THEN "M(y0)=0: NO DESPEJAR y' EN ESTE PUNTO" DOERR END \>>
+     FY 'Y' PVI 2 GET DVALC GX 'X' PVI 1 GET DVALC \-> A B
+     \<<
+      IF A TYPE 2 == B TYPE 2 == OR THEN "PVI FUERA DEL DOMINIO DE PRIMITIVAS" DOERR END
+      TR "Evaluar FY(y0), GX(x0)" A B 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+      A B - SIMPLIFY 'K' STO
+      TR "C=FY(y0)-GX(x0)" K 2 \->LIST 1 \->LIST + 'TR' STO
+     \>>
+    END
+    FY GX K + = \-> SOL
+    \<<
+     TR "Solucion implicita" SOL 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "Al derivar: FY'=M y GX'=N; comprobar ecuacion separada" FY 'Y' DERIV M - SIMPLIFY GX 'X' DERIV N - SIMPLIFY 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+     TR "Si se dividio antes de introducir M,N, pueden faltar equilibrios; usar DEDO desde ecuacion original" "No recuperar soluciones perdidas por conjetura" 2 \->LIST 1 \->LIST + 'TR' STO
+     FY GX SOL K 4 \->LIST 'VAL' STO "OK: en componentes reales de M y N" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

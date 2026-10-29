@@ -1,0 +1,97 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 A MODE TARGET CONV
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X } DFREEC THEN "X ASIGNADA" DOERR END
+IF CONV 1 == CONV -1 == OR NOT THEN "CONVENCION: 1 MATEMATICA, -1 DEMANDA" DOERR END
+F0 DREADC \-> F
+\<<
+ TR "Funcion original" F 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Dominio de f y restriccion extra para E: f<>0" F 0 DDOMC 1 GET F 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+ F 'X' DDERC \-> DF
+ \<<
+  TR DF 2 GET + 'TR' STO
+  IF DF 3 GET "OK" == NOT THEN DF 3 GET DOERR END
+  CONV 'X' * DF 1 GET * F / SIMPLIFY \-> E
+  \<<
+   TR "Formula: E=conv*X*f'/f; no dividir donde f=0" CONV 2 \->LIST 1 \->LIST + 'TR' STO
+   TR "Sustituir y simplificar E(X)" E 2 \->LIST 1 \->LIST + 'TR' STO
+   E 'X' DDERC \-> DE
+   \<<
+    IF DE 3 GET "OK" == NOT THEN DE 3 GET DOERR END
+    "" "" \-> ANS CL
+    \<<
+     CASE
+      MODE 0 == THEN
+       F 'X' A DVALC \-> FA
+       \<<
+        IF FA TYPE 2 == THEN "PUNTO FUERA DEL DOMINIO" DOERR END
+        IF FA \->NUM 0 == THEN "E NO EXISTE: f(a)=0" DOERR END
+        E 'X' A DVALC 'ANS' STO
+        IF ANS TYPE 2 == THEN "ELASTICIDAD NO REAL" DOERR END
+        ANS SIMPLIFY 'ANS' STO
+        TR "Evaluar E(a)" A ANS 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+        IF ANS \->NUM ABS 1 > THEN "ELASTICA: |E|>1" ELSE
+         IF ANS \->NUM ABS 1 == THEN "UNITARIA: |E|=1" ELSE "INELASTICA: |E|<1" END END 'CL' STO
+        TR "Clasificacion por valor absoluto" CL 2 \->LIST 1 \->LIST + 'TR' STO
+        TR "E=0 no prueba f'=0 si X=0" DF 1 GET 2 \->LIST 1 \->LIST + 'TR' STO
+       \>>
+      END
+      MODE 1 == MODE 2 == OR MODE 3 == OR THEN
+       CASE MODE 1 == THEN E TARGET - END MODE 2 == THEN
+        TR DE 2 GET + 'TR' STO DE 1 GET END DF 1 GET END \-> EQ
+       \<<
+        TR "Condicion: E=k, E'=0 o f'=0, segun modo" MODE EQ 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+        EQ 'X' DZEROC \-> RR
+        \<<
+         TR RR 2 GET + 'TR' STO
+         IF RR 3 GET "IDENTIDAD" == THEN
+          IF MODE 3 == THEN "TODO DOMINIO DE f" ELSE "TODO DOMINIO DE E" END 'ANS' STO
+         ELSE
+          IF RR 3 GET "OK" == NOT THEN RR 3 GET DOERR END
+          { } 'ANS' STO
+          IF RR 1 GET SIZE 0 > THEN
+           1 RR 1 GET SIZE FOR I
+            RR 1 GET I GET \-> P
+            \<<
+             F 'X' P DVALC \-> FP
+             \<<
+              IF FP TYPE 2 == THEN TR "Descartar: fuera de dominio de f" P 2 \->LIST 1 \->LIST + 'TR' STO ELSE
+               IF MODE 3 == FP \->NUM 0 == NOT OR THEN ANS P 1 \->LIST + 'ANS' STO
+               ELSE TR "Descartar: f(c)=0, E indefinida" P 2 \->LIST 1 \->LIST + 'TR' STO END
+              END
+             \>>
+            \>>
+           NEXT
+          END
+         END
+         "SOLUCIONES EN DOMINIO ORIGINAL" 'CL' STO
+        \>>
+       \>>
+      END
+      "MODO INVALIDO" DOERR
+     END
+     E DE 1 GET ANS CL 4 \->LIST 'VAL' STO
+     "OK" 'AV' STO
+    \>>
+   \>>
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

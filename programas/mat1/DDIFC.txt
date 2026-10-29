@@ -1,0 +1,63 @@
+%%HP: T(3)A(R)F(.);
+\<<
+  \-> F0 A DX
+  \<<
+    RCLF \-> FL
+    \<<
+      -105 CF -103 CF -3 CF -120 SF -123 CF -119 CF -100 CF -99 CF RAD
+      DEPTH \-> D0
+      \<<
+        "" { } "ERROR" \-> VAL TR AV
+        \<<
+          IFERR
+IF { X } DFREEC THEN "X ASIGNADA" DOERR END
+TR "Punto y variacion: a,dx" A DX 2 \->LIST 2 \->LIST 1 \->LIST + 'TR' STO
+"" "" "" "" 0 \-> FA DFA DFUNC DFULL DATA
+\<<
+ IF F0 TYPE 5 == THEN
+  IF F0 SIZE 2 == NOT THEN "DATOS: {f(a) f'(a)}" DOERR END
+  F0 1 GET 'FA' STO F0 2 GET 'DFA' STO 1 'DATA' STO
+  TR "Datos dados, sin formula de f" F0 2 \->LIST 1 \->LIST + 'TR' STO
+ ELSE
+  F0 DREADC 'DFUNC' STO
+  DFUNC 'X' DDERC \-> R
+  \<<
+   IF R 3 GET "OK" == NOT THEN R 3 GET DOERR END
+   TR R 2 GET + 'TR' STO
+   DFUNC 'X' A DVALC 'FA' STO R 1 GET 'X' A DVALC 'DFA' STO
+   DFUNC 'X' A DX + DVALC 'DFULL' STO
+  \>>
+ END
+ IF FA TYPE 2 == DFA TYPE 2 == OR THEN "F O DERIVADA NO REAL EN a" DOERR END
+ TR "Evaluar f(a)" FA 2 \->LIST 1 \->LIST + 'TR' STO
+ TR "Evaluar f'(a)" DFA 2 \->LIST 1 \->LIST + 'TR' STO
+ DFA DX * SIMPLIFY FA OVER + SIMPLIFY \-> DY AP
+ \<<
+  TR "Diferencial: dy=f'(a)*dx" DY 2 \->LIST 1 \->LIST + 'TR' STO
+  TR "Aproximacion: f(a+dx)~f(a)+dy" AP 2 \->LIST 1 \->LIST + 'TR' STO
+  "NO DISPONIBLE" "NO DISPONIBLE" \-> DEL ER
+  \<<
+   IF DATA NOT DFULL TYPE 2 == NOT AND THEN
+    DFULL FA - SIMPLIFY 'DEL' STO
+    DFULL AP - SIMPLIFY 'ER' STO
+    TR "Valor real f(a+dx)" DFULL 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Incremento real: Delta y=f(a+dx)-f(a)" DEL 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Error firmado: real-aproximado=Delta y-dy" ER 2 \->LIST 1 \->LIST + 'TR' STO
+    TR "Error absoluto" ER ABS 2 \->LIST 1 \->LIST + 'TR' STO
+   ELSE
+    TR "Sin valor real no se puede calcular el error" "No inventar" 2 \->LIST 1 \->LIST + 'TR' STO
+   END
+   DY AP DEL ER 4 \->LIST 'VAL' STO
+   "OK: aproximacion local, no cota de error" 'AV' STO
+  \>>
+ \>>
+\>>
+          THEN "" 'VAL' STO ERRM 'AV' STO END
+          TR "Estado" AV 2 \->LIST 1 \->LIST + 'TR' STO
+          VAL TR AV 3 \->LIST
+          \-> RES \<< DEPTH D0 - DROPN FL STOF RES \>>
+        \>>
+      \>>
+    \>>
+  \>>
+\>>

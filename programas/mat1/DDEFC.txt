@@ -1,36 +1,8 @@
 %%HP: T(3)A(R)F(.);
 \<<
-  @ DDEFC - nucleo de DDEF. Derivada por definicion.
-  @ Uso:  'f(X)' X0 DDEFC        (X0 puede ser 'X' para la derivada simbolica)
-  @ Deja: n1 = { Q DV }
-  @         Q  = cociente incremental SIN simplificar (lo que va a la hoja),
-  @         DV = la derivada, o "EL CAS NO PUDO".
-  @
-  @ Sin INFORM ni MSGBOX a proposito: la interfaz esta en DDEF.
-  \-> F0 P0
-  \<<
-    DEPTH \-> D0
-    \<<
-      F0 IF DUP TYPE 2 == THEN STR\-> END \-> F
-      \<<
-        P0 IF DUP TYPE 2 == THEN STR\-> END \-> X0
-        \<<
-          F 'X=X+H' SUBST EVAL F - 'H' / \-> Q
-          \<<
-            0 \-> DV
-            \<<
-              IFERR
-                Q 'H=0' LIMIT EVAL SIMPLIFY 'X' X0 = SUBST EVAL
-              THEN
-                "EL CAS NO PUDO"
-              END
-              'DV' STO
-              Q DV 2 \->LIST
-              \-> R \<< DEPTH D0 - DROPN R \>>
-            \>>
-          \>>
-        \>>
-      \>>
-    \>>
-  \>>
+ DDEFSC \-> R
+ \<<
+  IF R 1 GET TYPE 5 == THEN R 1 GET 1 GET R 1 GET 2 GET R 2 GET R 3 GET 4 \->LIST
+  ELSE "" "" R 2 GET R 3 GET 4 \->LIST END
+ \>>
 \>>
